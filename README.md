@@ -89,8 +89,17 @@ Saidas:
 - Checklist de deploy: docs/oracle_deploy_checklist.md.
 - Config local: `.env.local` (carregado automaticamente pela API).
 - Plano completo das proximas sprints: docs/product_backlog_sprints.md.
+- Board de execucao da Sprint 1: docs/sprint1_execution_board.md.
+- Checklist de fechamento da Sprint 1: docs/sprint1_closing_checklist.md.
 - Board executavel da Sprint 2: docs/sprint2_execution_board.md.
+- Checklist de fechamento da Sprint 2: docs/sprint2_closing_checklist.md.
 - Board executavel da Sprint 3: docs/sprint3_execution_board.md.
+- Templates de issues da Sprint 2 (GitHub):
+  - docs/github_issues/s2-01_oracle_homolog_segredos.md
+  - docs/github_issues/s2-02_migracoes_flyway.md
+  - docs/github_issues/s2-03_fallback_seed_dev_hml.md
+  - docs/github_issues/s2-04_health_detalhado.md
+  - docs/github_issues/s2-05_smoke_endpoints_oracle.md
 - Estrategia de testes: docs/testing_strategy.md.
 - Direcao visual (Design System): docs/design_system_monolith.md.
 

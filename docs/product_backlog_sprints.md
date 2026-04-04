@@ -5,12 +5,30 @@ Cadencia sugerida: sprints de 2 semanas
 
 ## Cronograma sugerido
 
+- Sprint 1: 24 de marco a 4 de abril de 2026 (concluida)
 - Sprint 2: 6 a 17 de abril de 2026
 - Sprint 3: 20 de abril a 1 de maio de 2026
 - Sprint 4: 4 a 15 de maio de 2026
 - Sprint 5: 18 a 29 de maio de 2026
 - Sprint 6: 1 a 12 de junho de 2026
 - Sprint 7: 15 a 26 de junho de 2026
+
+## Sprint 1 - Fundacao (concluida)
+
+Objetivo: entregar base funcional do produto para iniciar Oracle real e evolucao de seguranca nas sprints seguintes.
+
+Entregas principais:
+
+1. Frontend base com modulos operacionais e navegacao principal.
+2. API local com endpoints core e fallback mock.
+3. Base SQL inicial e scripts Oracle equivalentes.
+4. Estrategia de testes automatizados e suites executaveis.
+5. Documentacao operacional inicial (setup Oracle, backlog, board de execucao).
+
+Evidencias:
+
+- `docs/sprint1_execution_board.md`
+- `docs/sprint1_closing_checklist.md`
 
 ## Sprint 2 - Oracle real e base de producao
 
