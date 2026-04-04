@@ -1,0 +1,20 @@
+{
+  "welcomeMessage": "Sou o copiloto CondoGuard. Posso ajudar com alertas, consumo e operacao diaria.",
+  "suggestions": [
+    {
+      "id": "s1",
+      "label": "Resumo do dia",
+      "prompt": "Gerar um resumo rapido dos eventos operacionais de hoje."
+    },
+    {
+      "id": "s2",
+      "label": "Alertas criticos",
+      "prompt": "Quais alertas criticos exigem acao imediata?"
+    },
+    {
+      "id": "s3",
+      "label": "Consumo fora da meta",
+      "prompt": "Existe algum bloco com consumo fora da meta nesta semana?"
+    }
+  ]
+}
