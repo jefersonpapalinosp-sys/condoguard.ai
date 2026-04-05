@@ -32,6 +32,10 @@ Credenciais locais de desenvolvimento (P0 auth):
 - `npm run api:dev`: API Express local
 - `npm run api:dev:mock`: API local forçando seed mock
 - `npm run api:dev:oracle`: API local forçando Oracle
+- `npm run db:migrate:flyway`: executa migracoes Flyway no Oracle
+- `npm run db:smoke:sprint3`: smoke cross-tenant (Sprint 3) em Oracle
+- `npm run db:smoke:sprint3:rbac`: smoke de matriz RBAC (Sprint 3) e gera relatorio markdown
+- `npm run security:smoke:sprint3:oidc`: smoke de fechamento S3-01 com token real OIDC e relatorio markdown
 - `npm run build`: build de producao
 - `npm run lint`: typecheck
 - `npm run check`: lint + build
@@ -93,6 +97,8 @@ Saidas:
 - Checklist de fechamento da Sprint 1: docs/sprint1_closing_checklist.md.
 - Board executavel da Sprint 2: docs/sprint2_execution_board.md.
 - Checklist de fechamento da Sprint 2: docs/sprint2_closing_checklist.md.
+- Runbook Flyway homolog: docs/flyway_homolog_runbook.md.
+- Relatorio de smoke Oracle da Sprint 2: docs/sprint2_oracle_smoke_report.md.
 - Board executavel da Sprint 3: docs/sprint3_execution_board.md.
 - Templates de issues da Sprint 2 (GitHub):
   - docs/github_issues/s2-01_oracle_homolog_segredos.md
@@ -104,7 +110,14 @@ Saidas:
 - Direcao visual (Design System): docs/design_system_monolith.md.
 
 
-Backend por dialeto (ja implementado): server/index.mjs usa DB_DIALECT=oracle|mock com fallback para seed.
+Backend por dialeto (ja implementado): server/index.mjs usa DB_DIALECT=oracle|mock.
+Controle de fallback Oracle:
+- `APP_ENV=dev|hml`: fallback seed permitido por padrao.
+- `APP_ENV=prod`: fallback seed bloqueado por padrao (erro explicito 503 se Oracle indisponivel).
+- Override opcional: `ALLOW_ORACLE_SEED_FALLBACK=true|false`.
+
+Health detalhado (Sprint 2):
+- `/api/health` retorna `env`, `poolStatus`, `latencyMs` e `errorSummary`.
 
 ## Testes automatizados
 
@@ -134,10 +147,16 @@ Backend por dialeto (ja implementado): server/index.mjs usa DB_DIALECT=oracle|mo
 - Rate limiting global de API e especifico de login.
 - Auditoria estruturada de eventos de segurança no backend (`[security] ...` em JSON).
 - Eventos auditados: login sucesso/falha, token ausente/invalido/expirado, role proibida, CORS negado, rate limit excedido, resposta de erro.
+- Persistencia opcional da trilha de auditoria em JSONL:
+  - `SECURITY_AUDIT_PERSIST_ENABLED=true|false`
+- `SECURITY_AUDIT_LOG_PATH=logs/security-audit.log`
+- Consulta operacional (admin): `GET /api/security/audit?event=&actorSub=&condominiumId=&from=&to=&limit=`
 
 E2E segmentados por dominio:
 - `tests/e2e/auth.e2e.spec.ts`
 - `tests/e2e/dashboard.e2e.spec.ts`
 - `tests/e2e/invoices.e2e.spec.ts`
 - `tests/e2e/alerts.e2e.spec.ts`
+
+
 

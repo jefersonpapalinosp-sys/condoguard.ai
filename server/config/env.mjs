@@ -4,10 +4,32 @@ export function getServerConfig() {
     .split(',')
     .map((origin) => origin.trim())
     .filter(Boolean);
+  const appEnv = (process.env.APP_ENV || process.env.NODE_ENV || 'dev').toLowerCase();
+  const allowOracleSeedFallback = (process.env.ALLOW_ORACLE_SEED_FALLBACK || (appEnv === 'dev' || appEnv === 'hml' ? 'true' : 'false'))
+    .toLowerCase() === 'true';
+  const enableDemoAuth = (process.env.ENABLE_DEMO_AUTH || (appEnv === 'dev' ? 'true' : 'false')).toLowerCase() === 'true';
+  const authProvider = (process.env.AUTH_PROVIDER || 'local_jwt').toLowerCase();
+  const oidcAllowedAlgs = (process.env.OIDC_ALLOWED_ALGS || 'RS256')
+    .split(',')
+    .map((v) => v.trim())
+    .filter(Boolean);
+  const oidcIssuer = process.env.OIDC_ISSUER || '';
+  const oidcAudience = process.env.OIDC_AUDIENCE || '';
+  const oidcJwksUrl = process.env.OIDC_JWKS_URL || '';
+  const oidcConfigured = Boolean(oidcIssuer && oidcAudience && oidcJwksUrl);
+  const securityAuditLogPath = process.env.SECURITY_AUDIT_LOG_PATH || 'logs/security-audit.log';
+  const securityAuditPersistEnabled = (process.env.SECURITY_AUDIT_PERSIST_ENABLED || 'false').toLowerCase() === 'true';
+  const authPasswordLoginEnabled = (process.env.AUTH_PASSWORD_LOGIN_ENABLED || (authProvider === 'local_jwt' || appEnv === 'dev' ? 'true' : 'false'))
+    .toLowerCase() === 'true';
 
   return {
+    appEnv,
     port: Number(process.env.PORT || 4000),
     dbDialect: (process.env.DB_DIALECT || 'mock').toLowerCase(),
+    allowOracleSeedFallback,
+    enableDemoAuth,
+    authProvider,
+    authPasswordLoginEnabled,
     jwtSecret: process.env.JWT_SECRET || 'dev-only-change-me',
     jwtExpiresIn: process.env.JWT_EXPIRES_IN || '1h',
     corsAllowedOrigins: configuredOrigins.length > 0 ? configuredOrigins : defaultAllowedOrigins,
@@ -15,6 +37,17 @@ export function getServerConfig() {
     rateLimitMax: Number(process.env.RATE_LIMIT_MAX || 120),
     loginRateLimitMax: Number(process.env.RATE_LIMIT_LOGIN_MAX || 20),
     securityAuditLogEnabled: (process.env.SECURITY_AUDIT_LOG_ENABLED || 'true').toLowerCase() === 'true',
+    securityAuditPersistEnabled,
+    securityAuditLogPath,
+    oidc: {
+      issuer: oidcIssuer,
+      audience: oidcAudience,
+      jwksUrl: oidcJwksUrl,
+      roleClaim: process.env.OIDC_ROLE_CLAIM || 'roles',
+      tenantClaim: process.env.OIDC_TENANT_CLAIM || 'condominium_id',
+      allowedAlgs: oidcAllowedAlgs,
+      isConfigured: oidcConfigured,
+    },
     oracle: {
       user: process.env.ORACLE_USER || '',
       password: process.env.ORACLE_PASSWORD || '',

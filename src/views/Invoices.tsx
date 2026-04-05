@@ -105,6 +105,12 @@ export default function Invoices() {
     return <EmptyState message="Nenhuma fatura disponivel." />;
   }
 
+  function filterButtonClass(filterValue: 'all' | InvoiceStatus) {
+    return `px-4 py-2 rounded-full text-xs font-bold transition-colors ${
+      filter === filterValue ? 'bg-primary text-on-primary' : 'bg-surface-container-highest hover:bg-surface-container-high'
+    }`;
+  }
+
   return (
     <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-8">
       <section className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
@@ -131,16 +137,16 @@ export default function Invoices() {
       </section>
 
       <section className="flex flex-wrap gap-2">
-        <button onClick={() => setFilter('all')} className="px-4 py-2 rounded-full text-xs font-bold bg-primary text-on-primary">
+        <button onClick={() => setFilter('all')} className={filterButtonClass('all')}>
           Todas
         </button>
-        <button onClick={() => setFilter('pending')} className="px-4 py-2 rounded-full text-xs font-bold bg-surface-container-highest">
+        <button onClick={() => setFilter('pending')} className={filterButtonClass('pending')}>
           Pendentes
         </button>
-        <button onClick={() => setFilter('overdue')} className="px-4 py-2 rounded-full text-xs font-bold bg-surface-container-highest">
+        <button onClick={() => setFilter('overdue')} className={filterButtonClass('overdue')}>
           Vencidas
         </button>
-        <button onClick={() => setFilter('paid')} className="px-4 py-2 rounded-full text-xs font-bold bg-surface-container-highest">
+        <button onClick={() => setFilter('paid')} className={filterButtonClass('paid')}>
           Pagas
         </button>
       </section>

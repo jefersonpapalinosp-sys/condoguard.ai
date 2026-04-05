@@ -2,6 +2,22 @@ import { getServerConfig } from '../config/env.mjs';
 
 let pool;
 
+async function loadOracleDb() {
+  let mod;
+  try {
+    mod = await import('oracledb');
+  } catch {
+    throw new Error('Driver oracledb nao instalado. Execute: npm install oracledb');
+  }
+
+  const driver = mod?.default ?? mod;
+  if (!driver || typeof driver.createPool !== 'function') {
+    throw new Error('Driver oracledb carregado em formato invalido.');
+  }
+
+  return driver;
+}
+
 export async function getOraclePool() {
   const config = getServerConfig();
   if (config.dbDialect !== 'oracle') {
@@ -12,12 +28,7 @@ export async function getOraclePool() {
     return pool;
   }
 
-  let oracledb;
-  try {
-    oracledb = await import('oracledb');
-  } catch {
-    throw new Error('Driver oracledb nao instalado. Execute: npm install oracledb');
-  }
+  const oracledb = await loadOracleDb();
 
   if (!config.oracle.user || !config.oracle.password || !config.oracle.connectString) {
     throw new Error('Credenciais Oracle incompletas no ambiente.');
@@ -40,7 +51,7 @@ export async function runOracleQuery(sql, binds = {}, options = {}) {
     return null;
   }
 
-  const oracledb = await import('oracledb');
+  const oracledb = await loadOracleDb();
   const connection = await p.getConnection();
 
   try {

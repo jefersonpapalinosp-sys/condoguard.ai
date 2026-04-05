@@ -1,7 +1,7 @@
 import { FormEvent, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../features/auth/context/AuthContext';
-import type { AuthRole } from '../features/auth/context/AuthContext';
+import { loginWithPassword } from '../services/authService';
 
 export default function Login() {
   const navigate = useNavigate();
@@ -10,13 +10,6 @@ export default function Login() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const resolveRoleFromEmail = (email: string): AuthRole => {
-    const normalizedEmail = email.toLowerCase();
-    if (normalizedEmail.includes('sindico')) return 'sindico';
-    if (normalizedEmail.includes('morador')) return 'morador';
-    return 'admin';
-  };
-
   const onSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setError(null);
@@ -24,13 +17,15 @@ export default function Login() {
 
     const form = new FormData(event.currentTarget);
     const email = String(form.get('email') || '');
+    const password = String(form.get('password') || '');
 
     try {
-      login({ role: resolveRoleFromEmail(email) });
+      const session = await loginWithPassword(email, password);
+      login(session);
       const nextPath = (location.state as { from?: string } | null)?.from ?? '/dashboard';
       navigate(nextPath, { replace: true });
     } catch {
-      setError('Falha ao entrar no momento. Tente novamente.');
+      setError('Credenciais invalidas ou servico indisponivel.');
     } finally {
       setLoading(false);
     }
@@ -80,7 +75,7 @@ export default function Login() {
         <div className="w-full max-w-md">
           <header className="mb-10">
             <h2 className="text-2xl md:text-3xl font-headline font-extrabold text-on-surface tracking-tight">Acessar Plataforma</h2>
-            <p className="mt-2 text-on-surface-variant font-body">Acesso temporario sem validacao de credenciais.</p>
+            <p className="mt-2 text-on-surface-variant font-body">Acesso autenticado no backend com credenciais validas.</p>
           </header>
 
           <form className="space-y-6" onSubmit={onSubmit}>

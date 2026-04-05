@@ -12,6 +12,19 @@ const severityStyles: Record<'critical' | 'warning' | 'info', string> = {
   info: 'bg-surface-container-low border-on-primary-fixed-variant text-on-primary-fixed-variant',
 };
 
+function normalizeText(value: unknown, fallback: string) {
+  if (typeof value !== 'string') {
+    return fallback;
+  }
+
+  const raw = value.trim();
+  if (!raw || raw === '[object Object]') {
+    return fallback;
+  }
+
+  return raw;
+}
+
 export default function Alerts() {
   const [data, setData] = useState<AlertsData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -70,6 +83,12 @@ export default function Alerts() {
     return <EmptyState />;
   }
 
+  function filterButtonClass(filterValue: 'all' | 'critical' | 'warning' | 'info') {
+    return `px-4 py-2 rounded-full text-xs font-bold transition-colors ${
+      activeFilter === filterValue ? 'bg-primary text-on-primary' : 'bg-surface-container-highest hover:bg-surface-container-high'
+    }`;
+  }
+
   return (
     <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-6">
       <header className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
@@ -86,16 +105,16 @@ export default function Alerts() {
       </header>
 
       <section className="flex flex-wrap gap-2">
-        <button className="px-4 py-2 rounded-full text-xs font-bold bg-primary text-on-primary" onClick={() => setActiveFilter('all')}>
+        <button className={filterButtonClass('all')} onClick={() => setActiveFilter('all')}>
           Todos
         </button>
-        <button className="px-4 py-2 rounded-full text-xs font-bold bg-surface-container-highest" onClick={() => setActiveFilter('critical')}>
+        <button className={filterButtonClass('critical')} onClick={() => setActiveFilter('critical')}>
           Critico
         </button>
-        <button className="px-4 py-2 rounded-full text-xs font-bold bg-surface-container-highest" onClick={() => setActiveFilter('warning')}>
+        <button className={filterButtonClass('warning')} onClick={() => setActiveFilter('warning')}>
           Aviso
         </button>
-        <button className="px-4 py-2 rounded-full text-xs font-bold bg-surface-container-highest" onClick={() => setActiveFilter('info')}>
+        <button className={filterButtonClass('info')} onClick={() => setActiveFilter('info')}>
           Informativo
         </button>
       </section>
@@ -110,8 +129,10 @@ export default function Alerts() {
                 <span className="text-xs font-bold uppercase tracking-widest">{item.severity}</span>
                 <span className="text-[10px] font-medium text-on-surface-variant">{item.time}</span>
               </div>
-              <h3 className="font-headline font-bold text-lg mb-1">{item.title}</h3>
-              <p className="text-sm text-on-surface-variant leading-relaxed">{item.description}</p>
+              <h3 className="font-headline font-bold text-lg mb-1">{normalizeText(item.title, 'anomalia detectada')}</h3>
+              <p className="text-sm text-on-surface-variant leading-relaxed">
+                {normalizeText(item.description, 'Anomalia detectada automaticamente')}
+              </p>
             </article>
           ))}
         </section>

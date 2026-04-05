@@ -4,6 +4,9 @@ export default function Settings() {
       <section className="space-y-2">
         <h2 className="font-headline text-2xl md:text-4xl font-extrabold tracking-tight">Configuracoes</h2>
         <p className="text-on-surface-variant">Central de configuracoes operacionais da plataforma CondoGuard.AI.</p>
+        <p className="inline-flex items-center rounded-full bg-secondary-container px-3 py-1 text-[11px] font-bold uppercase tracking-widest text-on-secondary-container">
+          Modulo em consolidacao para Sprint 4
+        </p>
       </section>
 
       <section className="grid grid-cols-1 md:grid-cols-2 gap-6">

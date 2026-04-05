@@ -1,8 +1,12 @@
 export const healthResponseFixture = {
   ok: true,
   service: 'condoguard-api',
+  env: 'dev',
   dialect: 'mock',
   dbStatus: 'seed',
+  poolStatus: 'not_applicable',
+  latencyMs: null,
+  errorSummary: null,
   timestamp: new Date().toISOString(),
 };
 

@@ -30,9 +30,23 @@ export function AppRouter() {
         <Route path="alerts" element={<AlertsPage />} />
         <Route path="consumption" element={<ConsumptionPage />} />
         <Route path="contracts" element={<ContractsPage />} />
-        <Route path="invoices" element={<InvoicesPage />} />
+        <Route
+          path="invoices"
+          element={(
+            <ProtectedRoute requiredRoles={['admin', 'sindico']}>
+              <InvoicesPage />
+            </ProtectedRoute>
+          )}
+        />
         <Route path="chat" element={<ChatPage />} />
-        <Route path="management" element={<ManagementPage />} />
+        <Route
+          path="management"
+          element={(
+            <ProtectedRoute requiredRoles={['admin', 'sindico']}>
+              <ManagementPage />
+            </ProtectedRoute>
+          )}
+        />
         <Route path="cadastros-gerais" element={<CadastrosGeraisPage />} />
         <Route path="reports" element={<ReportsPage />} />
         <Route path="settings" element={<SettingsPage />} />

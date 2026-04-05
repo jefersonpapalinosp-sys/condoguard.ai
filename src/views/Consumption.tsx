@@ -60,6 +60,9 @@ export default function Consumption() {
       <section>
         <h2 className="font-headline text-2xl md:text-4xl font-extrabold tracking-tight">Consumo e Telemetria</h2>
         <p className="text-on-surface-variant mt-2">Monitoramento operacional de energia, agua e gas.</p>
+        <p className="mt-2 inline-flex items-center rounded-full bg-secondary-container px-3 py-1 text-[11px] font-bold uppercase tracking-widest text-on-secondary-container">
+          Telemetria detalhada entra na Sprint 4
+        </p>
       </section>
 
       <section className="grid grid-cols-1 md:grid-cols-3 gap-6">

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '../../auth/context/AuthContext';
+import type { AuthRole } from '../../auth/context/AuthContext';
 import { ApiFallbackToast } from '../../../shared/ui/ApiFallbackToast';
 import { ChatbotWidget } from '../../../shared/ui/ChatbotWidget';
 
@@ -8,6 +9,7 @@ type NavItem = {
   id: string;
   label: string;
   icon: string;
+  allowedRoles?: AuthRole[];
 };
 
 const navItems: NavItem[] = [
@@ -16,9 +18,9 @@ const navItems: NavItem[] = [
   { id: 'alerts', label: 'Alertas', icon: 'warning' },
   { id: 'consumption', label: 'Consumo', icon: 'energy_savings_leaf' },
   { id: 'contracts', label: 'Contratos', icon: 'description' },
-  { id: 'invoices', label: 'Faturas', icon: 'receipt_long' },
+  { id: 'invoices', label: 'Faturas', icon: 'receipt_long', allowedRoles: ['admin', 'sindico'] },
   { id: 'chat', label: 'Chat', icon: 'forum' },
-  { id: 'management', label: 'Gestao', icon: 'domain' },
+  { id: 'management', label: 'Gestao', icon: 'domain', allowedRoles: ['admin', 'sindico'] },
   { id: 'reports', label: 'Relatorios', icon: 'assessment' },
   { id: 'settings', label: 'Configuracoes', icon: 'settings' },
 ];
@@ -34,8 +36,9 @@ function toTitle(pathname: string) {
 
 export function AppLayout() {
   const location = useLocation();
-  const { logout } = useAuth();
+  const { logout, role } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const visibleNavItems = navItems.filter((item) => !item.allowedRoles || (role && item.allowedRoles.includes(role)));
 
   useEffect(() => {
     setMobileMenuOpen(false);
@@ -70,7 +73,7 @@ export function AppLayout() {
           </div>
 
           <nav className="flex-1 px-4 space-y-2 overflow-y-auto">
-            {navItems.map((item) => (
+            {visibleNavItems.map((item) => (
               <NavLink
                 key={item.id}
                 to={`/${item.id}`}

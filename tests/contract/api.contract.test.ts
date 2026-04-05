@@ -6,8 +6,12 @@ import { healthResponseFixture, invoicesResponseFixture } from '../fixtures/apiC
 const healthSchema = z.object({
   ok: z.boolean(),
   service: z.literal('condoguard-api'),
+  env: z.string(),
   dialect: z.enum(['mock', 'oracle']),
   dbStatus: z.string(),
+  poolStatus: z.enum(['not_applicable', 'active', 'disabled', 'error']),
+  latencyMs: z.number().int().nonnegative().nullable(),
+  errorSummary: z.string().nullable(),
   timestamp: z.string(),
 });
 
@@ -106,8 +110,10 @@ const errorSchema = z.object({
 });
 
 const appConfig = {
+  appEnv: 'dev',
   port: 4000,
   dbDialect: 'mock',
+  allowOracleSeedFallback: true,
   jwtSecret: 'test-secret',
   jwtExpiresIn: '1h',
   corsAllowedOrigins: ['http://localhost:3000'],

@@ -5,7 +5,7 @@ test.describe('Invoices page', () => {
   test('renders invoices module', async ({ page }) => {
     await loginAsAdmin(page);
     await page.getByRole('link', { name: 'Faturas' }).click();
-    await expect(page.getByRole('heading', { name: 'Faturas' })).toBeVisible();
+    await expect(page.locator('main section').first().getByRole('heading', { name: 'Faturas', exact: true })).toBeVisible();
   });
 
   test('shows fallback toast and badge when invoices API is unavailable', async ({ page }) => {
@@ -18,4 +18,3 @@ test.describe('Invoices page', () => {
     await expect(page.getByText('Fonte: fallback mock')).toBeVisible();
   });
 });
-

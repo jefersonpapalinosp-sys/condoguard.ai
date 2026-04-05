@@ -1,0 +1,67 @@
+{
+  "items": [
+    {
+      "id": "cad-001",
+      "condominiumId": 1,
+      "tipo": "unidade",
+      "titulo": "Unidade A-101",
+      "descricao": "Responsavel: Maria Silva",
+      "status": "active",
+      "updatedAt": "2026-04-05T09:22:00.000Z"
+    },
+    {
+      "id": "cad-002",
+      "condominiumId": 1,
+      "tipo": "morador",
+      "titulo": "Carlos Souza",
+      "descricao": "Unidade B-204",
+      "status": "active",
+      "updatedAt": "2026-04-05T08:41:00.000Z"
+    },
+    {
+      "id": "cad-003",
+      "condominiumId": 1,
+      "tipo": "fornecedor",
+      "titulo": "Elevadores Prime LTDA",
+      "descricao": "Contrato de manutencao preventiva",
+      "status": "pending",
+      "updatedAt": "2026-04-04T17:10:00.000Z"
+    },
+    {
+      "id": "cad-004",
+      "condominiumId": 1,
+      "tipo": "servico",
+      "titulo": "Limpeza tecnica de reservatorio",
+      "descricao": "Execucao mensal - Blocos A, B e C",
+      "status": "active",
+      "updatedAt": "2026-04-04T14:35:00.000Z"
+    },
+    {
+      "id": "cad-005",
+      "condominiumId": 1,
+      "tipo": "morador",
+      "titulo": "Fernanda Lima",
+      "descricao": "Unidade C-309",
+      "status": "inactive",
+      "updatedAt": "2026-04-02T11:02:00.000Z"
+    },
+    {
+      "id": "cad-101",
+      "condominiumId": 2,
+      "tipo": "unidade",
+      "titulo": "Unidade D-101",
+      "descricao": "Responsavel: Marcos Freitas",
+      "status": "active",
+      "updatedAt": "2026-04-05T09:10:00.000Z"
+    },
+    {
+      "id": "cad-102",
+      "condominiumId": 2,
+      "tipo": "fornecedor",
+      "titulo": "Limpeza Cond2 LTDA",
+      "descricao": "Equipe de apoio predial",
+      "status": "pending",
+      "updatedAt": "2026-04-04T15:45:00.000Z"
+    }
+  ]
+}

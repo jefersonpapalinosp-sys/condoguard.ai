@@ -6,9 +6,9 @@ Objetivo: concluir os itens pendentes da Sprint 2 com evidencias tecnicas.
 ## Resumo do status atual
 
 1. `S2-01` Oracle homolog e segredos: **Parcial**
-2. `S2-02` Migracoes Flyway/Liquibase: **Nao iniciado**
-3. `S2-03` Fallback seed so em `dev/hml`: **Nao iniciado**
-4. `S2-04` Health detalhado: **Parcial**
+2. `S2-02` Migracoes Flyway/Liquibase: **Em progresso**
+3. `S2-03` Fallback seed so em `dev/hml`: **Implementado (pendente validacao em homolog)**
+4. `S2-04` Health detalhado: **Implementado (pendente validacao em homolog)**
 5. `S2-05` Smoke endpoints Oracle real: **Parcial**
 
 ## Checklist executavel por card
@@ -27,25 +27,25 @@ Evidencia obrigatoria:
 
 ## `S2-02` Versionar SQL com Flyway ou Liquibase (P0)
 
-Status: **Nao iniciado**
+Status: **Em progresso**
 
-- [ ] Definir ferramenta oficial (`Flyway` recomendado no backlog).
-- [ ] Criar estrutura de migration versionada (`001`, `002`, `003`) para Oracle.
-- [ ] Criar pipeline de execucao automatica em homolog.
+- [x] Definir ferramenta oficial (`Flyway` recomendado no backlog).
+- [x] Criar estrutura de migration versionada (`001`, `002`, `003`) para Oracle.
+- [x] Criar pipeline de execucao automatica em homolog.
 - [ ] Validar execucao em ordem e idempotencia controlada.
-- [ ] Documentar runbook de migration.
+- [x] Documentar runbook de migration.
 
 Evidencia obrigatoria:
 - Log de pipeline executando `001 -> 002 -> 003` sem erro.
 
 ## `S2-03` Ajustar fallback para seed apenas em `dev/hml` (P0)
 
-Status: **Nao iniciado**
+Status: **Implementado (pendente validacao em homolog)**
 
-- [ ] Introduzir controle explicito por ambiente (`APP_ENV` ou equivalente).
-- [ ] Permitir fallback seed apenas em `dev/hml`.
-- [ ] Em `prod`, retornar erro explicito quando Oracle estiver indisponivel.
-- [ ] Ajustar logs para diagnostico rapido sem expor segredos.
+- [x] Introduzir controle explicito por ambiente (`APP_ENV` ou equivalente).
+- [x] Permitir fallback seed apenas em `dev/hml`.
+- [x] Em `prod`, retornar erro explicito quando Oracle estiver indisponivel.
+- [x] Ajustar logs para diagnostico rapido sem expor segredos.
 
 Evidencia obrigatoria:
 - Teste em ambiente `prod` simulado mostrando falha explicita sem seed.
@@ -53,12 +53,12 @@ Evidencia obrigatoria:
 
 ## `S2-04` Health detalhado (P1)
 
-Status: **Parcial**
+Status: **Implementado (pendente validacao em homolog)**
 
-- [ ] Incluir latencia de verificacao do banco no payload do health.
-- [ ] Incluir estado do pool Oracle (ativo/inativo).
-- [ ] Incluir erro resumido quando houver falha (sem segredo).
-- [ ] Manter compatibilidade com consumidores atuais.
+- [x] Incluir latencia de verificacao do banco no payload do health.
+- [x] Incluir estado do pool Oracle (ativo/inativo).
+- [x] Incluir erro resumido quando houver falha (sem segredo).
+- [x] Manter compatibilidade com consumidores atuais.
 
 Evidencia obrigatoria:
 - Payload de `/api/health` contendo campos de latencia/pool/erro resumido.
@@ -73,6 +73,7 @@ Status: **Parcial**
 - [ ] `/api/alerts`
 - [ ] `/api/chat/bootstrap`
 - [ ] Registrar status HTTP e latencia baseline.
+- [x] Criar relatorio de smoke versionado em `docs/sprint2_oracle_smoke_report.md`.
 
 Evidencia obrigatoria:
 - Relatorio de smoke versionado em `docs/` com data/hora/ambiente.
@@ -91,3 +92,12 @@ Evidencia obrigatoria:
 - `S2-04` concluido ou replanejado formalmente com risco aceito.
 - Evidencias anexadas por card.
 - Sem dependencia critica aberta para iniciar Sprint 3.
+
+## Atualizacao rapida (04-APR-2026)
+
+- [x] `S2-01`: `/api/health` validado com `dialect=oracle` e `dbStatus=oracle_pool_ok`.
+- [x] `S2-04`: health detalhado validado (`poolStatus`, `latencyMs`, `errorSummary`).
+- [x] Fluxo de autenticacao validado (`/api/auth/login` gera token).
+- [x] Endpoints protegidos validam auth (`401 AUTH_REQUIRED` sem token).
+- [x] Smoke autenticado executado nos endpoints principais (`200` com token).
+- [x] Fechamento final de `S2-05`: smoke repetido com `ALLOW_ORACLE_SEED_FALLBACK=false`.

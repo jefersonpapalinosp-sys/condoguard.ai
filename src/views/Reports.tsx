@@ -54,6 +54,9 @@ export default function Reports() {
       <section>
         <h2 className="font-headline text-2xl md:text-4xl font-extrabold tracking-tight">Relatorios inteligentes</h2>
         <p className="text-on-surface-variant mt-2">Consolidado gerencial e operacional baseado no periodo vigente.</p>
+        <p className="mt-2 inline-flex items-center rounded-full bg-secondary-container px-3 py-1 text-[11px] font-bold uppercase tracking-widest text-on-secondary-container">
+          Exportacao e visualizador completo na Sprint 4
+        </p>
       </section>
 
       <section className="bg-primary-container text-white rounded-xl p-4 md:p-8">
@@ -67,7 +70,14 @@ export default function Reports() {
             <span className="text-xs text-on-surface-variant uppercase tracking-widest">{item.generatedAt}</span>
             <h3 className="font-headline font-bold text-xl mt-2">{item.title}</h3>
             <p className="text-sm text-on-surface-variant mt-2">{item.subtitle}</p>
-            <button className="mt-4 text-primary text-sm font-bold">Abrir relatorio</button>
+            <button
+              type="button"
+              disabled
+              className="mt-4 text-sm font-bold text-on-surface-variant opacity-70 cursor-not-allowed"
+              title="Fluxo completo entra na Sprint 4"
+            >
+              Abrir relatorio (em breve)
+            </button>
           </article>
         ))}
       </section>

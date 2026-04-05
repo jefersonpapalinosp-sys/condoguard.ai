@@ -2,8 +2,10 @@
 import request from 'supertest';
 
 const config = {
+  appEnv: 'dev',
   port: 4000,
   dbDialect: 'mock',
+  allowOracleSeedFallback: true,
   jwtSecret: 'test-secret',
   jwtExpiresIn: '1h',
   corsAllowedOrigins: ['http://localhost:3000'],

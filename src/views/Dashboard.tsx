@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { getDashboardData, type DashboardData } from '../services/mockApi';
 import { LoadingState } from '../shared/ui/states/LoadingState';
 import { ErrorState } from '../shared/ui/states/ErrorState';
@@ -11,9 +12,11 @@ const levelClass: Record<'critical' | 'warning' | 'info', string> = {
 };
 
 export default function Dashboard() {
+  const location = useLocation();
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const forbiddenByRole = Boolean((location.state as { forbidden?: boolean } | null)?.forbidden);
 
   useEffect(() => {
     let active = true;
@@ -61,7 +64,17 @@ export default function Dashboard() {
       <section>
         <h3 className="font-headline text-2xl md:text-4xl font-extrabold tracking-tighter text-on-surface">Dashboard</h3>
         <p className="text-on-surface-variant font-body mt-2">Visao geral da inteligencia predial e performance operacional.</p>
+        <p className="mt-2 inline-flex items-center rounded-full bg-secondary-container px-3 py-1 text-[11px] font-bold uppercase tracking-widest text-on-secondary-container">
+          Indicadores sinteticos temporarios
+        </p>
       </section>
+
+      {forbiddenByRole ? (
+        <section className="rounded-xl border border-amber-300/60 bg-amber-100/80 px-4 py-3 text-amber-900">
+          <p className="text-sm font-semibold">Acesso restrito por perfil</p>
+          <p className="text-xs mt-1">Seu perfil atual nao possui permissao para o modulo solicitado.</p>
+        </section>
+      ) : null}
 
       <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <div className="bg-surface-container-highest p-6 rounded-xl">

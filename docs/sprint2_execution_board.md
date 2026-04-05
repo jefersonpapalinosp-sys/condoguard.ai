@@ -116,3 +116,48 @@ Mitigacao: feature flag por ambiente + teste de erro controlado.
 - `S2-01`, `S2-02`, `S2-03`, `S2-05` em `Done`.
 - Health Oracle operacional em homolog com `oracle_pool_ok`.
 - Evidencias da sprint registradas em docs (smoke + health + migration).
+
+## Atualizacao de evidencias (04-APR-2026)
+
+### S2-01 - Configurar Oracle homolog e segredos da API
+Status: DONE
+
+Evidencia (`/api/health`):
+- ok: `true`
+- env: `hml`
+- dialect: `oracle`
+- dbStatus: `oracle_pool_ok`
+- poolStatus: `active`
+- latencyMs: `386`
+- errorSummary: `null`
+
+Comando:
+`curl.exe http://localhost:4001/api/health`
+
+### S2-04 - Health detalhado (pool, latencia, erro resumido)
+Status: DONE
+
+Validado no payload do health:
+- `poolStatus` presente
+- `latencyMs` presente
+- `errorSummary` presente
+
+### S2-05 - Smoke endpoints principais no Oracle
+Status: DONE
+
+Resultado sem token:
+- `/api/invoices` -> `401 AUTH_REQUIRED`
+- `/api/management/units` -> `401 AUTH_REQUIRED`
+- `/api/alerts` -> `401 AUTH_REQUIRED`
+- `/api/chat/bootstrap` -> `401 AUTH_REQUIRED`
+
+Resultado com token (`POST /api/auth/login`):
+- `/api/invoices` -> `200`
+- `/api/management/units` -> `200`
+- `/api/alerts` -> `200`
+- `/api/chat/bootstrap` -> `200`
+
+Validacao final (fallback desativado):
+- `ALLOW_ORACLE_SEED_FALLBACK=false` validado em runtime.
+- Endpoints retornaram dados Oracle reais sem `ORACLE_UNAVAILABLE`.
+- Exemplo observado: `Contexto Oracle carregado: 1 faturas vencidas e 1 alertas criticos.`

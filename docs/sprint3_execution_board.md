@@ -205,3 +205,16 @@ Mitigacao: checklist obrigatorio de repositorio + teste automatizado cross-tenan
 - Fluxo de autenticacao com provedor real validado em homolog.
 - RBAC aplicado e testado no backend para perfis `admin`, `sindico` e `morador`.
 - Isolamento de dados por `condominium_id` validado com testes de acesso cruzado.
+
+## Evidencias e apoio de execucao
+
+- Matriz de testes executavel: `docs/sprint3_test_matrix.md`.
+- Checklist de fechamento: `docs/sprint3_closing_checklist.md`.
+- Setup de identidade real em homolog: `docs/sprint3_oidc_homolog_setup.md`.
+- Runbook de validacao cross-tenant Oracle: `docs/sprint3_cross_tenant_oracle_runbook.md`.
+- Snapshot atual (05-APR-2026):
+1. `S3-01` parcial: backend em modo local (`local_jwt`) validado; fechamento definitivo aguarda smoke OIDC com token real do IdP corporativo.
+2. `S3-02` done tecnico: smoke RBAC em homolog Oracle executado com `PASS` (`docs/sprint3_rbac_smoke_report.md`).
+3. `S3-03` done tecnico: smoke cross-tenant Oracle com 2 condominios executado com `PASS` (sem vazamento por `condominium_id`).
+4. `S3-04` done tecnico: evidencias de API/contract atualizadas (`npm run test:api` = `20 passed`).
+5. `S3-05` done tecnico: trilha auditavel + consulta admin operacionais e cobertas em testes de API/contrato.

@@ -67,6 +67,9 @@ export default function Contracts() {
         <div>
           <h2 className="font-headline text-2xl md:text-4xl font-extrabold tracking-tight">Auditoria de contratos</h2>
           <p className="text-on-surface-variant mt-2">Analise automatica de reajustes, vencimentos e risco financeiro.</p>
+          <p className="mt-2 inline-flex items-center rounded-full bg-secondary-container px-3 py-1 text-[11px] font-bold uppercase tracking-widest text-on-secondary-container">
+            Dados de contratos ainda sinteticos
+          </p>
         </div>
         <div className="text-sm font-bold bg-surface-container-highest px-4 py-3 rounded-lg">
           Impacto trimestral estimado: {data.estimatedQuarterImpact}

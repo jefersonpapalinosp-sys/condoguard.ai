@@ -18,16 +18,19 @@ Scripts Oracle disponiveis em `database/sql/oracle`:
 A API em `server/index.mjs` ja suporta modo por dialeto:
 
 - `DB_DIALECT=mock`: usa seeds de `server/data/*.json`.
-- `DB_DIALECT=oracle`: tenta Oracle (views `MART.*`) e faz fallback para seed em erro.
+- `DB_DIALECT=oracle`: usa Oracle (views `MART.*`).
 
 Scripts npm:
 
 - `npm run api:dev:mock`
 - `npm run api:dev:oracle`
+- `npm run db:migrate:flyway`
 
 Variaveis necessarias:
 
 - `DB_DIALECT=oracle`
+- `APP_ENV=dev|hml|prod`
+- `ALLOW_ORACLE_SEED_FALLBACK=true|false` (opcional)
 - `ORACLE_USER`
 - `ORACLE_PASSWORD`
 - `ORACLE_CONNECT_STRING`
@@ -36,6 +39,7 @@ Variaveis necessarias:
 
 Observacao: o backend carrega `.env.local` automaticamente via `server/start.mjs`.
 Observacao: para conectar de fato ao Oracle no Node, mantenha `oracledb` instalado no ambiente da API.
+Observacao: por padrao, fallback seed e permitido apenas em `dev/hml` e bloqueado em `prod`.
 
 ## Observacoes
 
@@ -43,3 +47,4 @@ Observacao: para conectar de fato ao Oracle no Node, mantenha `oracledb` instala
 - Diferente do Postgres, nao usamos `create table if not exists`.
 - Reexecucao de scripts DDL deve ser controlada por ferramenta de migracao (Liquibase/Flyway).
 - Checklist operacional: `docs/oracle_deploy_checklist.md`.
+- Runbook Flyway: `docs/flyway_homolog_runbook.md`.

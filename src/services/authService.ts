@@ -4,6 +4,7 @@ export type LoginResponse = {
   token: string;
   role: 'admin' | 'sindico' | 'morador';
   expiresAt: number;
+  condominiumId?: number | null;
 };
 
 export async function loginWithPassword(email: string, password: string) {
@@ -12,4 +13,3 @@ export async function loginWithPassword(email: string, password: string) {
     body: JSON.stringify({ email, password }),
   });
 }
-

@@ -107,6 +107,18 @@ export default function Management() {
     return <EmptyState message="Nenhuma unidade cadastrada." />;
   }
 
+  function blockFilterClass(filterValue: 'all' | 'A' | 'B' | 'C') {
+    return `px-4 py-2 rounded-full text-xs font-bold transition-colors ${
+      blockFilter === filterValue ? 'bg-primary text-on-primary' : 'bg-surface-container-highest hover:bg-surface-container-high'
+    }`;
+  }
+
+  function statusFilterClass(filterValue: 'all' | UnitStatus) {
+    return `px-4 py-2 rounded-full text-xs font-bold transition-colors ${
+      statusFilter === filterValue ? 'bg-primary text-on-primary' : 'bg-surface-container-highest hover:bg-surface-container-high'
+    }`;
+  }
+
   return (
     <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-8">
       <section className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
@@ -133,31 +145,31 @@ export default function Management() {
       </section>
 
       <section className="flex flex-wrap gap-2">
-        <button onClick={() => setBlockFilter('all')} className="px-4 py-2 rounded-full text-xs font-bold bg-primary text-on-primary">
+        <button onClick={() => setBlockFilter('all')} className={blockFilterClass('all')}>
           Todos os blocos
         </button>
-        <button onClick={() => setBlockFilter('A')} className="px-4 py-2 rounded-full text-xs font-bold bg-surface-container-highest">
+        <button onClick={() => setBlockFilter('A')} className={blockFilterClass('A')}>
           Bloco A
         </button>
-        <button onClick={() => setBlockFilter('B')} className="px-4 py-2 rounded-full text-xs font-bold bg-surface-container-highest">
+        <button onClick={() => setBlockFilter('B')} className={blockFilterClass('B')}>
           Bloco B
         </button>
-        <button onClick={() => setBlockFilter('C')} className="px-4 py-2 rounded-full text-xs font-bold bg-surface-container-highest">
+        <button onClick={() => setBlockFilter('C')} className={blockFilterClass('C')}>
           Bloco C
         </button>
       </section>
 
       <section className="flex flex-wrap gap-2">
-        <button onClick={() => setStatusFilter('all')} className="px-4 py-2 rounded-full text-xs font-bold bg-primary text-on-primary">
+        <button onClick={() => setStatusFilter('all')} className={statusFilterClass('all')}>
           Todos os status
         </button>
-        <button onClick={() => setStatusFilter('occupied')} className="px-4 py-2 rounded-full text-xs font-bold bg-surface-container-highest">
+        <button onClick={() => setStatusFilter('occupied')} className={statusFilterClass('occupied')}>
           Ocupadas
         </button>
-        <button onClick={() => setStatusFilter('maintenance')} className="px-4 py-2 rounded-full text-xs font-bold bg-surface-container-highest">
+        <button onClick={() => setStatusFilter('maintenance')} className={statusFilterClass('maintenance')}>
           Manutencao
         </button>
-        <button onClick={() => setStatusFilter('vacant')} className="px-4 py-2 rounded-full text-xs font-bold bg-surface-container-highest">
+        <button onClick={() => setStatusFilter('vacant')} className={statusFilterClass('vacant')}>
           Vagas
         </button>
       </section>
