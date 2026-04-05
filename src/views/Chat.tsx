@@ -1,6 +1,13 @@
 import { FormEvent, useEffect, useMemo, useState } from 'react';
-import { fetchChatBootstrap, postChatMessage } from '../services/chatService';
+import {
+  fetchChatBootstrap,
+  fetchChatTelemetry,
+  postChatMessage,
+  sendChatFeedback,
+  type ChatTelemetrySnapshot,
+} from '../services/chatService';
 import type { ChatMessage, ChatSuggestion } from '../services/mockApi';
+import { useAuth } from '../features/auth/context/AuthContext';
 import { DataSourceBadge } from '../shared/ui/DataSourceBadge';
 import { EmptyState } from '../shared/ui/states/EmptyState';
 import { ErrorState } from '../shared/ui/states/ErrorState';
@@ -10,13 +17,52 @@ function nowTime() {
   return new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
 }
 
+function formatTelemetryEvent(event: NonNullable<ChatTelemetrySnapshot['recentEvents']>[number]) {
+  if (event.type === 'feedback') {
+    return `Feedback ${event.rating === 'up' ? 'positivo' : 'negativo'} (${event.messageId || 'sem id'})`;
+  }
+
+  if (event.type === 'error') {
+    return `Erro de chat: ${event.errorCode || 'UNKNOWN_ERROR'}`;
+  }
+
+  const guardrailLabel = event.guardrailBlocked
+    ? `bloqueada (${event.guardrailReason || 'UNKNOWN'})`
+    : 'respondida';
+
+  return `Mensagem ${guardrailLabel} - intent ${event.intentId || 'n/a'} - confianca ${event.confidence || 'n/a'}`;
+}
+
 export default function Chat() {
+  const { role } = useAuth();
   const [suggestions, setSuggestions] = useState<ChatSuggestion[]>([]);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [text, setText] = useState('');
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [feedbackByMessage, setFeedbackByMessage] = useState<Record<string, 'up' | 'down'>>({});
+  const [telemetry, setTelemetry] = useState<ChatTelemetrySnapshot | null>(null);
+  const [eventFilter, setEventFilter] = useState<'all' | 'message' | 'feedback' | 'error'>('all');
+  const [visibleEventCount, setVisibleEventCount] = useState(8);
+
+  const canViewTelemetry = role === 'admin' || role === 'sindico';
+  const eventCounters = useMemo(() => {
+    const events = telemetry?.recentEvents ?? [];
+    return {
+      all: events.length,
+      message: events.filter((event) => event.type === 'message').length,
+      feedback: events.filter((event) => event.type === 'feedback').length,
+      error: events.filter((event) => event.type === 'error').length,
+    };
+  }, [telemetry?.recentEvents]);
+  const filteredEvents = useMemo(
+    () => telemetry?.recentEvents.filter((event) => (eventFilter === 'all' ? true : event.type === eventFilter)) ?? [],
+    [eventFilter, telemetry?.recentEvents],
+  );
+  const visibleEvents = useMemo(() => filteredEvents.slice(0, visibleEventCount), [filteredEvents, visibleEventCount]);
+  const canLoadMoreEvents = filteredEvents.length > visibleEventCount;
+  const canShowLessEvents = visibleEventCount > 8 && filteredEvents.length > 8;
 
   useEffect(() => {
     let active = true;
@@ -49,11 +95,22 @@ export default function Chat() {
     }
 
     void load();
+    if (canViewTelemetry) {
+      void fetchChatTelemetry(15).then((snapshot) => {
+        if (active) {
+          setTelemetry(snapshot);
+        }
+      });
+    }
 
     return () => {
       active = false;
     };
-  }, []);
+  }, [canViewTelemetry]);
+
+  useEffect(() => {
+    setVisibleEventCount(8);
+  }, [eventFilter]);
 
   const canSend = useMemo(() => text.trim().length > 0 && !sending, [sending, text]);
 
@@ -77,6 +134,10 @@ export default function Chat() {
     try {
       const assistantMessage = await postChatMessage(prompt);
       setMessages((current) => [...current, assistantMessage]);
+      if (canViewTelemetry) {
+        const snapshot = await fetchChatTelemetry(15);
+        setTelemetry(snapshot);
+      }
     } finally {
       setSending(false);
     }
@@ -85,6 +146,19 @@ export default function Chat() {
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     void submitMessage(text);
+  }
+
+  async function handleFeedback(messageId: string, rating: 'up' | 'down') {
+    if (!messageId || feedbackByMessage[messageId]) {
+      return;
+    }
+
+    setFeedbackByMessage((current) => ({ ...current, [messageId]: rating }));
+    await sendChatFeedback(messageId, rating);
+    if (canViewTelemetry) {
+      const snapshot = await fetchChatTelemetry(15);
+      setTelemetry(snapshot);
+    }
   }
 
   if (loading) {
@@ -121,6 +195,74 @@ export default function Chat() {
         ))}
       </section>
 
+      {canViewTelemetry && telemetry ? (
+        <section className="rounded-xl bg-surface-container-low p-4 space-y-3">
+          <div className="flex items-center justify-between">
+            <h3 className="font-headline text-lg font-bold">Telemetria do chat</h3>
+            <span className="text-[11px] text-on-surface-variant">Atualizado: {new Date(telemetry.updatedAt).toLocaleTimeString('pt-BR')}</span>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div className="rounded-lg bg-surface-container-highest p-3">
+              <p className="text-[11px] uppercase">Mensagens</p>
+              <p className="text-xl font-bold">{telemetry.counters.messages}</p>
+            </div>
+            <div className="rounded-lg bg-surface-container-highest p-3">
+              <p className="text-[11px] uppercase">Bloqueios</p>
+              <p className="text-xl font-bold">{telemetry.counters.blocked}</p>
+            </div>
+            <div className="rounded-lg bg-surface-container-highest p-3">
+              <p className="text-[11px] uppercase">Fallbacks</p>
+              <p className="text-xl font-bold">{telemetry.counters.fallback}</p>
+            </div>
+            <div className="rounded-lg bg-surface-container-highest p-3">
+              <p className="text-[11px] uppercase">Satisfacao</p>
+              <p className="text-xl font-bold">{telemetry.satisfaction.score ?? 0}%</p>
+            </div>
+          </div>
+          <div className="rounded-lg bg-surface-container-highest p-3">
+            <h4 className="text-sm font-bold mb-2">Eventos recentes</h4>
+            <div className="mb-3 flex flex-wrap gap-2">
+              <button type="button" onClick={() => setEventFilter('all')} className={`text-[11px] px-2 py-1 rounded ${eventFilter === 'all' ? 'bg-primary text-on-primary' : 'bg-surface-container-low'}`}>Todos ({eventCounters.all})</button>
+              <button type="button" onClick={() => setEventFilter('message')} className={`text-[11px] px-2 py-1 rounded ${eventFilter === 'message' ? 'bg-primary text-on-primary' : 'bg-surface-container-low'}`}>Mensagens ({eventCounters.message})</button>
+              <button type="button" onClick={() => setEventFilter('feedback')} className={`text-[11px] px-2 py-1 rounded ${eventFilter === 'feedback' ? 'bg-primary text-on-primary' : 'bg-surface-container-low'}`}>Feedbacks ({eventCounters.feedback})</button>
+              <button type="button" onClick={() => setEventFilter('error')} className={`text-[11px] px-2 py-1 rounded ${eventFilter === 'error' ? 'bg-primary text-on-primary' : 'bg-surface-container-low'}`}>Erros ({eventCounters.error})</button>
+            </div>
+            {filteredEvents.length === 0 ? (
+              <p className="text-xs text-on-surface-variant">Sem eventos registrados.</p>
+            ) : (
+              <>
+                <ul className="space-y-2">
+                  {visibleEvents.map((event) => (
+                    <li key={`${event.type}-${event.ts}-${event.messageId || ''}`} className="text-xs">
+                      <span className="font-semibold">{new Date(event.ts).toLocaleTimeString('pt-BR')}:</span>{' '}
+                      <span className="text-on-surface-variant">{formatTelemetryEvent(event)}</span>
+                    </li>
+                  ))}
+                </ul>
+                {canLoadMoreEvents ? (
+                  <button
+                    type="button"
+                    onClick={() => setVisibleEventCount((current) => current + 8)}
+                    className="mt-3 text-[11px] px-3 py-1 rounded bg-surface-container-low"
+                  >
+                    Ver mais
+                  </button>
+                ) : null}
+                {canShowLessEvents ? (
+                  <button
+                    type="button"
+                    onClick={() => setVisibleEventCount(8)}
+                    className="mt-3 ml-2 text-[11px] px-3 py-1 rounded bg-surface-container-low"
+                  >
+                    Ver menos
+                  </button>
+                ) : null}
+              </>
+            )}
+          </div>
+        </section>
+      ) : null}
+
       <section className="flex-1 min-h-0 bg-surface-container-low rounded-xl p-4 overflow-y-auto space-y-3">
         {messages.map((message) => (
           <article
@@ -132,6 +274,43 @@ export default function Chat() {
             }`}
           >
             <p className="text-sm leading-relaxed">{message.text}</p>
+            {message.role === 'assistant' && message.guardrails?.blocked ? (
+              <p className="mt-2 text-[11px] font-bold text-error">
+                Resposta bloqueada por guardrail ({message.guardrails.reason || 'UNKNOWN'})
+              </p>
+            ) : null}
+            {message.role === 'assistant' ? (
+              <div className="mt-2 space-y-1">
+                {message.confidence ? (
+                  <p className="text-[10px] opacity-80">
+                    Confianca: {message.confidence}
+                  </p>
+                ) : null}
+                {message.sources && message.sources.length > 0 ? (
+                  <p className="text-[10px] opacity-80">
+                    Fontes: {message.sources.join(', ')}
+                  </p>
+                ) : null}
+                <div className="pt-1 flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => void handleFeedback(message.id, 'up')}
+                    disabled={Boolean(feedbackByMessage[message.id])}
+                    className="text-[10px] px-2 py-1 rounded bg-surface-container-low disabled:opacity-50"
+                  >
+                    Util
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void handleFeedback(message.id, 'down')}
+                    disabled={Boolean(feedbackByMessage[message.id])}
+                    className="text-[10px] px-2 py-1 rounded bg-surface-container-low disabled:opacity-50"
+                  >
+                    Nao util
+                  </button>
+                </div>
+              </div>
+            ) : null}
             <span className="text-[10px] opacity-70 mt-2 block">{message.time}</span>
           </article>
         ))}

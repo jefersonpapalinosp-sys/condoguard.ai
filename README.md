@@ -133,6 +133,27 @@ Health detalhado (Sprint 2):
 - `npm run test:e2e`: Playwright E2E
 - `npm run test:e2e:install`: instala browsers do Playwright
 
+## Chat IA (Sprint 5)
+
+Endpoints principais:
+
+- `GET /api/chat/intents`: catalogo versionado de intents/prompts.
+- `GET /api/chat/context`: contexto consolidado por condominio.
+- `POST /api/chat/message`: resposta do assistente com metadados de transparencia (`intentId`, `confidence`, `sources`, `limitations`, `guardrails`).
+- `POST /api/chat/feedback`: registra feedback (`messageId`, `rating=up|down`, `comment?`).
+- `GET /api/chat/telemetry`: snapshot de qualidade (mensagens, bloqueios, fallback, score de satisfacao, eventos recentes).
+
+Validacao manual (Windows PowerShell):
+
+```powershell
+cd C:\Users\Camila\Desktop\Senac\workspace\CondoGuard.AI\condoguard.ai
+$login = Invoke-RestMethod -Method Post -Uri "http://localhost:4001/api/auth/login" -ContentType "application/json" -Body '{"email":"admin@condoguard.ai","password":"password123"}'
+$headers = @{ Authorization = "Bearer $($login.token)" }
+$msg = Invoke-RestMethod -Method Post -Uri "http://localhost:4001/api/chat/message" -Headers $headers -ContentType "application/json" -Body '{"message":"Resumo financeiro do condominio"}'
+Invoke-RestMethod -Method Post -Uri "http://localhost:4001/api/chat/feedback" -Headers $headers -ContentType "application/json" -Body (@{ messageId = $msg.id; rating = "up" } | ConvertTo-Json)
+Invoke-RestMethod -Method Get -Uri "http://localhost:4001/api/chat/telemetry?limit=20" -Headers $headers | ConvertTo-Json -Depth 10
+```
+
 ## Segurança (P0)
 
 - JWT no backend com expiração (`JWT_SECRET`, `JWT_EXPIRES_IN`).

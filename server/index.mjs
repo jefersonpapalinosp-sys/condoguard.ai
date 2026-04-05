@@ -8,15 +8,25 @@ import { summarizeOracleError } from './errors/oracleErrors.mjs';
 import { verifyAccessToken } from './auth/authProvider.mjs';
 import { persistSecurityEvent } from './audit/securityAudit.mjs';
 import { querySecurityAuditEvents } from './audit/querySecurityAudit.mjs';
-import { getAlertsData } from './repositories/alertsRepo.mjs';
+import { getAlertsData, markAlertAsRead } from './repositories/alertsRepo.mjs';
 import { getChatBootstrap, askChat } from './repositories/chatRepo.mjs';
-import { getInvoicesData } from './repositories/invoicesRepo.mjs';
+import { getChatIntentCatalog } from './repositories/chatIntentsRepo.mjs';
+import {
+  getChatTelemetrySnapshot,
+  recordChatErrorTelemetry,
+  recordChatFeedbackTelemetry,
+  recordChatMessageTelemetry,
+  resetChatTelemetryStore,
+} from './repositories/chatTelemetryRepo.mjs';
+import { buildChatContext } from './services/chatContextService.mjs';
+import { getInvoicesData, markInvoiceAsPaid } from './repositories/invoicesRepo.mjs';
 import { getManagementUnitsData } from './repositories/managementRepo.mjs';
 import { listCadastros, createCadastro, updateCadastroStatus } from './repositories/cadastrosRepo.mjs';
 import { findAccountForLogin } from './repositories/authRepo.mjs';
 
 const INVOICE_STATUSES = ['pending', 'paid', 'overdue'];
 const ALERT_SEVERITIES = ['critical', 'warning', 'info'];
+const ALERT_STATUSES = ['active', 'read'];
 const MANAGEMENT_STATUSES = ['occupied', 'vacant', 'maintenance'];
 const MANAGEMENT_BLOCKS = ['A', 'B', 'C'];
 const CADASTRO_TYPES = ['unidade', 'morador', 'fornecedor', 'servico'];
@@ -81,6 +91,184 @@ function parseIsoDatetime(value, field) {
   }
 
   return new Date(ts).toISOString();
+}
+
+function parseSortOrder(value) {
+  if (value == null || value === '') {
+    return 'asc';
+  }
+
+  const normalized = String(value).toLowerCase();
+  if (normalized !== 'asc' && normalized !== 'desc') {
+    throw new ApiRequestError(400, 'INVALID_ENUM_VALUE', 'sortOrder invalido.', {
+      field: 'sortOrder',
+      allowed: ['asc', 'desc'],
+      value: normalized,
+    });
+  }
+
+  return normalized;
+}
+
+function parseSortBy(value, allowed) {
+  if (value == null || value === '') {
+    return allowed[0];
+  }
+
+  const normalized = String(value).trim();
+  if (!allowed.includes(normalized)) {
+    throw new ApiRequestError(400, 'INVALID_ENUM_VALUE', 'sortBy invalido.', {
+      field: 'sortBy',
+      allowed,
+      value: normalized,
+    });
+  }
+
+  return normalized;
+}
+
+function compareForSort(left, right) {
+  const leftNumber = typeof left === 'number' ? left : Number.NaN;
+  const rightNumber = typeof right === 'number' ? right : Number.NaN;
+  if (Number.isFinite(leftNumber) && Number.isFinite(rightNumber)) {
+    return leftNumber - rightNumber;
+  }
+
+  const leftDate = Date.parse(String(left || ''));
+  const rightDate = Date.parse(String(right || ''));
+  if (Number.isFinite(leftDate) && Number.isFinite(rightDate)) {
+    return leftDate - rightDate;
+  }
+
+  return String(left || '').localeCompare(String(right || ''), 'pt-BR', { sensitivity: 'base' });
+}
+
+function sortCollection(list, sortBy, sortOrder, selectors) {
+  const getValue = selectors[sortBy];
+  if (!getValue) {
+    return list;
+  }
+
+  const direction = sortOrder === 'desc' ? -1 : 1;
+  return [...list].sort((a, b) => direction * compareForSort(getValue(a), getValue(b)));
+}
+
+function buildUnitKey(block, unit) {
+  return `${String(block || '').trim().toUpperCase()}-${String(unit || '').trim()}`;
+}
+
+function normalizeInvoiceUnitKey(unit) {
+  return String(unit || '').trim().toUpperCase();
+}
+
+function computeManagementIndicators(units, invoices, cadastros) {
+  const totalUnits = units.length;
+  const occupiedCount = units.filter((item) => item.status === 'occupied').length;
+  const occupancyRate = totalUnits > 0 ? Math.round((occupiedCount / totalUnits) * 100) : 0;
+
+  const occupiedUnitKeys = new Set(
+    units
+      .filter((item) => item.status === 'occupied')
+      .map((item) => buildUnitKey(item.block, item.unit)),
+  );
+
+  const overdueUnitKeys = new Set(
+    invoices
+      .filter((item) => item.status === 'overdue')
+      .map((item) => normalizeInvoiceUnitKey(item.unit)),
+  );
+
+  let delinquencyUnits = 0;
+  occupiedUnitKeys.forEach((unitKey) => {
+    if (overdueUnitKeys.has(unitKey)) {
+      delinquencyUnits += 1;
+    }
+  });
+
+  const delinquencyRate = occupiedCount > 0 ? Math.round((delinquencyUnits / occupiedCount) * 100) : 0;
+
+  const maintenanceCount = units.filter((item) => item.status === 'maintenance').length;
+  const cadastrosPending = cadastros.filter((item) => item.status === 'pending').length;
+  const pendingCount = maintenanceCount + cadastrosPending;
+
+  return {
+    occupancy: {
+      totalUnits,
+      occupiedCount,
+      occupancyRate,
+    },
+    delinquency: {
+      delinquencyUnits,
+      occupiedUnits: occupiedCount,
+      delinquencyRate,
+    },
+    pending: {
+      maintenanceCount,
+      cadastrosPending,
+      pendingCount,
+    },
+  };
+}
+
+function filterAndSortInvoices(items, query) {
+  const status = parseEnum(query.status, INVOICE_STATUSES, 'status');
+  const unit = query.unit ? String(query.unit).trim().toLowerCase() : undefined;
+  const search = query.search ? String(query.search).trim().toLowerCase() : undefined;
+  const sortBy = parseSortBy(query.sortBy, ['dueDate', 'amount', 'unit', 'resident', 'reference', 'status']);
+  const sortOrder = parseSortOrder(query.sortOrder);
+
+  const filtered = items.filter((item) => {
+    const statusOk = status ? item.status === status : true;
+    const unitOk = unit ? item.unit.toLowerCase().includes(unit) : true;
+    const searchOk = search
+      ? item.unit.toLowerCase().includes(search)
+        || item.resident.toLowerCase().includes(search)
+        || item.reference.toLowerCase().includes(search)
+      : true;
+    return statusOk && unitOk && searchOk;
+  });
+
+  const sorted = sortCollection(filtered, sortBy, sortOrder, {
+    dueDate: (item) => item.dueDate,
+    amount: (item) => item.amount,
+    unit: (item) => item.unit,
+    resident: (item) => item.resident,
+    reference: (item) => item.reference,
+    status: (item) => item.status,
+  });
+
+  return {
+    items: sorted,
+    filters: {
+      status: status ?? null,
+      unit: unit ?? null,
+      search: search ?? null,
+    },
+    sort: { sortBy, sortOrder },
+  };
+}
+
+function csvCell(value) {
+  const raw = value == null ? '' : String(value);
+  return `"${raw.replaceAll('"', '""')}"`;
+}
+
+function toInvoicesCsv(items) {
+  const header = ['id', 'condominiumId', 'unit', 'resident', 'reference', 'dueDate', 'amount', 'status'];
+  const lines = items.map((item) => [
+    item.id,
+    item.condominiumId ?? '',
+    item.unit,
+    item.resident,
+    item.reference,
+    item.dueDate,
+    item.amount,
+    item.status,
+  ]);
+
+  return [header, ...lines]
+    .map((cols) => cols.map((col) => csvCell(col)).join(','))
+    .join('\n');
 }
 
 function paginate(list, page, pageSize) {
@@ -256,6 +444,7 @@ export function createApp(config = {}) {
     },
   };
   const app = express();
+  resetChatTelemetryStore();
 
   app.use(helmet());
   app.use(express.json());
@@ -385,49 +574,89 @@ export function createApp(config = {}) {
 
   app.get('/api/invoices', requireAuth(resolvedConfig), requireTenant(resolvedConfig), requireRole(resolvedConfig, ['admin', 'sindico']), asyncRoute(async (req, res) => {
     const payload = await getInvoicesData(req.auth.condominiumId);
-    const status = parseEnum(req.query.status, INVOICE_STATUSES, 'status');
-    const unit = req.query.unit ? String(req.query.unit).trim().toLowerCase() : undefined;
+    const listing = filterAndSortInvoices(payload.items, req.query);
     const page = parsePositiveInt(req.query.page, 1, 'page');
     const pageSize = parsePositiveInt(req.query.pageSize, 20, 'pageSize');
-
-    const filtered = payload.items.filter((item) => {
-      const statusOk = status ? item.status === status : true;
-      const unitOk = unit ? item.unit.toLowerCase().includes(unit) : true;
-      return statusOk && unitOk;
-    });
-    const { data, meta } = paginate(filtered, page, pageSize);
+    const { data, meta } = paginate(listing.items, page, pageSize);
 
     res.json({
       items: data,
       meta,
-      filters: {
-        status: status ?? null,
-        unit: unit ?? null,
-      },
+      filters: listing.filters,
+      sort: listing.sort,
     });
   }));
 
+  app.get('/api/invoices/export.csv', requireAuth(resolvedConfig), requireTenant(resolvedConfig), requireRole(resolvedConfig, ['admin', 'sindico']), asyncRoute(async (req, res) => {
+    const payload = await getInvoicesData(req.auth.condominiumId);
+    const listing = filterAndSortInvoices(payload.items, req.query);
+    const csv = toInvoicesCsv(listing.items);
+
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="invoices-export-${Date.now()}.csv"`);
+    res.status(200).send(csv);
+  }));
+
+  app.patch('/api/invoices/:id/pay', requireAuth(resolvedConfig), requireTenant(resolvedConfig), requireRole(resolvedConfig, ['admin', 'sindico']), asyncRoute(async (req, res) => {
+    const invoiceId = String(req.params.id || '').trim();
+    if (!invoiceId) {
+      throw new ApiRequestError(400, 'INVALID_BODY', 'Parametro id e obrigatorio.', { field: 'id' });
+    }
+
+    const updated = await markInvoiceAsPaid(req.auth.condominiumId, invoiceId, req.auth.sub || null);
+    if (!updated) {
+      throw new ApiRequestError(404, 'NOT_FOUND', 'Fatura nao encontrada.');
+    }
+
+    logSecurityEvent(resolvedConfig, 'invoice_mark_paid', req, { invoiceId });
+    res.json({ item: updated });
+  }));
+
   app.get('/api/management/units', requireAuth(resolvedConfig), requireTenant(resolvedConfig), requireRole(resolvedConfig, ['admin', 'sindico']), asyncRoute(async (req, res) => {
-    const payload = await getManagementUnitsData(req.auth.condominiumId);
+    const [payload, invoicesPayload, cadastrosPayload] = await Promise.all([
+      getManagementUnitsData(req.auth.condominiumId),
+      getInvoicesData(req.auth.condominiumId),
+      listCadastros(req.auth.condominiumId),
+    ]);
     const status = parseEnum(req.query.status, MANAGEMENT_STATUSES, 'status');
     const block = parseEnum(req.query.block, MANAGEMENT_BLOCKS.map((v) => v.toLowerCase()), 'block');
+    const search = req.query.search ? String(req.query.search).trim().toLowerCase() : undefined;
     const page = parsePositiveInt(req.query.page, 1, 'page');
     const pageSize = parsePositiveInt(req.query.pageSize, 20, 'pageSize');
+    const sortBy = parseSortBy(req.query.sortBy, ['block', 'unit', 'resident', 'status', 'lastUpdate']);
+    const sortOrder = parseSortOrder(req.query.sortOrder);
 
     const filtered = payload.units.filter((item) => {
       const statusOk = status ? item.status === status : true;
       const blockOk = block ? item.block.toLowerCase() === block : true;
-      return statusOk && blockOk;
+      const searchOk = search
+        ? item.block.toLowerCase().includes(search)
+          || item.unit.toLowerCase().includes(search)
+          || item.resident.toLowerCase().includes(search)
+        : true;
+      return statusOk && blockOk && searchOk;
     });
-    const { data, meta } = paginate(filtered, page, pageSize);
+    const sorted = sortCollection(filtered, sortBy, sortOrder, {
+      block: (item) => item.block,
+      unit: (item) => item.unit,
+      resident: (item) => item.resident,
+      status: (item) => item.status,
+      lastUpdate: (item) => item.lastUpdate,
+    });
+    const { data, meta } = paginate(sorted, page, pageSize);
+    const indicators = computeManagementIndicators(payload.units, invoicesPayload.items, cadastrosPayload.items);
 
     res.json({
+      items: data,
       units: data,
+      indicators,
       meta,
       filters: {
         status: status ?? null,
         block: block ? block.toUpperCase() : null,
+        search: search ?? null,
       },
+      sort: { sortBy, sortOrder },
     });
   }));
 
@@ -510,22 +739,74 @@ export function createApp(config = {}) {
     res.json(payload);
   }));
 
+  app.get('/api/chat/intents', requireAuth(resolvedConfig), requireTenant(resolvedConfig), requireRole(resolvedConfig, AUTH_ROLES), asyncRoute(async (_req, res) => {
+    const payload = getChatIntentCatalog();
+    res.json(payload);
+  }));
+
+  app.get('/api/chat/context', requireAuth(resolvedConfig), requireTenant(resolvedConfig), requireRole(resolvedConfig, AUTH_ROLES), asyncRoute(async (req, res) => {
+    const payload = await buildChatContext(req.auth.condominiumId);
+    res.json(payload);
+  }));
+
+  app.get('/api/chat/telemetry', requireAuth(resolvedConfig), requireTenant(resolvedConfig), requireRole(resolvedConfig, ['admin', 'sindico']), asyncRoute(async (req, res) => {
+    const limit = Math.min(parsePositiveInt(req.query.limit, 20, 'limit'), 100);
+    const payload = getChatTelemetrySnapshot(req.auth.condominiumId, { limit });
+    res.json(payload);
+  }));
+
   app.get('/api/alerts', requireAuth(resolvedConfig), requireTenant(resolvedConfig), requireRole(resolvedConfig, AUTH_ROLES), asyncRoute(async (req, res) => {
     const payload = await getAlertsData(req.auth.condominiumId);
     const severity = parseEnum(req.query.severity, ALERT_SEVERITIES, 'severity');
+    const status = parseEnum(req.query.status, ALERT_STATUSES, 'status');
+    const search = req.query.search ? String(req.query.search).trim().toLowerCase() : undefined;
     const page = parsePositiveInt(req.query.page, 1, 'page');
     const pageSize = parsePositiveInt(req.query.pageSize, 20, 'pageSize');
-    const filtered = payload.items.filter((item) => (severity ? item.severity === severity : true));
-    const { data, meta } = paginate(filtered, page, pageSize);
+    const sortBy = parseSortBy(req.query.sortBy, ['severity', 'title', 'time', 'status', 'readAt']);
+    const sortOrder = parseSortOrder(req.query.sortOrder);
+    const filtered = payload.items.filter((item) => {
+      const severityOk = severity ? item.severity === severity : true;
+      const statusOk = status ? item.status === status : true;
+      const searchOk = search
+        ? item.title.toLowerCase().includes(search) || item.description.toLowerCase().includes(search)
+        : true;
+      return severityOk && statusOk && searchOk;
+    });
+    const sorted = sortCollection(filtered, sortBy, sortOrder, {
+      severity: (item) => item.severity,
+      title: (item) => item.title,
+      time: (item) => item.time,
+      status: (item) => item.status,
+      readAt: (item) => item.readAt || '',
+    });
+    const { data, meta } = paginate(sorted, page, pageSize);
 
     res.json({
-      activeCount: filtered.length,
+      activeCount: payload.activeCount,
       items: data,
       meta,
       filters: {
         severity: severity ?? null,
+        status: status ?? null,
+        search: search ?? null,
       },
+      sort: { sortBy, sortOrder },
     });
+  }));
+
+  app.patch('/api/alerts/:id/read', requireAuth(resolvedConfig), requireTenant(resolvedConfig), requireRole(resolvedConfig, AUTH_ROLES), asyncRoute(async (req, res) => {
+    const alertId = String(req.params.id || '').trim();
+    if (!alertId) {
+      throw new ApiRequestError(400, 'INVALID_BODY', 'Parametro id e obrigatorio.', { field: 'id' });
+    }
+
+    const updated = await markAlertAsRead(req.auth.condominiumId, alertId, req.auth.sub || null);
+    if (!updated) {
+      throw new ApiRequestError(404, 'NOT_FOUND', 'Alerta nao encontrado.');
+    }
+
+    logSecurityEvent(resolvedConfig, 'alert_mark_read', req, { alertId });
+    res.json({ item: updated });
   }));
 
   app.post('/api/chat/message', requireAuth(resolvedConfig), requireTenant(resolvedConfig), requireRole(resolvedConfig, AUTH_ROLES), asyncRoute(async (req, res) => {
@@ -543,8 +824,50 @@ export function createApp(config = {}) {
       });
     }
 
-    const payload = await askChat(message);
+    let payload;
+    try {
+      payload = await askChat(message, req.auth.condominiumId);
+    } catch (error) {
+      recordChatErrorTelemetry(req.auth.condominiumId, error?.code || error?.name || 'CHAT_ERROR');
+      throw error;
+    }
+    recordChatMessageTelemetry(req.auth.condominiumId, payload);
     res.json(payload);
+  }));
+
+  app.post('/api/chat/feedback', requireAuth(resolvedConfig), requireTenant(resolvedConfig), requireRole(resolvedConfig, AUTH_ROLES), asyncRoute(async (req, res) => {
+    const messageId = String(req.body?.messageId || '').trim();
+    const rating = String(req.body?.rating || '').trim().toLowerCase();
+    const comment = req.body?.comment == null ? '' : String(req.body?.comment).trim();
+
+    if (!messageId || messageId.length > 120) {
+      throw new ApiRequestError(400, 'INVALID_BODY', 'Campo messageId invalido.', {
+        field: 'messageId',
+        maxLength: 120,
+      });
+    }
+
+    if (rating !== 'up' && rating !== 'down') {
+      throw new ApiRequestError(400, 'INVALID_BODY', 'Campo rating invalido.', {
+        field: 'rating',
+        allowed: ['up', 'down'],
+      });
+    }
+
+    if (comment.length > 500) {
+      throw new ApiRequestError(400, 'INVALID_BODY', 'Campo comment excede tamanho maximo permitido.', {
+        field: 'comment',
+        maxLength: 500,
+      });
+    }
+
+    recordChatFeedbackTelemetry(req.auth.condominiumId, {
+      messageId,
+      rating,
+      comment: comment || null,
+    });
+    logSecurityEvent(resolvedConfig, 'chat_feedback_submitted', req, { messageId, rating });
+    res.status(201).json({ ok: true });
   }));
 
   app.get('/api/security/audit', requireAuth(resolvedConfig), requireTenant(resolvedConfig), requireRole(resolvedConfig, ['admin']), asyncRoute(async (req, res) => {

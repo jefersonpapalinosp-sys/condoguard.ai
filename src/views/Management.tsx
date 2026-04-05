@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { fetchManagementData } from '../services/managementService';
 import type { ManagementUnit, UnitStatus } from '../services/mockApi';
 import { DataSourceBadge } from '../shared/ui/DataSourceBadge';
@@ -30,10 +30,30 @@ function nextStatus(status: UnitStatus): UnitStatus {
 
 export default function Management() {
   const [units, setUnits] = useState<ManagementUnit[]>([]);
+  const [indicators, setIndicators] = useState({
+    occupancyRate: 0,
+    occupiedCount: 0,
+    totalUnits: 0,
+    delinquencyRate: 0,
+    delinquencyUnits: 0,
+    pendingCount: 0,
+  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [blockFilter, setBlockFilter] = useState<'all' | 'A' | 'B' | 'C'>('all');
   const [statusFilter, setStatusFilter] = useState<'all' | UnitStatus>('all');
+  const [search, setSearch] = useState('');
+  const [sortBy, setSortBy] = useState<'block' | 'unit' | 'resident' | 'status' | 'lastUpdate'>('unit');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+  const [page, setPage] = useState(1);
+  const [meta, setMeta] = useState({
+    page: 1,
+    pageSize: 8,
+    total: 0,
+    totalPages: 1,
+    hasNext: false,
+    hasPrevious: false,
+  });
 
   useEffect(() => {
     let active = true;
@@ -41,9 +61,35 @@ export default function Management() {
     async function load() {
       try {
         setLoading(true);
-        const response = await fetchManagementData();
+        const response = await fetchManagementData({
+          page,
+          pageSize: meta.pageSize,
+          block: blockFilter === 'all' ? undefined : blockFilter,
+          status: statusFilter === 'all' ? undefined : statusFilter,
+          search: search.trim() || undefined,
+          sortBy,
+          sortOrder,
+        });
         if (active) {
           setUnits(response.units);
+          setIndicators({
+            occupancyRate: response.indicators?.occupancy?.occupancyRate ?? 0,
+            occupiedCount: response.indicators?.occupancy?.occupiedCount ?? 0,
+            totalUnits: response.indicators?.occupancy?.totalUnits ?? response.units.length,
+            delinquencyRate: response.indicators?.delinquency?.delinquencyRate ?? 0,
+            delinquencyUnits: response.indicators?.delinquency?.delinquencyUnits ?? 0,
+            pendingCount: response.indicators?.pending?.pendingCount ?? 0,
+          });
+          setMeta(
+            response.meta ?? {
+              page: 1,
+              pageSize: response.units.length || 8,
+              total: response.units.length,
+              totalPages: 1,
+              hasNext: false,
+              hasPrevious: false,
+            },
+          );
           setError(null);
         }
       } catch {
@@ -62,23 +108,7 @@ export default function Management() {
     return () => {
       active = false;
     };
-  }, []);
-
-  const filteredUnits = useMemo(() => {
-    return units.filter((unit) => {
-      const matchBlock = blockFilter === 'all' || unit.block === blockFilter;
-      const matchStatus = statusFilter === 'all' || unit.status === statusFilter;
-      return matchBlock && matchStatus;
-    });
-  }, [blockFilter, statusFilter, units]);
-
-  const stats = useMemo(() => {
-    return {
-      occupied: units.filter((unit) => unit.status === 'occupied').length,
-      maintenance: units.filter((unit) => unit.status === 'maintenance').length,
-      vacant: units.filter((unit) => unit.status === 'vacant').length,
-    };
-  }, [units]);
+  }, [blockFilter, meta.pageSize, page, search, sortBy, sortOrder, statusFilter]);
 
   function rotateStatus(id: string) {
     setUnits((current) =>
@@ -131,50 +161,94 @@ export default function Management() {
 
       <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="bg-surface-container-highest p-6 rounded-xl">
-          <p className="text-xs uppercase tracking-widest text-on-surface-variant">Unidades ocupadas</p>
-          <h3 className="text-2xl md:text-3xl font-headline font-extrabold mt-2">{stats.occupied}</h3>
+          <p className="text-xs uppercase tracking-widest text-on-surface-variant">Ocupacao</p>
+          <h3 className="text-2xl md:text-3xl font-headline font-extrabold mt-2">{indicators.occupancyRate}%</h3>
+          <p className="text-xs text-on-surface-variant mt-1">
+            {indicators.occupiedCount} ocupadas de {indicators.totalUnits}
+          </p>
         </div>
         <div className="bg-surface-container-highest p-6 rounded-xl">
-          <p className="text-xs uppercase tracking-widest text-on-surface-variant">Em manutencao</p>
-          <h3 className="text-2xl md:text-3xl font-headline font-extrabold mt-2">{stats.maintenance}</h3>
+          <p className="text-xs uppercase tracking-widest text-on-surface-variant">Inadimplencia</p>
+          <h3 className="text-2xl md:text-3xl font-headline font-extrabold mt-2">{indicators.delinquencyRate}%</h3>
+          <p className="text-xs text-on-surface-variant mt-1">
+            {indicators.delinquencyUnits} unidades inadimplentes
+          </p>
         </div>
         <div className="bg-surface-container-highest p-6 rounded-xl">
-          <p className="text-xs uppercase tracking-widest text-on-surface-variant">Vagas</p>
-          <h3 className="text-2xl md:text-3xl font-headline font-extrabold mt-2">{stats.vacant}</h3>
+          <p className="text-xs uppercase tracking-widest text-on-surface-variant">Pendencias</p>
+          <h3 className="text-2xl md:text-3xl font-headline font-extrabold mt-2">{indicators.pendingCount}</h3>
+          <p className="text-xs text-on-surface-variant mt-1">Manutencoes + cadastros pendentes</p>
         </div>
       </section>
 
       <section className="flex flex-wrap gap-2">
-        <button onClick={() => setBlockFilter('all')} className={blockFilterClass('all')}>
+        <button onClick={() => { setPage(1); setBlockFilter('all'); }} className={blockFilterClass('all')}>
           Todos os blocos
         </button>
-        <button onClick={() => setBlockFilter('A')} className={blockFilterClass('A')}>
+        <button onClick={() => { setPage(1); setBlockFilter('A'); }} className={blockFilterClass('A')}>
           Bloco A
         </button>
-        <button onClick={() => setBlockFilter('B')} className={blockFilterClass('B')}>
+        <button onClick={() => { setPage(1); setBlockFilter('B'); }} className={blockFilterClass('B')}>
           Bloco B
         </button>
-        <button onClick={() => setBlockFilter('C')} className={blockFilterClass('C')}>
+        <button onClick={() => { setPage(1); setBlockFilter('C'); }} className={blockFilterClass('C')}>
           Bloco C
         </button>
       </section>
 
       <section className="flex flex-wrap gap-2">
-        <button onClick={() => setStatusFilter('all')} className={statusFilterClass('all')}>
+        <button onClick={() => { setPage(1); setStatusFilter('all'); }} className={statusFilterClass('all')}>
           Todos os status
         </button>
-        <button onClick={() => setStatusFilter('occupied')} className={statusFilterClass('occupied')}>
+        <button onClick={() => { setPage(1); setStatusFilter('occupied'); }} className={statusFilterClass('occupied')}>
           Ocupadas
         </button>
-        <button onClick={() => setStatusFilter('maintenance')} className={statusFilterClass('maintenance')}>
+        <button onClick={() => { setPage(1); setStatusFilter('maintenance'); }} className={statusFilterClass('maintenance')}>
           Manutencao
         </button>
-        <button onClick={() => setStatusFilter('vacant')} className={statusFilterClass('vacant')}>
+        <button onClick={() => { setPage(1); setStatusFilter('vacant'); }} className={statusFilterClass('vacant')}>
           Vagas
         </button>
       </section>
 
-      {filteredUnits.length === 0 ? (
+      <section className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <input
+          value={search}
+          onChange={(event) => {
+            setPage(1);
+            setSearch(event.target.value);
+          }}
+          placeholder="Buscar por bloco, unidade ou morador..."
+          className="bg-surface-container-highest rounded-xl px-4 py-3 text-sm outline-none border border-outline-variant/30"
+        />
+        <select
+          value={sortBy}
+          onChange={(event) => {
+            setPage(1);
+            setSortBy(event.target.value as 'block' | 'unit' | 'resident' | 'status' | 'lastUpdate');
+          }}
+          className="bg-surface-container-highest rounded-xl px-4 py-3 text-sm outline-none border border-outline-variant/30"
+        >
+          <option value="unit">Ordenar por unidade</option>
+          <option value="block">Ordenar por bloco</option>
+          <option value="resident">Ordenar por morador</option>
+          <option value="status">Ordenar por status</option>
+          <option value="lastUpdate">Ordenar por atualizacao</option>
+        </select>
+        <select
+          value={sortOrder}
+          onChange={(event) => {
+            setPage(1);
+            setSortOrder(event.target.value as 'asc' | 'desc');
+          }}
+          className="bg-surface-container-highest rounded-xl px-4 py-3 text-sm outline-none border border-outline-variant/30"
+        >
+          <option value="asc">Ordem crescente</option>
+          <option value="desc">Ordem decrescente</option>
+        </select>
+      </section>
+
+      {units.length === 0 ? (
         <EmptyState message="Nenhuma unidade encontrada para os filtros selecionados." />
       ) : (
         <section className="bg-surface-container-low rounded-xl p-6 overflow-x-auto">
@@ -189,7 +263,7 @@ export default function Management() {
               </tr>
             </thead>
             <tbody>
-              {filteredUnits.map((unit) => (
+              {units.map((unit) => (
                 <tr key={unit.id} className="border-t border-outline-variant/20">
                   <td className="py-4 font-bold">{unit.block}-{unit.unit}</td>
                   <td className="py-4">{unit.resident}</td>
@@ -206,6 +280,27 @@ export default function Management() {
               ))}
             </tbody>
           </table>
+          <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+            <p className="text-xs text-on-surface-variant">
+              Pagina {meta.page} de {meta.totalPages} | Total: {meta.total}
+            </p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setPage((current) => Math.max(1, current - 1))}
+                disabled={!meta.hasPrevious}
+                className="px-3 py-2 text-xs font-bold rounded bg-surface-container-highest disabled:opacity-50"
+              >
+                Anterior
+              </button>
+              <button
+                onClick={() => setPage((current) => current + 1)}
+                disabled={!meta.hasNext}
+                className="px-3 py-2 text-xs font-bold rounded bg-primary text-on-primary disabled:opacity-50"
+              >
+                Proxima
+              </button>
+            </div>
+          </div>
         </section>
       )}
     </div>

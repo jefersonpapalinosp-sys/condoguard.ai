@@ -26,6 +26,10 @@ export type AlertsData = {
     title: string;
     description: string;
     time: string;
+    status?: 'active' | 'read';
+    read?: boolean;
+    readAt?: string | null;
+    readBy?: string | null;
   }>;
 };
 
@@ -100,6 +104,16 @@ export type ChatMessage = {
   role: 'assistant' | 'user';
   text: string;
   time: string;
+  intentId?: string;
+  confidence?: 'low' | 'medium' | 'high';
+  promptCatalogVersion?: string;
+  sources?: string[];
+  limitations?: string;
+  guardrails?: {
+    blocked: boolean;
+    reason: string | null;
+    policyVersion: string;
+  };
 };
 
 export type ChatData = {
@@ -376,6 +390,16 @@ export async function sendChatMessage(userMessage: string): Promise<ChatMessage>
       role: 'assistant',
       text: answer,
       time: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+      intentId: 'general_overview',
+      confidence: 'low',
+      promptCatalogVersion: 'mock',
+      sources: ['mock:chat'],
+      limitations: 'Resposta de fallback local sem contexto consolidado do backend.',
+      guardrails: {
+        blocked: false,
+        reason: null,
+        policyVersion: 'mock',
+      },
     },
     500,
   );

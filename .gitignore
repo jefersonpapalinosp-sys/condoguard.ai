@@ -6,3 +6,5 @@ coverage/
 *.log
 .env*
 !.env.example
+invoices-export.csv
+server/data/*_state.json

@@ -1,5 +1,5 @@
 import { FormEvent, useEffect, useMemo, useState } from 'react';
-import { fetchChatBootstrap, postChatMessage } from '../../services/chatService';
+import { fetchChatBootstrap, postChatMessage, sendChatFeedback } from '../../services/chatService';
 import type { ChatMessage } from '../../services/mockApi';
 
 function nowTime() {
@@ -17,6 +17,7 @@ export function ChatbotWidget({ hidden = false }: ChatbotWidgetProps) {
   const [error, setError] = useState<string | null>(null);
   const [text, setText] = useState('');
   const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [feedbackByMessage, setFeedbackByMessage] = useState<Record<string, 'up' | 'down'>>({});
 
   useEffect(() => {
     let active = true;
@@ -86,6 +87,15 @@ export function ChatbotWidget({ hidden = false }: ChatbotWidgetProps) {
   function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     void handleSend(text);
+  }
+
+  async function handleFeedback(messageId: string, rating: 'up' | 'down') {
+    if (!messageId || feedbackByMessage[messageId]) {
+      return;
+    }
+
+    setFeedbackByMessage((current) => ({ ...current, [messageId]: rating }));
+    await sendChatFeedback(messageId, rating);
   }
 
   if (hidden) {
@@ -169,6 +179,26 @@ export function ChatbotWidget({ hidden = false }: ChatbotWidgetProps) {
               }`}
             >
               <p>{message.text}</p>
+              {message.role === 'assistant' ? (
+                <div className="mt-1 flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => void handleFeedback(message.id, 'up')}
+                    disabled={Boolean(feedbackByMessage[message.id])}
+                    className="rounded px-2 py-0.5 text-[10px] bg-surface-container-low disabled:opacity-50"
+                  >
+                    Util
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void handleFeedback(message.id, 'down')}
+                    disabled={Boolean(feedbackByMessage[message.id])}
+                    className="rounded px-2 py-0.5 text-[10px] bg-surface-container-low disabled:opacity-50"
+                  >
+                    Nao util
+                  </button>
+                </div>
+              ) : null}
               <span
                 className={`mt-1 block text-[10px] ${
                   message.role === 'assistant' ? 'text-on-surface-variant' : 'text-on-primary/80'

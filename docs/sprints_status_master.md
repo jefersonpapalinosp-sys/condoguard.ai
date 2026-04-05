@@ -80,16 +80,25 @@ Melhorias sugeridas:
 
 ## Sprint 5 - IA CondoGuard
 
-Status geral: Nao iniciada
+Status geral: Fechada tecnicamente (local)
 
 Feito:
-- Sem entrega oficial de sprint.
+- `S5-01` Catalogo de intents e prompts versionados (`/api/chat/intents`).
+- `S5-02` Contexto real do condominio para chat (`/api/chat/context` + agregacoes por tenant).
+- `S5-03` Guardrails de bloqueio/transparencia (`guardrails`, `confidence`, `sources`, `limitations`).
+- `S5-04` Telemetria de qualidade (`/api/chat/telemetry`, `/api/chat/feedback`, eventos e score de satisfacao).
+- Feedback de utilidade habilitado na tela `/chat` e no `ChatbotWidget`.
+- Suites de validacao da sprint executadas com PASS:
+  - `lint`: PASS
+  - `test:api`: PASS
+  - `test:integration -- Chat.integration.test.tsx`: PASS
 
 Pendente:
-- `S5-01` a `S5-04` completos (intents, contexto real, guardrails, telemetria).
+- Validar o fluxo completo em homolog apos fechamento do gate de identidade real (`S3-01`), para evidenciar comportamento com token corporativo.
 
 Melhorias sugeridas:
-- Antecipar definicao de fontes de dados confiaveis e politica de rastreabilidade de respostas.
+- Definir retention/expurgo da telemetria de chat para ambiente produtivo.
+- Publicar painel operacional (dashboard) para consumo de telemetria pela equipe de produto/operacao.
 
 ## Sprint 6 - Qualidade, testes e observabilidade
 

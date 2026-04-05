@@ -6,40 +6,33 @@ import { makeInvoice } from '../../factories/invoiceFactory';
 
 vi.mock('../../../src/services/invoicesService', () => ({
   fetchInvoicesData: vi.fn(),
+  markInvoiceAsPaid: vi.fn(),
 }));
-
-function deferred<T>() {
-  let resolve!: (value: T) => void;
-  let reject!: (reason?: unknown) => void;
-  const promise = new Promise<T>((res, rej) => {
-    resolve = res;
-    reject = rej;
-  });
-  return { promise, resolve, reject };
-}
 
 describe('Invoices view', () => {
   it('handles loading -> success and register payment flow', async () => {
-    const { fetchInvoicesData } = await import('../../../src/services/invoicesService');
-    const dataPromise = deferred<{ items: Array<{ id: string; unit: string; resident: string; reference: string; dueDate: string; amount: number; status: 'pending' | 'paid' | 'overdue' }> }>();
-    vi.mocked(fetchInvoicesData).mockReturnValue(dataPromise.promise);
+    const { fetchInvoicesData, markInvoiceAsPaid } = await import('../../../src/services/invoicesService');
+    const pendingItem = makeInvoice({ id: 'inv-1', resident: 'Mariana', amount: 100, status: 'pending' });
+    const paidItem = makeInvoice({ id: 'inv-1', resident: 'Mariana', amount: 100, status: 'paid' });
+    let reloadAfterPay = false;
+
+    vi.mocked(fetchInvoicesData).mockImplementation(async () => ({
+      items: [reloadAfterPay ? paidItem : pendingItem],
+    }));
+    vi.mocked(markInvoiceAsPaid).mockImplementation(async () => {
+      reloadAfterPay = true;
+      return { item: paidItem };
+    });
     setModuleDataSource('invoices', 'api');
 
     render(<Invoices />);
-    expect(screen.getByText(/Carregando modulo de faturas/i)).toBeInTheDocument();
-
-    dataPromise.resolve({
-      items: [
-        makeInvoice({ id: 'inv-1', resident: 'Mariana', amount: 100 }),
-      ],
-    });
-
     expect(await screen.findByText('Faturas')).toBeInTheDocument();
     expect(screen.getByText('Fonte: API real')).toBeInTheDocument();
 
     const user = userEvent.setup();
     await user.click(screen.getByRole('button', { name: /Registrar pagamento/i }));
     await waitFor(() => {
+      expect(markInvoiceAsPaid).toHaveBeenCalledWith('inv-1');
       expect(screen.getByText('Quitada')).toBeInTheDocument();
     });
   });

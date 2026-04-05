@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { fetchInvoicesData } from '../services/invoicesService';
+import { exportInvoicesCsv, fetchInvoicesData, markInvoiceAsPaid } from '../services/invoicesService';
 import type { InvoiceItem, InvoiceStatus } from '../services/mockApi';
 import { DataSourceBadge } from '../shared/ui/DataSourceBadge';
 import { EmptyState } from '../shared/ui/states/EmptyState';
@@ -26,7 +26,22 @@ const statusClass: Record<InvoiceStatus, string> = {
 export default function Invoices() {
   const [invoices, setInvoices] = useState<InvoiceItem[]>([]);
   const [filter, setFilter] = useState<'all' | InvoiceStatus>('all');
+  const [search, setSearch] = useState('');
+  const [sortBy, setSortBy] = useState<'dueDate' | 'amount' | 'unit' | 'resident' | 'reference' | 'status'>('dueDate');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+  const [page, setPage] = useState(1);
+  const [meta, setMeta] = useState({
+    page: 1,
+    pageSize: 8,
+    total: 0,
+    totalPages: 1,
+    hasNext: false,
+    hasPrevious: false,
+  });
   const [loading, setLoading] = useState(true);
+  const [exporting, setExporting] = useState(false);
+  const [payingId, setPayingId] = useState<string | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -35,9 +50,26 @@ export default function Invoices() {
     async function load() {
       try {
         setLoading(true);
-        const response = await fetchInvoicesData();
+        const response = await fetchInvoicesData({
+          page,
+          pageSize: meta.pageSize,
+          status: filter === 'all' ? undefined : filter,
+          search: search.trim() || undefined,
+          sortBy,
+          sortOrder,
+        });
         if (active) {
           setInvoices(response.items);
+          setMeta(
+            response.meta ?? {
+              page: 1,
+              pageSize: response.items.length || 8,
+              total: response.items.length,
+              totalPages: 1,
+              hasNext: false,
+              hasPrevious: false,
+            },
+          );
           setError(null);
         }
       } catch {
@@ -56,17 +88,9 @@ export default function Invoices() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [filter, meta.pageSize, page, reloadKey, search, sortBy, sortOrder]);
 
-  const filteredInvoices = useMemo(() => {
-    if (filter === 'all') {
-      return invoices;
-    }
-
-    return invoices.filter((invoice) => invoice.status === filter);
-  }, [filter, invoices]);
-
-  const totals = useMemo(() => {
+  const totalsOnPage = useMemo(() => {
     return invoices.reduce(
       (acc, invoice) => {
         acc.total += invoice.amount;
@@ -82,15 +106,41 @@ export default function Invoices() {
     );
   }, [invoices]);
 
-  function registerPayment(id: string) {
-    setInvoices((current) =>
-      current.map((invoice) => {
-        if (invoice.id !== id) {
-          return invoice;
-        }
-        return { ...invoice, status: 'paid' };
-      }),
-    );
+  async function registerPayment(id: string) {
+    try {
+      setPayingId(id);
+      await markInvoiceAsPaid(id);
+      setReloadKey((current) => current + 1);
+      setError(null);
+    } catch {
+      setError('Falha ao registrar pagamento da fatura.');
+    } finally {
+      setPayingId(null);
+    }
+  }
+
+  async function handleExportCsv() {
+    try {
+      setExporting(true);
+      const csvBlob = await exportInvoicesCsv({
+        status: filter === 'all' ? undefined : filter,
+        search: search.trim() || undefined,
+        sortBy,
+        sortOrder,
+      });
+      const url = URL.createObjectURL(csvBlob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `faturas-${new Date().toISOString().slice(0, 10)}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    } catch {
+      setError('Falha ao exportar CSV de faturas.');
+    } finally {
+      setExporting(false);
+    }
   }
 
   if (loading) {
@@ -118,21 +168,30 @@ export default function Invoices() {
           <h2 className="font-headline text-2xl md:text-4xl font-extrabold tracking-tight">Faturas</h2>
           <p className="text-on-surface-variant mt-2">Acompanhe cobrancas por unidade e registre pagamentos.</p>
         </div>
-        <DataSourceBadge module="invoices" />
+        <div className="flex items-center gap-2">
+          <DataSourceBadge module="invoices" />
+          <button
+            onClick={() => void handleExportCsv()}
+            disabled={exporting}
+            className="px-4 py-2 text-xs font-bold rounded bg-primary text-on-primary disabled:opacity-50"
+          >
+            {exporting ? 'Exportando...' : 'Exportar CSV'}
+          </button>
+        </div>
       </section>
 
       <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="bg-surface-container-highest p-6 rounded-xl">
-          <p className="text-xs uppercase tracking-widest text-on-surface-variant">Total do ciclo</p>
-          <h3 className="text-2xl font-headline font-extrabold mt-2">{currency.format(totals.total)}</h3>
+          <p className="text-xs uppercase tracking-widest text-on-surface-variant">Total da pagina</p>
+          <h3 className="text-2xl font-headline font-extrabold mt-2">{currency.format(totalsOnPage.total)}</h3>
         </div>
         <div className="bg-surface-container-highest p-6 rounded-xl">
-          <p className="text-xs uppercase tracking-widest text-on-surface-variant">Pendentes</p>
-          <h3 className="text-2xl font-headline font-extrabold mt-2">{currency.format(totals.pending)}</h3>
+          <p className="text-xs uppercase tracking-widest text-on-surface-variant">Pendentes (pagina)</p>
+          <h3 className="text-2xl font-headline font-extrabold mt-2">{currency.format(totalsOnPage.pending)}</h3>
         </div>
         <div className="bg-surface-container-highest p-6 rounded-xl">
-          <p className="text-xs uppercase tracking-widest text-on-surface-variant">Vencidas</p>
-          <h3 className="text-2xl font-headline font-extrabold mt-2">{currency.format(totals.overdue)}</h3>
+          <p className="text-xs uppercase tracking-widest text-on-surface-variant">Vencidas (pagina)</p>
+          <h3 className="text-2xl font-headline font-extrabold mt-2">{currency.format(totalsOnPage.overdue)}</h3>
         </div>
       </section>
 
@@ -151,7 +210,45 @@ export default function Invoices() {
         </button>
       </section>
 
-      {filteredInvoices.length === 0 ? (
+      <section className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <input
+          value={search}
+          onChange={(event) => {
+            setPage(1);
+            setSearch(event.target.value);
+          }}
+          placeholder="Buscar por unidade, morador ou referencia..."
+          className="bg-surface-container-highest rounded-xl px-4 py-3 text-sm outline-none border border-outline-variant/30"
+        />
+        <select
+          value={sortBy}
+          onChange={(event) => {
+            setPage(1);
+            setSortBy(event.target.value as 'dueDate' | 'amount' | 'unit' | 'resident' | 'reference' | 'status');
+          }}
+          className="bg-surface-container-highest rounded-xl px-4 py-3 text-sm outline-none border border-outline-variant/30"
+        >
+          <option value="dueDate">Ordenar por vencimento</option>
+          <option value="amount">Ordenar por valor</option>
+          <option value="unit">Ordenar por unidade</option>
+          <option value="resident">Ordenar por morador</option>
+          <option value="reference">Ordenar por referencia</option>
+          <option value="status">Ordenar por status</option>
+        </select>
+        <select
+          value={sortOrder}
+          onChange={(event) => {
+            setPage(1);
+            setSortOrder(event.target.value as 'asc' | 'desc');
+          }}
+          className="bg-surface-container-highest rounded-xl px-4 py-3 text-sm outline-none border border-outline-variant/30"
+        >
+          <option value="asc">Ordem crescente</option>
+          <option value="desc">Ordem decrescente</option>
+        </select>
+      </section>
+
+      {invoices.length === 0 ? (
         <EmptyState message="Nenhuma fatura para o filtro selecionado." />
       ) : (
         <section className="bg-surface-container-low rounded-xl p-6 overflow-x-auto">
@@ -168,7 +265,7 @@ export default function Invoices() {
               </tr>
             </thead>
             <tbody>
-              {filteredInvoices.map((invoice) => (
+              {invoices.map((invoice) => (
                 <tr key={invoice.id} className="border-t border-outline-variant/20">
                   <td className="py-4 font-bold">{invoice.unit}</td>
                   <td className="py-4">{invoice.resident}</td>
@@ -183,10 +280,11 @@ export default function Invoices() {
                       <span className="text-xs text-on-surface-variant">Quitada</span>
                     ) : (
                       <button
-                        onClick={() => registerPayment(invoice.id)}
-                        className="px-3 py-1.5 text-xs font-bold rounded bg-primary text-on-primary"
+                        onClick={() => void registerPayment(invoice.id)}
+                        disabled={payingId === invoice.id}
+                        className="px-3 py-1.5 text-xs font-bold rounded bg-primary text-on-primary disabled:opacity-50"
                       >
-                        Registrar pagamento
+                        {payingId === invoice.id ? 'Salvando...' : 'Registrar pagamento'}
                       </button>
                     )}
                   </td>
@@ -194,6 +292,27 @@ export default function Invoices() {
               ))}
             </tbody>
           </table>
+          <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+            <p className="text-xs text-on-surface-variant">
+              Pagina {meta.page} de {meta.totalPages} | Total: {meta.total}
+            </p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setPage((current) => Math.max(1, current - 1))}
+                disabled={!meta.hasPrevious}
+                className="px-3 py-2 text-xs font-bold rounded bg-surface-container-highest disabled:opacity-50"
+              >
+                Anterior
+              </button>
+              <button
+                onClick={() => setPage((current) => current + 1)}
+                disabled={!meta.hasNext}
+                className="px-3 py-2 text-xs font-bold rounded bg-primary text-on-primary disabled:opacity-50"
+              >
+                Proxima
+              </button>
+            </div>
+          </div>
         </section>
       )}
     </div>

@@ -82,6 +82,40 @@ describe('API endpoints', () => {
     );
   });
 
+  it('exports invoices CSV with active filters', async () => {
+    const { createApp } = await import('../../server/index.mjs');
+    const app = createApp(config);
+    const token = await loginAndGetToken(app);
+
+    const response = await request(app)
+      .get('/api/invoices/export.csv')
+      .set('Authorization', `Bearer ${token}`)
+      .query({ status: 'pending', sortBy: 'amount', sortOrder: 'desc' });
+
+    expect(response.status).toBe(200);
+    expect(String(response.headers['content-type'] || '')).toContain('text/csv');
+    expect(String(response.text || '')).toContain('"id","condominiumId","unit","resident","reference","dueDate","amount","status"');
+  });
+
+  it('marks invoice as paid and returns updated item', async () => {
+    const { createApp } = await import('../../server/index.mjs');
+    const app = createApp(config);
+    const token = await loginAndGetToken(app);
+
+    const list = await request(app).get('/api/invoices').set('Authorization', `Bearer ${token}`).query({ status: 'pending', page: 1, pageSize: 1 });
+    expect(list.status).toBe(200);
+    const firstId = list.body.items?.[0]?.id;
+    expect(firstId).toBeTruthy();
+
+    const mark = await request(app).patch(`/api/invoices/${firstId}/pay`).set('Authorization', `Bearer ${token}`).send({});
+    expect(mark.status).toBe(200);
+    expect(mark.body.item.status).toBe('paid');
+
+    const paidList = await request(app).get('/api/invoices').set('Authorization', `Bearer ${token}`).query({ status: 'paid' });
+    expect(paidList.status).toBe(200);
+    expect(paidList.body.items.some((item: { id: string }) => item.id === firstId)).toBe(true);
+  });
+
   it('accepts chat message POST', async () => {
     const { createApp } = await import('../../server/index.mjs');
     const app = createApp(config);
@@ -95,8 +129,182 @@ describe('API endpoints', () => {
         id: expect.any(String),
         role: 'assistant',
         text: expect.any(String),
+        intentId: expect.any(String),
+        confidence: expect.stringMatching(/^(low|medium|high)$/),
+        promptCatalogVersion: expect.any(String),
+        guardrails: expect.objectContaining({
+          blocked: expect.any(Boolean),
+          policyVersion: expect.any(String),
+        }),
       }),
     );
+    expect([null, 'OUT_OF_SCOPE', 'LOW_CONFIDENCE']).toContain(response.body.guardrails?.reason ?? null);
+  });
+
+  it('blocks out-of-scope chat message by guardrails', async () => {
+    const { createApp } = await import('../../server/index.mjs');
+    const app = createApp(config);
+    const token = await loginAndGetToken(app);
+
+    const response = await request(app)
+      .post('/api/chat/message')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ message: 'Me conte uma piada de futebol' });
+
+    expect(response.status).toBe(200);
+    expect(response.body.guardrails).toEqual(
+      expect.objectContaining({
+        blocked: true,
+        reason: 'OUT_OF_SCOPE',
+        policyVersion: expect.any(String),
+      }),
+    );
+    expect(String(response.body.text || '')).toMatch(/fora do escopo/i);
+  });
+
+  it('returns versioned chat intents catalog', async () => {
+    const { createApp } = await import('../../server/index.mjs');
+    const app = createApp(config);
+    const token = await loginAndGetToken(app);
+
+    const response = await request(app).get('/api/chat/intents').set('Authorization', `Bearer ${token}`);
+
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual(
+      expect.objectContaining({
+        version: expect.any(String),
+        intents: expect.arrayContaining([
+          expect.objectContaining({
+            id: expect.any(String),
+            label: expect.any(String),
+            promptTemplate: expect.any(String),
+          }),
+        ]),
+      }),
+    );
+  });
+
+  it('returns structured chat context for current condominium', async () => {
+    const { createApp } = await import('../../server/index.mjs');
+    const app = createApp(config);
+    const token = await loginAndGetToken(app);
+
+    const response = await request(app).get('/api/chat/context').set('Authorization', `Bearer ${token}`);
+
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual(
+      expect.objectContaining({
+        condominiumId: expect.any(Number),
+        generatedAt: expect.any(String),
+        dataSource: expect.stringMatching(/^(mock|oracle)$/),
+        metrics: expect.objectContaining({
+          pendingInvoices: expect.any(Number),
+          overdueInvoices: expect.any(Number),
+          paidInvoices: expect.any(Number),
+          criticalAlerts: expect.any(Number),
+          openAlerts: expect.any(Number),
+          maintenanceUnits: expect.any(Number),
+          occupiedUnits: expect.any(Number),
+          totalUnits: expect.any(Number),
+        }),
+        sources: expect.arrayContaining([expect.any(String)]),
+      }),
+    );
+  });
+
+  it('registers chat telemetry for message, fallback and satisfaction', async () => {
+    const { createApp } = await import('../../server/index.mjs');
+    const app = createApp(config);
+    const token = await loginAndGetToken(app);
+
+    const first = await request(app)
+      .post('/api/chat/message')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ message: 'Resumo financeiro do condominio' });
+    expect(first.status).toBe(200);
+
+    const blocked = await request(app)
+      .post('/api/chat/message')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ message: 'Me conte uma piada de futebol' });
+    expect(blocked.status).toBe(200);
+    expect(blocked.body.guardrails?.blocked).toBe(true);
+
+    const feedback = await request(app)
+      .post('/api/chat/feedback')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ messageId: first.body.id, rating: 'up' });
+    expect(feedback.status).toBe(201);
+    expect(feedback.body.ok).toBe(true);
+
+    const telemetry = await request(app)
+      .get('/api/chat/telemetry')
+      .set('Authorization', `Bearer ${token}`)
+      .query({ limit: 10 });
+    expect(telemetry.status).toBe(200);
+    expect(telemetry.body).toEqual(
+      expect.objectContaining({
+        condominiumId: 1,
+        counters: expect.objectContaining({
+          messages: 2,
+          fallback: 1,
+          blocked: 1,
+          outOfScope: 1,
+        }),
+        satisfaction: expect.objectContaining({
+          total: 1,
+          positive: 1,
+          negative: 0,
+        }),
+      }),
+    );
+    expect(Array.isArray(telemetry.body.recentEvents)).toBe(true);
+    expect(telemetry.body.recentEvents.length).toBeGreaterThan(0);
+  });
+
+  it('allows telemetry only for admin/sindico and blocks morador', async () => {
+    const { createApp } = await import('../../server/index.mjs');
+    const app = createApp(config);
+
+    const adminToken = await loginAndGetToken(app, { email: 'admin@condoguard.ai', password: 'password123' });
+    const sindicoToken = await loginAndGetToken(app, { email: 'sindico@condoguard.ai', password: 'password123' });
+    const moradorToken = await loginAndGetToken(app, { email: 'morador@condoguard.ai', password: 'password123' });
+
+    const adminTelemetry = await request(app).get('/api/chat/telemetry').set('Authorization', `Bearer ${adminToken}`);
+    const sindicoTelemetry = await request(app).get('/api/chat/telemetry').set('Authorization', `Bearer ${sindicoToken}`);
+    const moradorTelemetry = await request(app).get('/api/chat/telemetry').set('Authorization', `Bearer ${moradorToken}`);
+
+    expect(adminTelemetry.status).toBe(200);
+    expect(sindicoTelemetry.status).toBe(200);
+    expect(moradorTelemetry.status).toBe(403);
+    expect(moradorTelemetry.body.error.code).toBe('FORBIDDEN');
+  });
+
+  it('validates payload for chat feedback endpoint', async () => {
+    const { createApp } = await import('../../server/index.mjs');
+    const app = createApp(config);
+    const token = await loginAndGetToken(app);
+
+    const missingMessageId = await request(app)
+      .post('/api/chat/feedback')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ rating: 'up' });
+    expect(missingMessageId.status).toBe(400);
+    expect(missingMessageId.body.error.code).toBe('INVALID_BODY');
+
+    const invalidRating = await request(app)
+      .post('/api/chat/feedback')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ messageId: 'bot-1', rating: 'maybe' });
+    expect(invalidRating.status).toBe(400);
+    expect(invalidRating.body.error.code).toBe('INVALID_BODY');
+
+    const longComment = await request(app)
+      .post('/api/chat/feedback')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ messageId: 'bot-1', rating: 'up', comment: 'x'.repeat(501) });
+    expect(longComment.status).toBe(400);
+    expect(longComment.body.error.code).toBe('INVALID_BODY');
   });
 
   it('supports pagination and filters in list endpoints', async () => {
@@ -117,6 +325,34 @@ describe('API endpoints', () => {
     expect(management.status).toBe(200);
     expect(management.body.filters.block).toBe('A');
     expect(management.body.filters.status).toBe('occupied');
+    expect(management.body.indicators).toEqual(
+      expect.objectContaining({
+        occupancy: expect.objectContaining({
+          occupancyRate: expect.any(Number),
+        }),
+        delinquency: expect.objectContaining({
+          delinquencyRate: expect.any(Number),
+        }),
+        pending: expect.objectContaining({
+          pendingCount: expect.any(Number),
+        }),
+      }),
+    );
+  });
+
+  it('marks alert as read and returns updated item', async () => {
+    const { createApp } = await import('../../server/index.mjs');
+    const app = createApp(config);
+    const token = await loginAndGetToken(app);
+
+    const list = await request(app).get('/api/alerts').set('Authorization', `Bearer ${token}`).query({ page: 1, pageSize: 1 });
+    expect(list.status).toBe(200);
+    const firstId = list.body.items?.[0]?.id;
+    expect(firstId).toBeTruthy();
+
+    const mark = await request(app).patch(`/api/alerts/${firstId}/read`).set('Authorization', `Bearer ${token}`).send({});
+    expect(mark.status).toBe(200);
+    expect(mark.body.item.status).toBe('read');
   });
 
   it('returns standardized 400 error for invalid enum/filter values', async () => {
