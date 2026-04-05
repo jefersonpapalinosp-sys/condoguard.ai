@@ -12,6 +12,12 @@ import { getAlertsData, markAlertAsRead } from './repositories/alertsRepo.mjs';
 import { getChatBootstrap, askChat } from './repositories/chatRepo.mjs';
 import { getChatIntentCatalog } from './repositories/chatIntentsRepo.mjs';
 import {
+  getObservabilityMetricsSnapshot,
+  recordApiErrorCodeMetric,
+  recordApiRequestMetric,
+  resetObservabilityMetrics,
+} from './observability/metricsStore.mjs';
+import {
   getChatTelemetrySnapshot,
   recordChatErrorTelemetry,
   recordChatFeedbackTelemetry,
@@ -444,6 +450,7 @@ export function createApp(config = {}) {
     },
   };
   const app = express();
+  resetObservabilityMetrics();
   resetChatTelemetryStore();
 
   app.use(helmet());
@@ -474,6 +481,18 @@ export function createApp(config = {}) {
   });
 
   app.use('/api', apiLimiter);
+  app.use('/api', (req, res, next) => {
+    const startedAt = Date.now();
+    res.on('finish', () => {
+      recordApiRequestMetric({
+        method: req.method,
+        path: req.path,
+        status: res.statusCode,
+        latencyMs: Date.now() - startedAt,
+      });
+    });
+    next();
+  });
 
   app.get('/api/health', asyncRoute(async (_, res) => {
     let dbStatus = 'seed';
@@ -755,6 +774,13 @@ export function createApp(config = {}) {
     res.json(payload);
   }));
 
+  app.get('/api/observability/metrics', requireAuth(resolvedConfig), requireTenant(resolvedConfig), requireRole(resolvedConfig, ['admin']), asyncRoute(async (req, res) => {
+    const routeLimit = Math.min(parsePositiveInt(req.query.routeLimit, 10, 'routeLimit'), 100);
+    const codeLimit = Math.min(parsePositiveInt(req.query.codeLimit, 10, 'codeLimit'), 100);
+    const payload = getObservabilityMetricsSnapshot({ routeLimit, codeLimit });
+    res.json(payload);
+  }));
+
   app.get('/api/alerts', requireAuth(resolvedConfig), requireTenant(resolvedConfig), requireRole(resolvedConfig, AUTH_ROLES), asyncRoute(async (req, res) => {
     const payload = await getAlertsData(req.auth.condominiumId);
     const severity = parseEnum(req.query.severity, ALERT_SEVERITIES, 'severity');
@@ -929,6 +955,7 @@ export function createApp(config = {}) {
 
     if (status >= 400) {
       logSecurityEvent(resolvedConfig, 'api_error_response', _req, { status, code });
+      recordApiErrorCodeMetric(code);
     }
   });
 

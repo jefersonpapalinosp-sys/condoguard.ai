@@ -21,6 +21,7 @@ const navItems: NavItem[] = [
   { id: 'invoices', label: 'Faturas', icon: 'receipt_long', allowedRoles: ['admin', 'sindico'] },
   { id: 'chat', label: 'Chat', icon: 'forum' },
   { id: 'management', label: 'Gestao', icon: 'domain', allowedRoles: ['admin', 'sindico'] },
+  { id: 'observability', label: 'Observabilidade', icon: 'monitoring', allowedRoles: ['admin'] },
   { id: 'reports', label: 'Relatorios', icon: 'assessment' },
   { id: 'settings', label: 'Configuracoes', icon: 'settings' },
 ];

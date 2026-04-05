@@ -2,6 +2,7 @@
 
 Data de referencia: 5 de abril de 2026
 Fonte: consolidado de `product_backlog_sprints.md`, checklists e boards das sprints.
+Checklist operacional consolidado: `docs/sprints_implantacao_checklist.md`.
 
 ## Sprint 1 - Fundacao
 
@@ -102,10 +103,14 @@ Melhorias sugeridas:
 
 ## Sprint 6 - Qualidade, testes e observabilidade
 
-Status geral: Nao iniciada formalmente (ha maturidade parcial de testes)
+Status geral: Em progresso
 
 Feito:
 - Suites locais de testes e E2E ja operacionais no projeto.
+- `S6-01` iniciado com expansao de unit tests para modulos criticos de chat (`chatIntentsRepo`, `chatTelemetryRepo`).
+- Board de execucao publicado: `docs/sprint6_execution_board.md`.
+- Gate de cobertura validado com `npm.cmd run test:coverage:check` (PASS).
+- Workflow CI criado: `.github/workflows/ci-quality.yml` com bloqueio por `lint`, cobertura e E2E.
 
 Pendente:
 - `S6-01` meta de cobertura formal por modulo critico.

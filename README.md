@@ -173,6 +173,16 @@ Invoke-RestMethod -Method Get -Uri "http://localhost:4001/api/chat/telemetry?lim
 - `SECURITY_AUDIT_LOG_PATH=logs/security-audit.log`
 - Consulta operacional (admin): `GET /api/security/audit?event=&actorSub=&condominiumId=&from=&to=&limit=`
 
+## Observabilidade (Sprint 6)
+
+- Endpoint operacional de métricas (admin):
+  - `GET /api/observability/metrics?routeLimit=10&codeLimit=10`
+- Retorna:
+  - contadores de requests/erros e taxa de erro
+  - latência (`avg`, `p95`, `max`)
+  - distribuição por classe de status (`2xx`, `4xx`, `5xx`)
+  - top rotas e códigos de erro mais frequentes
+
 E2E segmentados por dominio:
 - `tests/e2e/auth.e2e.spec.ts`
 - `tests/e2e/dashboard.e2e.spec.ts`

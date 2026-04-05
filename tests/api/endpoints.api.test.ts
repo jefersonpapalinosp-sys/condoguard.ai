@@ -5,6 +5,7 @@ import path from 'node:path';
 import { mkdir, rm } from 'node:fs/promises';
 
 const testAuditLogPath = path.resolve(process.cwd(), 'logs', 'test-security-audit-api.log');
+const invoiceStatePath = path.resolve(process.cwd(), 'server', 'data', 'invoices_status_state.json');
 
 const config = {
   appEnv: 'dev',
@@ -49,6 +50,7 @@ describe('API endpoints', () => {
   beforeEach(async () => {
     await mkdir(path.dirname(testAuditLogPath), { recursive: true });
     await rm(testAuditLogPath, { force: true });
+    await rm(invoiceStatePath, { force: true });
   });
 
   it('serves invoices, management, alerts and chat bootstrap', async () => {
@@ -305,6 +307,52 @@ describe('API endpoints', () => {
       .send({ messageId: 'bot-1', rating: 'up', comment: 'x'.repeat(501) });
     expect(longComment.status).toBe(400);
     expect(longComment.body.error.code).toBe('INVALID_BODY');
+  });
+
+  it('exposes observability metrics for admin and blocks non-admin role', async () => {
+    const { createApp } = await import('../../server/index.mjs');
+    const app = createApp(config);
+
+    const adminToken = await loginAndGetToken(app, { email: 'admin@condoguard.ai', password: 'password123' });
+    const moradorToken = await loginAndGetToken(app, { email: 'morador@condoguard.ai', password: 'password123' });
+
+    await request(app).get('/api/health');
+    await request(app).get('/api/invoices').set('Authorization', `Bearer ${adminToken}`);
+    await request(app).get('/api/invoices').set('Authorization', `Bearer ${moradorToken}`);
+
+    const adminMetrics = await request(app)
+      .get('/api/observability/metrics')
+      .set('Authorization', `Bearer ${adminToken}`)
+      .query({ routeLimit: 5, codeLimit: 5 });
+    expect(adminMetrics.status).toBe(200);
+    expect(adminMetrics.body).toEqual(
+      expect.objectContaining({
+        counters: expect.objectContaining({
+          totalRequests: expect.any(Number),
+          totalErrors: expect.any(Number),
+          errorRatePct: expect.any(Number),
+        }),
+        latency: expect.objectContaining({
+          avgMs: expect.any(Number),
+          p95Ms: expect.any(Number),
+          maxMs: expect.any(Number),
+          samples: expect.any(Number),
+        }),
+        statusClasses: expect.objectContaining({
+          '2xx': expect.any(Number),
+          '4xx': expect.any(Number),
+        }),
+        topRoutes: expect.any(Array),
+        errorCodes: expect.any(Array),
+      }),
+    );
+    expect(adminMetrics.body.topRoutes.length).toBeGreaterThan(0);
+
+    const forbidden = await request(app)
+      .get('/api/observability/metrics')
+      .set('Authorization', `Bearer ${moradorToken}`);
+    expect(forbidden.status).toBe(403);
+    expect(forbidden.body.error.code).toBe('FORBIDDEN');
   });
 
   it('supports pagination and filters in list endpoints', async () => {

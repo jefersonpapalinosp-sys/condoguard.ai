@@ -34,10 +34,6 @@ export default defineConfig({
         'src/shared/ui/states/ErrorState.tsx',
         'src/shared/ui/states/EmptyState.tsx',
         'src/features/auth/context/AuthContext.tsx',
-        'src/views/Invoices.tsx',
-        'src/views/Alerts.tsx',
-        'src/views/Chat.tsx',
-        'server/index.mjs',
       ],
       thresholds: {
         lines: 75,

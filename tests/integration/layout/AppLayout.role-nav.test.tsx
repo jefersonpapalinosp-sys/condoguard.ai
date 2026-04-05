@@ -36,6 +36,7 @@ describe('AppLayout role-based navigation', () => {
     expect(await screen.findByText('Dashboard')).toBeInTheDocument();
     expect(screen.queryByText('Faturas')).not.toBeInTheDocument();
     expect(screen.queryByText('Gestao')).not.toBeInTheDocument();
+    expect(screen.queryByText('Observabilidade')).not.toBeInTheDocument();
     expect(screen.getByText('Alertas')).toBeInTheDocument();
   });
 
@@ -49,5 +50,6 @@ describe('AppLayout role-based navigation', () => {
     expect(await screen.findByText('Dashboard')).toBeInTheDocument();
     expect(screen.getByText('Faturas')).toBeInTheDocument();
     expect(screen.getByText('Gestao')).toBeInTheDocument();
+    expect(screen.getByText('Observabilidade')).toBeInTheDocument();
   });
 });

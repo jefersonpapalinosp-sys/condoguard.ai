@@ -13,6 +13,82 @@ vi.mock('../../../src/services/apiStatus', () => ({
   setModuleDataSource: vi.fn(),
 }));
 
+vi.mock('../../../src/services/authTokenStore', () => ({
+  getAccessToken: vi.fn(),
+}));
+
+vi.mock('../../../src/services/authEvents', () => ({
+  notifyUnauthorized: vi.fn(),
+}));
+
+describe('invoicesService.exportInvoicesCsv', () => {
+  beforeEach(() => {
+    vi.stubEnv('VITE_API_BASE_URL', 'http://localhost:4001');
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    vi.restoreAllMocks();
+  });
+
+  it('requests csv with auth header and returns blob', async () => {
+    const csvBlob = new Blob(['id,unit\n1,A-101'], { type: 'text/csv' });
+    const { getAccessToken } = await import('../../../src/services/authTokenStore');
+    const { exportInvoicesCsv } = await import('../../../src/services/invoicesService');
+
+    vi.mocked(getAccessToken).mockReturnValue('token-123');
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue({
+      ok: true,
+      status: 200,
+      blob: async () => csvBlob,
+    } as unknown as Response);
+
+    const result = await exportInvoicesCsv({ status: 'pending', page: 2, pageSize: 10 });
+    expect(result).toBe(csvBlob);
+    expect(globalThis.fetch).toHaveBeenCalledWith(
+      expect.stringContaining('/api/invoices/export.csv?page=2&pageSize=10&status=pending'),
+      expect.objectContaining({
+        method: 'GET',
+        headers: expect.objectContaining({
+          Authorization: 'Bearer token-123',
+        }),
+      }),
+    );
+  });
+
+  it('notifies unauthorized on 401 and throws', async () => {
+    const { getAccessToken } = await import('../../../src/services/authTokenStore');
+    const { notifyUnauthorized } = await import('../../../src/services/authEvents');
+    const { exportInvoicesCsv } = await import('../../../src/services/invoicesService');
+
+    vi.mocked(getAccessToken).mockReturnValue('token-123');
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue({
+      ok: false,
+      status: 401,
+      blob: async () => new Blob(),
+    } as unknown as Response);
+
+    await expect(exportInvoicesCsv()).rejects.toThrow(/Falha ao exportar CSV/i);
+    expect(notifyUnauthorized).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('invoicesService.markInvoiceAsPaid', () => {
+  it('encodes id and issues PATCH request', async () => {
+    const { requestJson } = await import('../../../src/services/http');
+    const { markInvoiceAsPaid } = await import('../../../src/services/invoicesService');
+    vi.mocked(requestJson).mockResolvedValue({
+      item: { id: 'inv-1', unit: 'A-1', resident: 'Teste', reference: 'Abr/2026', dueDate: '2026-04-01', amount: 10, status: 'paid' },
+    });
+
+    await markInvoiceAsPaid('inv/1');
+    expect(requestJson).toHaveBeenCalledWith('/api/invoices/inv%2F1/pay', {
+      method: 'PATCH',
+      body: JSON.stringify({}),
+    });
+  });
+});
+
 describe('invoicesService.fetchInvoicesData', () => {
   it('returns API response and marks source as api', async () => {
     const apiPayload: InvoicesData = {
@@ -55,4 +131,3 @@ describe('invoicesService.fetchInvoicesData', () => {
     });
   });
 });
-

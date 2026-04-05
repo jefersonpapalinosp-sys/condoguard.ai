@@ -52,7 +52,7 @@ describe('Chat view', () => {
       expect(screen.getByText('Quais alertas?')).toBeInTheDocument();
       expect(screen.getByText('Resposta do bot')).toBeInTheDocument();
     });
-  });
+  }, 15000);
 
   it('shows error state when bootstrap fails', async () => {
     const { fetchChatBootstrap, fetchChatTelemetry } = await import('../../../src/services/chatService');

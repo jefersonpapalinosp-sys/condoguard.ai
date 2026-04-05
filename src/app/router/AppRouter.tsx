@@ -12,6 +12,7 @@ import ManagementPage from '../../features/management/pages/ManagementPage';
 import ReportsPage from '../../features/reports/pages/ReportsPage';
 import SettingsPage from '../../features/settings/pages/SettingsPage';
 import CadastrosGeraisPage from '../../features/cadastros/pages/CadastrosGeraisPage';
+import ObservabilityPage from '../../features/observability/pages/ObservabilityPage';
 
 export function AppRouter() {
   return (
@@ -49,6 +50,14 @@ export function AppRouter() {
         />
         <Route path="cadastros-gerais" element={<CadastrosGeraisPage />} />
         <Route path="reports" element={<ReportsPage />} />
+        <Route
+          path="observability"
+          element={(
+            <ProtectedRoute requiredRoles={['admin']}>
+              <ObservabilityPage />
+            </ProtectedRoute>
+          )}
+        />
         <Route path="settings" element={<SettingsPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/dashboard" replace />} />
