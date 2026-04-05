@@ -58,19 +58,25 @@ Melhorias sugeridas:
 
 ## Sprint 4 - Modulos de negocio
 
-Status geral: Nao iniciada formalmente (alguns adiantos pontuais no frontend/API)
+Status geral: Fechada tecnicamente (local)
 
 Feito:
-- Adiantos parciais em telas/servicos (ex.: cadastros com CRUD basico funcional).
+- `S4-01` Financeiro: filtros, paginacao e exportacao CSV funcional (`/api/invoices/export.csv` + UI de exportacao).
+- `S4-01` Financeiro: fluxo de pagamento integrado (`PATCH /api/invoices/:id/pay`) com persistencia e reflexo na UI.
+- `S4-02` Gestao de unidades: indicadores operacionais reais (ocupacao, inadimplencia, pendencias) no endpoint e na tela.
+- `S4-03` Alertas: ciclo completo com historico paginado, filtro por estado (`active/read`) e acao `marcar como lido` persistente.
+- `S4-04` Padrao unico de listagens: consolidado em `items/meta/filters/sort` com `search`, `sortBy`, `sortOrder`.
+- Suites validadas em ambiente local:
+  - `lint`: PASS
+  - `test` (Vitest completo): 65/65 PASS
+  - `test:e2e` (Playwright): 7/7 PASS
 
 Pendente:
-- `S4-01` Financeiro fim a fim com filtros/paginacao/export CSV.
-- `S4-02` Gestao de unidades com indicadores operacionais reais.
-- `S4-03` Alertas ciclo completo (severidade, historico, leitura).
-- `S4-04` Padrao unico de listagens na API.
+- Validacao final de regressao completa em ambiente de homologacao com o gate de identidade real (`S3-01`) (adiada por decisao de planejamento).
 
 Melhorias sugeridas:
-- Definir contrato padrao de paginação/filtro antes de expandir todos os endpoints.
+- Manter `docs/sprint4_closing_checklist.md` atualizado com cada rodada de regressao.
+- Expandir cobertura E2E dedicada para os fluxos novos de CSV e `mark as read`.
 
 ## Sprint 5 - IA CondoGuard
 
@@ -129,4 +135,3 @@ Melhorias sugeridas:
 2. Rodar smoke OIDC final e anexar relatorio PASS.
 3. Atualizar `sprint3_closing_checklist.md` e `sprint3_handoff_status.md` com status final unico.
 4. Congelar pacote de evidencias (health, smoke, matriz de testes, checklist).
-
