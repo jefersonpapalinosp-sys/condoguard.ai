@@ -205,3 +205,14 @@ Variaveis de threshold:
 - `OBS_ALERT_ERROR_RATE_PCT` (default `5`)
 - `OBS_ALERT_FALLBACK_COUNT` (default `3`)
 - `OBS_ALERT_CHANNEL` (default `log`)
+
+### Sprint 6 - CI Oracle e webhook de observabilidade
+
+- Guia de setup dos secrets Oracle no GitHub Actions:
+  - `docs/github_actions_oracle_secrets.md`
+- Novo endpoint admin para dispatch manual de alertas operacionais:
+  - `POST /api/observability/alerts/dispatch`
+- Configuracao de webhook de alertas:
+  - `OBS_ALERT_CHANNEL=webhook`
+  - `OBS_ALERT_WEBHOOK_URL=https://seu-endpoint`
+  - `OBS_ALERT_WEBHOOK_TIMEOUT_MS=5000`

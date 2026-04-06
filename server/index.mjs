@@ -313,6 +313,60 @@ function buildObservabilityAlerts(metrics, thresholds) {
   return alerts;
 }
 
+async function dispatchObservabilityAlerts(config, payload) {
+  const channel = String(config?.observability?.alertChannel || 'log').toLowerCase();
+  const webhookUrl = String(config?.observability?.webhookUrl || '').trim();
+  const timeoutMs = Number(config?.observability?.webhookTimeoutMs || 5000);
+
+  if (!payload?.items?.length) {
+    return { dispatched: false, channel, reason: 'no_alerts' };
+  }
+
+  if (channel === 'log') {
+    console.info(`[observability_alerts] ${JSON.stringify(payload)}`);
+    return { dispatched: true, channel, reason: null };
+  }
+
+  if (channel !== 'webhook') {
+    return { dispatched: false, channel, reason: 'channel_not_supported' };
+  }
+
+  if (!webhookUrl) {
+    return { dispatched: false, channel, reason: 'webhook_not_configured' };
+  }
+
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), Math.max(500, timeoutMs));
+  try {
+    const response = await fetch(webhookUrl, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+      signal: controller.signal,
+    });
+    if (!response.ok) {
+      return {
+        dispatched: false,
+        channel,
+        reason: 'webhook_rejected',
+        status: response.status,
+      };
+    }
+    return { dispatched: true, channel, reason: null };
+  } catch (error) {
+    return {
+      dispatched: false,
+      channel,
+      reason: 'webhook_failed',
+      error: String(error?.message || error),
+    };
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 function paginate(list, page, pageSize) {
   const total = list.length;
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
@@ -829,9 +883,37 @@ export function createApp(config = {}) {
     res.json({
       generatedAt: new Date().toISOString(),
       channel: resolvedConfig.observability?.alertChannel || 'log',
+      channelConfigured: Boolean(
+        String(resolvedConfig.observability?.alertChannel || 'log').toLowerCase() !== 'webhook'
+          || String(resolvedConfig.observability?.webhookUrl || '').trim(),
+      ),
       thresholds,
       hasAlerts: items.length > 0,
       items,
+    });
+  }));
+
+  app.post('/api/observability/alerts/dispatch', requireAuth(resolvedConfig), requireTenant(resolvedConfig), requireRole(resolvedConfig, ['admin']), asyncRoute(async (_req, res) => {
+    const metrics = getObservabilityMetricsSnapshot({ routeLimit: 20, codeLimit: 20 });
+    const thresholds = resolvedConfig.observability?.thresholds || {
+      latencyP95WarnMs: 1200,
+      errorRateWarnPct: 5,
+      fallbackWarnCount: 3,
+    };
+    const payload = {
+      generatedAt: new Date().toISOString(),
+      channel: resolvedConfig.observability?.alertChannel || 'log',
+      thresholds,
+      hasAlerts: false,
+      items: [],
+    };
+    payload.items = buildObservabilityAlerts(metrics, thresholds);
+    payload.hasAlerts = payload.items.length > 0;
+
+    const dispatch = await dispatchObservabilityAlerts(resolvedConfig, payload);
+    res.json({
+      ...payload,
+      dispatch,
     });
   }));
 

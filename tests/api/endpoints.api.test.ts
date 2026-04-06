@@ -384,6 +384,7 @@ describe('API endpoints', () => {
     expect(adminResponse.body).toEqual(
       expect.objectContaining({
         channel: 'log',
+        channelConfigured: true,
         hasAlerts: expect.any(Boolean),
         thresholds: expect.objectContaining({
           latencyP95WarnMs: 0,
@@ -396,6 +397,46 @@ describe('API endpoints', () => {
     expect(adminResponse.body.items.length).toBeGreaterThan(0);
 
     const forbidden = await request(app).get('/api/observability/alerts').set('Authorization', `Bearer ${sindicoToken}`);
+    expect(forbidden.status).toBe(403);
+    expect(forbidden.body.error.code).toBe('FORBIDDEN');
+  });
+
+  it('dispatches observability alerts for admin and blocks non-admin role', async () => {
+    const { createApp } = await import('../../server/index.mjs');
+    const app = createApp({
+      ...config,
+      observability: {
+        thresholds: {
+          latencyP95WarnMs: 0,
+          errorRateWarnPct: 0,
+          fallbackWarnCount: 0,
+        },
+        alertChannel: 'log',
+      },
+    });
+
+    const adminToken = await loginAndGetToken(app, { email: 'admin@condoguard.ai', password: 'password123' });
+    const moradorToken = await loginAndGetToken(app, { email: 'morador@condoguard.ai', password: 'password123' });
+
+    await request(app).get('/api/health');
+    await request(app).get('/api/invoices').set('Authorization', `Bearer ${adminToken}`);
+
+    const adminResponse = await request(app)
+      .post('/api/observability/alerts/dispatch')
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({});
+    expect(adminResponse.status).toBe(200);
+    expect(adminResponse.body.dispatch).toEqual(
+      expect.objectContaining({
+        dispatched: expect.any(Boolean),
+        channel: 'log',
+      }),
+    );
+
+    const forbidden = await request(app)
+      .post('/api/observability/alerts/dispatch')
+      .set('Authorization', `Bearer ${moradorToken}`)
+      .send({});
     expect(forbidden.status).toBe(403);
     expect(forbidden.body.error.code).toBe('FORBIDDEN');
   });

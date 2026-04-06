@@ -112,14 +112,16 @@ Feito:
 - Gate de cobertura validado com `npm.cmd run test:coverage:check` (PASS).
 - Workflow CI criado: `.github/workflows/ci-quality.yml` com bloqueio por `lint`, cobertura e E2E.
 - Job Oracle dedicado no CI publicado (`oracle-smoke`), condicionado a secrets.
+- Guia de setup de secrets Oracle publicado: `docs/github_actions_oracle_secrets.md`.
 - Artefatos E2E ampliados no CI (`playwright-report`, `test-results`) com `trace`, `screenshot` e `video` em falha.
 - Observabilidade backend evoluida com fallback por modulo e alertas por threshold (`/api/observability/alerts`).
+- Canal externo de alerta por webhook implementado com dispatch manual (`/api/observability/alerts/dispatch`).
 - Catalogo de logs estruturados publicado: `docs/observability_log_catalog.md`.
 
 Pendente:
 - `S6-01` meta de cobertura formal por modulo critico.
 - `S6-02` validar secrets Oracle no GitHub e evidenciar primeira execucao verde do job dedicado.
-- `S6-04` definir canal externo de notificacao operacional (Slack/Email/Webhook).
+- `S6-04` configurar URL real de webhook em homolog e evidenciar disparo.
 
 Melhorias sugeridas:
 - Publicar baseline de qualidade (cobertura, flakiness, tempo medio de pipeline).

@@ -25,6 +25,8 @@ export function getServerConfig() {
   const observabilityErrorRateWarnPct = Number(process.env.OBS_ALERT_ERROR_RATE_PCT || 5);
   const observabilityFallbackWarnCount = Number(process.env.OBS_ALERT_FALLBACK_COUNT || 3);
   const observabilityAlertChannel = process.env.OBS_ALERT_CHANNEL || 'log';
+  const observabilityWebhookUrl = process.env.OBS_ALERT_WEBHOOK_URL || '';
+  const observabilityWebhookTimeoutMs = Number(process.env.OBS_ALERT_WEBHOOK_TIMEOUT_MS || 5000);
 
   return {
     appEnv,
@@ -66,6 +68,8 @@ export function getServerConfig() {
         fallbackWarnCount: Number.isFinite(observabilityFallbackWarnCount) ? observabilityFallbackWarnCount : 3,
       },
       alertChannel: observabilityAlertChannel,
+      webhookUrl: observabilityWebhookUrl,
+      webhookTimeoutMs: Number.isFinite(observabilityWebhookTimeoutMs) ? observabilityWebhookTimeoutMs : 5000,
     },
   };
 }

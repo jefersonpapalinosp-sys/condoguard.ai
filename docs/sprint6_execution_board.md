@@ -25,6 +25,7 @@ Objetivo da sprint: estabilizar a plataforma para escala e go-live com gates de 
 - [x] Criar workflow de quality gate no GitHub Actions: `.github/workflows/ci-quality.yml`.
 - [x] Bloquear merge por falha de `lint` + `test:coverage:check` + `test:e2e`.
 - [x] Publicar job Oracle dedicado no CI (`oracle-smoke`) condicionado a secrets.
+- [x] Publicar guia de secrets Oracle para GitHub Actions (`docs/github_actions_oracle_secrets.md`).
 - [ ] Confirmar secrets Oracle no repositorio GitHub e evidenciar execucao verde do job.
 
 ## S6-03 - Backlog tecnico
@@ -40,7 +41,8 @@ Objetivo da sprint: estabilizar a plataforma para escala e go-live com gates de 
 - [x] Consolidar catalogo de logs estruturados por dominio (`docs/observability_log_catalog.md`).
 - [x] Evoluir metrica de fallback por modulo no backend.
 - [x] Definir endpoint de alertas operacionais por threshold (`GET /api/observability/alerts`).
-- [ ] Definir canal de notificacao externo (Slack/Email/Webhook) para alertas.
+- [x] Definir canal externo de notificacao por webhook (`OBS_ALERT_CHANNEL=webhook` + `OBS_ALERT_WEBHOOK_URL`) com endpoint de dispatch manual (`POST /api/observability/alerts/dispatch`).
+- [ ] Configurar URL real de webhook no ambiente e validar disparo em homolog.
 
 ## Comandos Windows (PowerShell)
 
