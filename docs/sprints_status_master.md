@@ -155,11 +155,40 @@ Pendente:
 Melhorias sugeridas:
 - Definir criterios de go/no-go com donos claros por area (produto, backend, dados, operacao).
 
+## Sprint 8 - Eliminacao de dados sinteticos
+
+Status geral: Fechada tecnicamente (local Oracle smoke)
+
+Objetivo:
+- Remover os pontos restantes de dados sinteticos/hardcoded do produto.
+
+Feito:
+- `Cadastros` migrado para Oracle real end-to-end (sem seed invisivel em `hml/prod`).
+- `Dashboard` sem KPIs fixos (`monthlySavings`, `currentConsumption`).
+- `Management` sem dependencia de fonte sintetica para pendencias.
+- `Settings` sem placeholder, consumindo API real.
+- Politica de fallback mock no frontend controlada por ambiente.
+- Regressao final executada com evidencias:
+  - `lint`: PASS
+  - `test:py`: PASS (`28 passed`)
+  - `test` frontend: PASS (`34 passed`)
+  - smoke Oracle de endpoints criticos: PASS (`failed=0`)
+
+Pendente:
+- Validacao final em homolog/producao permanece dependente do gate de identidade real de `S3-01`.
+
+Melhorias sugeridas:
+- Automatizar um smoke dedicado da Sprint 8 em script versionado para execucao recorrente no pipeline.
+
+Artefato da sprint:
+- `docs/sprint8_execution_board.md`
+- `docs/sprint8_closing_report.md`
+
 ## Riscos transversais atuais
 
 1. Divergencia de status entre documentos de sprint (necessita fonte unica de verdade).
 2. Fechamento de `S3-01` depende de credenciais/config real de OIDC em homolog.
-3. Parte do frontend ainda exibe dados sinteticos em modulos de sprint futura.
+3. Manter a politica de fallback mock consistente entre modulo novo e modulo legado para evitar regressao.
 
 ## Plano objetivo para fechar Sprint 3
 
