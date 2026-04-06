@@ -12,11 +12,15 @@ Plataforma de inteligencia predial em React + Vite.
 
 1. Instale dependencias:
    `npm install`
-2. Configure variaveis em `.env.local`
-3. Rode frontend:
+2. Instale dependencias do backend Python:
+   `py -m pip install -r backend/requirements.txt`
+3. Configure variaveis em `.env.local`
+4. Rode frontend:
    `npm run dev`
-4. Rode API local (seed):
+5. Rode API local (FastAPI):
    `npm run api:dev`
+6. Se aparecer `No module named uvicorn`, rode:
+   `py -m pip install -r backend/requirements.txt`
 
 No PowerShell com politica restrita, use `npm.cmd` em vez de `npm`.
 
@@ -29,9 +33,13 @@ Credenciais locais de desenvolvimento (P0 auth):
 ## Scripts
 
 - `npm run dev`: frontend
-- `npm run api:dev`: API Express local
-- `npm run api:dev:mock`: API local forçando seed mock
-- `npm run api:dev:oracle`: API local forçando Oracle
+- `npm run api:dev`: API FastAPI local
+- `npm run api:dev:mock`: API FastAPI local (usa DB_DIALECT do ambiente)
+- `npm run api:dev:oracle`: API FastAPI local (usa DB_DIALECT do ambiente)
+- `npm run api:start:mock`: API FastAPI mock sem reload (ideal para CI/E2E)
+- `npm run api:start:oracle`: API FastAPI Oracle sem reload (ideal para CI)
+- `npm run api:dev:node:mock`: API legada Node/Express com mock
+- `npm run api:dev:node:oracle`: API legada Node/Express com Oracle
 - `npm run db:migrate:flyway`: executa migracoes Flyway no Oracle
 - `npm run db:smoke:sprint3`: smoke cross-tenant (Sprint 3) em Oracle
 - `npm run db:smoke:sprint3:rbac`: smoke de matriz RBAC (Sprint 3) e gera relatorio markdown
@@ -111,7 +119,8 @@ Saidas:
 - Direcao visual (Design System): docs/design_system_monolith.md.
 
 
-Backend por dialeto (ja implementado): server/index.mjs usa DB_DIALECT=oracle|mock.
+Backend por dialeto (FastAPI): `backend/app/main.py` usa `DB_DIALECT=oracle|mock`.
+Entrypoint local padrao: `npm run api:dev` (runner em `scripts/run-fastapi.mjs`).
 Controle de fallback Oracle:
 - `APP_ENV=dev|hml`: fallback seed permitido por padrao.
 - `APP_ENV=prod`: fallback seed bloqueado por padrao (erro explicito 503 se Oracle indisponivel).
@@ -133,9 +142,16 @@ Health detalhado (Sprint 2):
 - `npm run test:coverage:check`
 - `npm run test:e2e`: Playwright E2E
 - `npm run test:e2e:install`: instala browsers do Playwright
+- `npm run test:py`: testes do backend FastAPI (`backend/tests`)
 - `npm run env:validate`: valida perfil de ambiente (`.env.local`) para gate de go-live
 - `npm run release:s7:hml-smoke`: smoke dos fluxos criticos para gate da Sprint 7 (`S7-01`)
 - `npm run release:s7:rollback-drill`: simulacao assistida de rollback com relatorio (`S7-03`)
+
+## Deprecacao do backend Node
+
+- Backend oficial: **FastAPI** (`backend/app/main.py`).
+- Scripts `api:dev:node:*` permanecem apenas como contingencia temporaria.
+- Planejamento de remocao do legado: `docs/backend_node_decommission_checklist.md`.
 
 ## Chat IA (Sprint 5)
 
@@ -151,11 +167,11 @@ Validacao manual (Windows PowerShell):
 
 ```powershell
 cd C:\Users\Camila\Desktop\Senac\workspace\CondoGuard.AI\condoguard.ai
-$login = Invoke-RestMethod -Method Post -Uri "http://localhost:4001/api/auth/login" -ContentType "application/json" -Body '{"email":"admin@condoguard.ai","password":"password123"}'
+$login = Invoke-RestMethod -Method Post -Uri "http://localhost:4000/api/auth/login" -ContentType "application/json" -Body '{"email":"admin@condoguard.ai","password":"password123"}'
 $headers = @{ Authorization = "Bearer $($login.token)" }
-$msg = Invoke-RestMethod -Method Post -Uri "http://localhost:4001/api/chat/message" -Headers $headers -ContentType "application/json" -Body '{"message":"Resumo financeiro do condominio"}'
-Invoke-RestMethod -Method Post -Uri "http://localhost:4001/api/chat/feedback" -Headers $headers -ContentType "application/json" -Body (@{ messageId = $msg.id; rating = "up" } | ConvertTo-Json)
-Invoke-RestMethod -Method Get -Uri "http://localhost:4001/api/chat/telemetry?limit=20" -Headers $headers | ConvertTo-Json -Depth 10
+$msg = Invoke-RestMethod -Method Post -Uri "http://localhost:4000/api/chat/message" -Headers $headers -ContentType "application/json" -Body '{"message":"Resumo financeiro do condominio"}'
+Invoke-RestMethod -Method Post -Uri "http://localhost:4000/api/chat/feedback" -Headers $headers -ContentType "application/json" -Body (@{ messageId = $msg.id; rating = "up" } | ConvertTo-Json)
+Invoke-RestMethod -Method Get -Uri "http://localhost:4000/api/chat/telemetry?limit=20" -Headers $headers | ConvertTo-Json -Depth 10
 ```
 
 ## Segurança (P0)
@@ -228,3 +244,5 @@ Variaveis de threshold:
 - Plano de rollout piloto: `docs/sprint7_rollout_pilot_plan.md`
 - Plano de treinamento/handoff: `docs/sprint7_training_handoff_plan.md`
 - FAQ operacional e escalonamento: `docs/sprint7_operational_faq.md`
+- Checklist de decisao Go/No-Go: `docs/sprint7_go_no_go_checklist.md`
+- Template de ata de handoff: `docs/sprint7_handoff_minutes_template.md`

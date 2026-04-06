@@ -28,11 +28,24 @@ jobs:
           node-version: 24
           cache: npm
 
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
       - name: Install dependencies
         run: npm ci
 
+      - name: Install backend Python dependencies
+        run: python -m pip install -r backend/requirements.txt
+
       - name: Typecheck
         run: npm run lint
+
+      - name: Backend FastAPI tests
+        env:
+          PYTHON_BIN: python
+        run: npm run test:py
 
       - name: Coverage quality gate
         run: npm run test:coverage:check
@@ -51,8 +64,16 @@ jobs:
           node-version: 24
           cache: npm
 
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
       - name: Install dependencies
         run: npm ci
+
+      - name: Install backend Python dependencies
+        run: python -m pip install -r backend/requirements.txt
 
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
@@ -114,13 +135,25 @@ jobs:
           node-version: 24
           cache: npm
 
+      - name: Setup Python
+        if: steps.gate.outputs.run == 'true'
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
       - name: Install dependencies
         if: steps.gate.outputs.run == 'true'
         run: npm ci
 
+      - name: Install backend Python dependencies
+        if: steps.gate.outputs.run == 'true'
+        run: python -m pip install -r backend/requirements.txt
+
       - name: Start API (oracle)
         if: steps.gate.outputs.run == 'true'
-        run: nohup npm run api:dev:oracle > oracle-api.log 2>&1 &
+        env:
+          PYTHON_BIN: python
+        run: nohup npm run api:start:oracle > oracle-api.log 2>&1 &
 
       - name: Wait and validate Oracle health
         if: steps.gate.outputs.run == 'true'

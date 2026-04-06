@@ -103,12 +103,13 @@ Lista base definida (backend):
 
 ## Evidencias executadas (05-APR-2026)
 
-- `npm.cmd run db:smoke:sprint3:rbac -- -ApiBaseUrl "http://localhost:4001"`:
+- `npm.cmd run db:smoke:sprint3:rbac -- -ApiBaseUrl "http://localhost:4000"`:
   - resultado: `PASS`, `failed=0`;
   - relatorio: `docs/sprint3_rbac_smoke_report.md`.
-- `npm.cmd run db:smoke:sprint3 -- -ApiBaseUrl "http://localhost:4001" -Tenant1Email "admin@condoguard.ai" -Tenant1Password "password123" -Tenant2Email "admin.cond2@condoguard.ai" -Tenant2Password "password123"`:
+- `npm.cmd run db:smoke:sprint3 -- -ApiBaseUrl "http://localhost:4000" -Tenant1Email "admin@condoguard.ai" -Tenant1Password "password123" -Tenant2Email "admin.cond2@condoguard.ai" -Tenant2Password "password123"`:
   - resultado: `PASS` cross-tenant (sem vazamento por `condominium_id`).
 - `npm.cmd run test:api`:
   - resultado: `20 passed`.
 - `npm.cmd run test:contract`:
   - resultado: `4 passed`.
+

@@ -15,7 +15,7 @@ Scripts Oracle disponiveis em `database/sql/oracle`:
 
 ## Backend pronto para Oracle
 
-A API em `server/index.mjs` ja suporta modo por dialeto:
+A API FastAPI em `backend/app/main.py` suporta modo por dialeto:
 
 - `DB_DIALECT=mock`: usa seeds de `server/data/*.json`.
 - `DB_DIALECT=oracle`: usa Oracle (views `MART.*`).
@@ -37,8 +37,8 @@ Variaveis necessarias:
 - `ORACLE_POOL_MIN`
 - `ORACLE_POOL_MAX`
 
-Observacao: o backend carrega `.env.local` automaticamente via `server/start.mjs`.
-Observacao: para conectar de fato ao Oracle no Node, mantenha `oracledb` instalado no ambiente da API.
+Observacao: o backend carrega `.env.local` automaticamente via `pydantic-settings`.
+Observacao: para conectar de fato ao Oracle no FastAPI, mantenha `oracledb` instalado no ambiente Python da API.
 Observacao: por padrao, fallback seed e permitido apenas em `dev/hml` e bloqueado em `prod`.
 
 ## Observacoes

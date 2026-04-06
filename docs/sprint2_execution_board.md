@@ -132,7 +132,7 @@ Evidencia (`/api/health`):
 - errorSummary: `null`
 
 Comando:
-`curl.exe http://localhost:4001/api/health`
+`curl.exe http://localhost:4000/api/health`
 
 ### S2-04 - Health detalhado (pool, latencia, erro resumido)
 Status: DONE
@@ -161,3 +161,4 @@ Validacao final (fallback desativado):
 - `ALLOW_ORACLE_SEED_FALLBACK=false` validado em runtime.
 - Endpoints retornaram dados Oracle reais sem `ORACLE_UNAVAILABLE`.
 - Exemplo observado: `Contexto Oracle carregado: 1 faturas vencidas e 1 alertas criticos.`
+

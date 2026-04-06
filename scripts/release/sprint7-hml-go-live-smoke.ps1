@@ -1,5 +1,5 @@
 param(
-  [string]$ApiBaseUrl = "http://localhost:4001",
+  [string]$ApiBaseUrl = "http://localhost:4000",
   [string]$ExpectedEnv = "hml",
   [switch]$RequireOidc,
   [string]$AccessToken = "",

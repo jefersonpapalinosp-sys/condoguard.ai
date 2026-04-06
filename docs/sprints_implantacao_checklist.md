@@ -73,6 +73,8 @@ Status da sprint: **concluida**.
 - [x] Plano de rollout piloto documentado (`docs/sprint7_rollout_pilot_plan.md`).
 - [x] Plano de treinamento e handoff documentado (`docs/sprint7_training_handoff_plan.md`).
 - [x] FAQ operacional e trilha de escalonamento base (`docs/sprint7_operational_faq.md`).
+- [x] Checklist formal de decisao Go/No-Go (`docs/sprint7_go_no_go_checklist.md`).
+- [x] Template de ata de handoff assinado (`docs/sprint7_handoff_minutes_template.md`).
 - [x] Evidencia tecnica de smoke S7-01 (`docs/sprint7_hml_smoke_report.md`) com `failed=0`.
 - [x] Evidencia tecnica de drill S7-03 (`docs/sprint7_rollback_drill_report.md`) com `recovery_failed=0` e `RTO=2s`.
 - [ ] `S7-01` Homolog espelhando producao + identidade real validada.
@@ -86,3 +88,5 @@ Status da sprint: **em andamento**.
 
 - [x] `npm.cmd run lint`
 - [x] `npm.cmd run test:all` (Vitest + Playwright)
+- [x] Backend padrao migrado para FastAPI (`api:dev` em `:4000`)
+- [ ] Backend Node legado removido definitivamente (ver `docs/backend_node_decommission_checklist.md`)

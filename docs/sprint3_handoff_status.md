@@ -26,9 +26,9 @@ Data de referencia: 5 de abril de 2026
 
 ## Testes recentes executados
 
-- `npm.cmd run db:smoke:sprint3:rbac -- -ApiBaseUrl "http://localhost:4001"`:
+- `npm.cmd run db:smoke:sprint3:rbac -- -ApiBaseUrl "http://localhost:4000"`:
   - `PASS`, `failed=0`.
-- `npm.cmd run db:smoke:sprint3 -- -ApiBaseUrl "http://localhost:4001" -Tenant1Email "admin@condoguard.ai" -Tenant1Password "password123" -Tenant2Email "admin.cond2@condoguard.ai" -Tenant2Password "password123"`:
+- `npm.cmd run db:smoke:sprint3 -- -ApiBaseUrl "http://localhost:4000" -Tenant1Email "admin@condoguard.ai" -Tenant1Password "password123" -Tenant2Email "admin.cond2@condoguard.ai" -Tenant2Password "password123"`:
   - `PASS` (isolamento cross-tenant validado no Oracle).
 - `npm.cmd run test:api`:
   - `20 passed`.
@@ -54,3 +54,4 @@ Data de referencia: 5 de abril de 2026
 - `docs/sprint3_test_matrix.md`
 - `docs/sprint3_closing_checklist.md`
 - `docs/sprint3_oidc_homolog_setup.md`
+

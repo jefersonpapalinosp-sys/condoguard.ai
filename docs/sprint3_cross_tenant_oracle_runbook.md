@@ -19,7 +19,7 @@ Executar validacao real de isolamento por `condominium_id` em Oracle para fecham
 ## 1) Confirmar health
 
 ```powershell
-curl.exe http://localhost:4001/api/health
+curl.exe http://localhost:4000/api/health
 ```
 
 Esperado:
@@ -29,23 +29,23 @@ Esperado:
 ## 2) Login condominio 1 e chamadas principais
 
 ```powershell
-$loginC1 = Invoke-RestMethod -Method Post -Uri "http://localhost:4001/api/auth/login" -ContentType "application/json" -Body '{"email":"admin@condoguard.ai","password":"password123"}'
+$loginC1 = Invoke-RestMethod -Method Post -Uri "http://localhost:4000/api/auth/login" -ContentType "application/json" -Body '{"email":"admin@condoguard.ai","password":"password123"}'
 $headersC1 = @{ Authorization = "Bearer $($loginC1.token)" }
 
-$invC1 = Invoke-RestMethod -Uri "http://localhost:4001/api/invoices" -Headers $headersC1
-$mgmtC1 = Invoke-RestMethod -Uri "http://localhost:4001/api/management/units" -Headers $headersC1
-$alertsC1 = Invoke-RestMethod -Uri "http://localhost:4001/api/alerts" -Headers $headersC1
+$invC1 = Invoke-RestMethod -Uri "http://localhost:4000/api/invoices" -Headers $headersC1
+$mgmtC1 = Invoke-RestMethod -Uri "http://localhost:4000/api/management/units" -Headers $headersC1
+$alertsC1 = Invoke-RestMethod -Uri "http://localhost:4000/api/alerts" -Headers $headersC1
 ```
 
 ## 3) Login condominio 2 e chamadas principais
 
 ```powershell
-$loginC2 = Invoke-RestMethod -Method Post -Uri "http://localhost:4001/api/auth/login" -ContentType "application/json" -Body '{"email":"admin.cond2@condoguard.ai","password":"password123"}'
+$loginC2 = Invoke-RestMethod -Method Post -Uri "http://localhost:4000/api/auth/login" -ContentType "application/json" -Body '{"email":"admin.cond2@condoguard.ai","password":"password123"}'
 $headersC2 = @{ Authorization = "Bearer $($loginC2.token)" }
 
-$invC2 = Invoke-RestMethod -Uri "http://localhost:4001/api/invoices" -Headers $headersC2
-$mgmtC2 = Invoke-RestMethod -Uri "http://localhost:4001/api/management/units" -Headers $headersC2
-$alertsC2 = Invoke-RestMethod -Uri "http://localhost:4001/api/alerts" -Headers $headersC2
+$invC2 = Invoke-RestMethod -Uri "http://localhost:4000/api/invoices" -Headers $headersC2
+$mgmtC2 = Invoke-RestMethod -Uri "http://localhost:4000/api/management/units" -Headers $headersC2
+$alertsC2 = Invoke-RestMethod -Uri "http://localhost:4000/api/alerts" -Headers $headersC2
 ```
 
 ## 4) Evidencia minima esperada
@@ -75,9 +75,10 @@ Com credenciais customizadas:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File scripts/db/sprint3-cross-tenant-smoke.ps1 `
-  -ApiBaseUrl "http://localhost:4001" `
+  -ApiBaseUrl "http://localhost:4000" `
   -Tenant1Email "admin@condoguard.ai" `
   -Tenant1Password "password123" `
   -Tenant2Email "admin.cond2@condoguard.ai" `
   -Tenant2Password "password123"
 ```
+

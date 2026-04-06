@@ -1,6 +1,6 @@
 param(
-  [string]$PrimaryApiBaseUrl = "http://localhost:4001",
-  [string]$RollbackApiBaseUrl = "http://localhost:4002",
+  [string]$PrimaryApiBaseUrl = "http://localhost:4000",
+  [string]$RollbackApiBaseUrl = "http://localhost:4000",
   [string]$AccessToken = "",
   [string]$AdminEmail = "admin@condoguard.ai",
   [string]$AdminPassword = "password123",

@@ -1,5 +1,5 @@
 param(
-  [string]$ApiBaseUrl = "http://localhost:4001",
+  [string]$ApiBaseUrl = "http://localhost:4000",
   [string]$AccessToken = "",
   [string]$OutputPath = "docs/sprint3_s7_oidc_final_gate_report.md"
 )
@@ -21,7 +21,7 @@ $s7Script = Join-Path $repoRoot "scripts\release\sprint7-hml-go-live-smoke.ps1"
 $s3Report = "docs/sprint3_oidc_smoke_report.md"
 $s7Report = "docs/sprint7_hml_smoke_report.md"
 
-$results = @()
+$script:results = @()
 
 function Add-Result {
   param(
@@ -30,7 +30,7 @@ function Add-Result {
     [string]$Details
   )
 
-  $results += [PSCustomObject]@{
+  $script:results += [PSCustomObject]@{
     Check = $Check
     Status = $Status
     Details = $Details
@@ -55,7 +55,7 @@ try {
 }
 
 $generatedAt = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
-$failed = @($results | Where-Object { $_.Status -ne "PASS" }).Count
+$failed = @($script:results | Where-Object { $_.Status -ne "PASS" }).Count
 $outputAbs = Join-Path $repoRoot $OutputPath
 $outputDir = Split-Path -Parent $outputAbs
 New-Item -ItemType Directory -Path $outputDir -Force | Out-Null
@@ -68,12 +68,12 @@ $lines += "API: $ApiBaseUrl"
 $lines += ""
 $lines += "| Check | Status | Details |"
 $lines += "|---|---|---|"
-foreach ($r in $results) {
+foreach ($r in $script:results) {
   $detailsEscaped = ($r.Details -replace "\|", "\|")
   $lines += "| $($r.Check) | $($r.Status) | $detailsEscaped |"
 }
 $lines += ""
-$lines += "Summary: total=$($results.Count), failed=$failed"
+$lines += "Summary: total=$($script:results.Count), failed=$failed"
 $lines += ""
 $lines += "Gate criteria:"
 $lines += "- S3-01 OIDC closure smoke = PASS"
@@ -82,7 +82,7 @@ $lines += "- S7-01 OIDC go-live smoke = PASS"
 Set-Content -Path $outputAbs -Value ($lines -join "`r`n")
 
 Write-Host "Report generated at $outputAbs"
-Write-Host "Summary: total=$($results.Count), failed=$failed"
+Write-Host "Summary: total=$($script:results.Count), failed=$failed"
 
 if ($failed -gt 0) {
   throw "Gate final OIDC finalizado com falhas. Consulte: $outputAbs"

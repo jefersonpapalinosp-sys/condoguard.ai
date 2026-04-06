@@ -6,7 +6,7 @@ Objetivo: validar criterios de aceite dos cards `S3-01`, `S3-02` e `S3-03`.
 
 ## Pre-condicoes
 
-1. API Oracle em execucao (`http://localhost:4001`).
+1. API Oracle em execucao (`http://localhost:4000`).
 2. `/api/health` retornando `dialect=oracle` e `dbStatus=oracle_pool_ok`.
 3. Usuarios ativos em `app.usuarios` para cada role (`admin`, `sindico`, `morador`).
 4. Dados de ao menos 2 condominios para testes de isolamento (`condominium_id` diferente).
@@ -16,14 +16,14 @@ Objetivo: validar criterios de aceite dos cards `S3-01`, `S3-02` e `S3-03`.
 
 ```powershell
 # login
-$login = Invoke-RestMethod -Method Post -Uri "http://localhost:4001/api/auth/login" -ContentType "application/json" -Body '{"email":"admin@condoguard.ai","password":"password123"}'
+$login = Invoke-RestMethod -Method Post -Uri "http://localhost:4000/api/auth/login" -ContentType "application/json" -Body '{"email":"admin@condoguard.ai","password":"password123"}'
 $headers = @{ Authorization = "Bearer $($login.token)" }
 
 # chamadas protegidas
-Invoke-RestMethod -Uri "http://localhost:4001/api/invoices" -Headers $headers
-Invoke-RestMethod -Uri "http://localhost:4001/api/management/units" -Headers $headers
-Invoke-RestMethod -Uri "http://localhost:4001/api/alerts" -Headers $headers
-Invoke-RestMethod -Uri "http://localhost:4001/api/chat/bootstrap" -Headers $headers
+Invoke-RestMethod -Uri "http://localhost:4000/api/invoices" -Headers $headers
+Invoke-RestMethod -Uri "http://localhost:4000/api/management/units" -Headers $headers
+Invoke-RestMethod -Uri "http://localhost:4000/api/alerts" -Headers $headers
+Invoke-RestMethod -Uri "http://localhost:4000/api/chat/bootstrap" -Headers $headers
 
 # usuarios de apoio para condominio 2 (apos V005)
 # admin.cond2@condoguard.ai / password123
@@ -98,11 +98,11 @@ Observacao: confirmar contrato final de permissoes por endpoint na policy centra
 ## Atualizacao automatizada (05-APR-2026)
 
 1. Smoke RBAC executado em Oracle homolog:
-- comando: `npm.cmd run db:smoke:sprint3:rbac -- -ApiBaseUrl "http://localhost:4001"`;
+- comando: `npm.cmd run db:smoke:sprint3:rbac -- -ApiBaseUrl "http://localhost:4000"`;
 - resultado: `PASS` (`failed=0`);
 - evidencias: `docs/sprint3_rbac_smoke_report.md`.
 2. Smoke cross-tenant executado com dois condominios reais:
-- comando: `npm.cmd run db:smoke:sprint3 -- -ApiBaseUrl "http://localhost:4001" -Tenant1Email "admin@condoguard.ai" -Tenant1Password "password123" -Tenant2Email "admin.cond2@condoguard.ai" -Tenant2Password "password123"`;
+- comando: `npm.cmd run db:smoke:sprint3 -- -ApiBaseUrl "http://localhost:4000" -Tenant1Email "admin@condoguard.ai" -Tenant1Password "password123" -Tenant2Email "admin.cond2@condoguard.ai" -Tenant2Password "password123"`;
 - resultado: `PASS` (sem vazamento por `condominium_id`).
 3. Regressao API:
 - comando: `npm.cmd run test:api`;
@@ -110,3 +110,4 @@ Observacao: confirmar contrato final de permissoes por endpoint na policy centra
 4. Regressao de contrato:
 - comando: `npm.cmd run test:contract`;
 - resultado: `4 passed`.
+

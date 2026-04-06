@@ -18,7 +18,7 @@ npm.cmd run env:validate
 4. Verificar health:
 
 ```powershell
-curl.exe http://localhost:4001/api/health
+curl.exe http://localhost:4000/api/health
 ```
 
 Aceite esperado:
@@ -39,8 +39,8 @@ npm.cmd run release:s7:hml-smoke
 Modo OIDC real (gate final de identidade):
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File scripts/release/sprint7-hml-go-live-smoke.ps1 `
-  -ApiBaseUrl "http://localhost:4001" `
+  powershell -ExecutionPolicy Bypass -File scripts/release/sprint7-hml-go-live-smoke.ps1 `
+  -ApiBaseUrl "http://localhost:4000" `
   -RequireOidc `
   -AccessToken "<TOKEN_OIDC_REAL>" `
   -ExpectedEnv "hml"
@@ -55,7 +55,7 @@ Comando unico (usa `OIDC_ACCESS_TOKEN` ou `-AccessToken`):
 
 ```powershell
 $env:OIDC_ACCESS_TOKEN="<TOKEN_OIDC_REAL>"
-npm.cmd run security:smoke:s3:s7:oidc-gate -- --ApiBaseUrl "http://localhost:4001"
+npm.cmd run security:smoke:s3:s7:oidc-gate -- --ApiBaseUrl "http://localhost:4000"
 ```
 
 Relatorios gerados:
@@ -78,8 +78,8 @@ Ou com endpoints explicitos:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File scripts/release/sprint7-rollback-drill.ps1 `
-  -PrimaryApiBaseUrl "http://localhost:4001" `
-  -RollbackApiBaseUrl "http://localhost:4002" `
+  -PrimaryApiBaseUrl "http://localhost:4000" `
+  -RollbackApiBaseUrl "http://localhost:4000" `
   -AccessToken "<TOKEN_VALIDO_OPCIONAL>"
 ```
 
@@ -87,8 +87,8 @@ Modo automatizado (sem prompts interativos):
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File scripts/release/sprint7-rollback-drill.ps1 `
-  -PrimaryApiBaseUrl "http://localhost:4001" `
-  -RollbackApiBaseUrl "http://localhost:4002" `
+  -PrimaryApiBaseUrl "http://localhost:4000" `
+  -RollbackApiBaseUrl "http://localhost:4000" `
   -AccessToken "<TOKEN_VALIDO_OPCIONAL>" `
   -NonInteractive
 ```
@@ -109,6 +109,9 @@ No-Go quando:
 - OIDC real nao estiver validado;
 - rollback nao recuperar dentro da janela acordada.
 
+Checklist de decisao:
+- `docs/sprint7_go_no_go_checklist.md`
+
 ## 5) Evidencias minimas para fechamento
 
 1. `docs/sprint7_hml_smoke_report.md`
@@ -116,3 +119,4 @@ No-Go quando:
 3. `docs/sprint7_operational_faq.md`
 4. Link do run de CI verde
 5. Registro de decisao Go/No-Go com data e responsaveis
+6. Ata de handoff assinada (`docs/sprint7_handoff_minutes_template.md`)

@@ -43,6 +43,8 @@ Objetivo da sprint: publicar com risco controlado, plano de resposta e operacao 
 - [x] Publicar plano inicial de treinamento e handoff (`docs/sprint7_training_handoff_plan.md`).
 - [ ] Treinar equipe operacional (suporte + negocio).
 - [x] Fechar FAQ operacional e trilha de escalonamento base (`docs/sprint7_operational_faq.md`).
+- [x] Criar checklist formal de decisao Go/No-Go (`docs/sprint7_go_no_go_checklist.md`).
+- [x] Criar template de ata de handoff assinado (`docs/sprint7_handoff_minutes_template.md`).
 - [ ] Entregar pacote final de documentacao assinada.
 - [ ] Definir rotina de acompanhamento pos-go-live.
 

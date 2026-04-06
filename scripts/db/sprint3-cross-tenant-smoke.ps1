@@ -1,5 +1,5 @@
 param(
-  [string]$ApiBaseUrl = "http://localhost:4001",
+  [string]$ApiBaseUrl = "http://localhost:4000",
   [string]$Tenant1Email = "admin@condoguard.ai",
   [string]$Tenant1Password = "password123",
   [string]$Tenant2Email = "admin.cond2@condoguard.ai",

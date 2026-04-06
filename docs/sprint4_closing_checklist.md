@@ -36,9 +36,9 @@ npm.cmd run test:api
 
 Smoke manual:
 ```powershell
-$login = Invoke-RestMethod -Method Post -Uri "http://localhost:4001/api/auth/login" -ContentType "application/json" -Body '{"email":"admin@condoguard.ai","password":"password123"}'
+$login = Invoke-RestMethod -Method Post -Uri "http://localhost:4000/api/auth/login" -ContentType "application/json" -Body '{"email":"admin@condoguard.ai","password":"password123"}'
 $headers = @{ Authorization = "Bearer $($login.token)" }
-Invoke-WebRequest -Method Get -Uri "http://localhost:4001/api/invoices/export.csv?status=pending&sortBy=amount&sortOrder=desc" -Headers $headers -OutFile ".\invoices-export.csv"
+Invoke-WebRequest -Method Get -Uri "http://localhost:4000/api/invoices/export.csv?status=pending&sortBy=amount&sortOrder=desc" -Headers $headers -OutFile ".\invoices-export.csv"
 Get-Content .\invoices-export.csv -TotalCount 5
 ```
 
@@ -55,9 +55,9 @@ Evidencias:
 
 Smoke manual (Windows):
 ```powershell
-$login = Invoke-RestMethod -Method Post -Uri "http://localhost:4001/api/auth/login" -ContentType "application/json" -Body '{"email":"admin@condoguard.ai","password":"password123"}'
+$login = Invoke-RestMethod -Method Post -Uri "http://localhost:4000/api/auth/login" -ContentType "application/json" -Body '{"email":"admin@condoguard.ai","password":"password123"}'
 $headers = @{ Authorization = "Bearer $($login.token)" }
-Invoke-RestMethod -Method Get -Uri "http://localhost:4001/api/management/units?page=1&pageSize=5&status=occupied" -Headers $headers | ConvertTo-Json -Depth 10
+Invoke-RestMethod -Method Get -Uri "http://localhost:4000/api/management/units?page=1&pageSize=5&status=occupied" -Headers $headers | ConvertTo-Json -Depth 10
 ```
 
 ## `S4-03` Alertas com severidade, historico e leitura
@@ -78,12 +78,12 @@ Evidencias:
 
 Smoke manual (Windows):
 ```powershell
-$login = Invoke-RestMethod -Method Post -Uri "http://localhost:4001/api/auth/login" -ContentType "application/json" -Body '{"email":"admin@condoguard.ai","password":"password123"}'
+$login = Invoke-RestMethod -Method Post -Uri "http://localhost:4000/api/auth/login" -ContentType "application/json" -Body '{"email":"admin@condoguard.ai","password":"password123"}'
 $headers = @{ Authorization = "Bearer $($login.token)" }
-$before = Invoke-RestMethod -Method Get -Uri "http://localhost:4001/api/alerts?page=1&pageSize=1&status=active" -Headers $headers
+$before = Invoke-RestMethod -Method Get -Uri "http://localhost:4000/api/alerts?page=1&pageSize=1&status=active" -Headers $headers
 $alertId = $before.items[0].id
-Invoke-RestMethod -Method Patch -Uri "http://localhost:4001/api/alerts/$alertId/read" -Headers $headers -ContentType "application/json" -Body "{}" | ConvertTo-Json -Depth 6
-Invoke-RestMethod -Method Get -Uri "http://localhost:4001/api/alerts?page=1&pageSize=5&status=read" -Headers $headers | ConvertTo-Json -Depth 8
+Invoke-RestMethod -Method Patch -Uri "http://localhost:4000/api/alerts/$alertId/read" -Headers $headers -ContentType "application/json" -Body "{}" | ConvertTo-Json -Depth 6
+Invoke-RestMethod -Method Get -Uri "http://localhost:4000/api/alerts?page=1&pageSize=5&status=read" -Headers $headers | ConvertTo-Json -Depth 8
 ```
 
 ## `S4-04` Padrao unico de API para listagens
@@ -119,3 +119,4 @@ Resultado consolidado (executado em 5-APR-2026):
 
 Observacao de decisao:
 - A validacao final em homolog foi deliberadamente adiada para etapa posterior, sem bloquear o fechamento tecnico da Sprint 4.
+

@@ -49,8 +49,9 @@ Thresholds por modulo critico (gate custom):
 ## Decisoes tecnicas
 
 1. Backend refatorado para testabilidade:
-- `server/index.mjs` agora exporta `createApp` e `startServer`.
-- `server/start.mjs` continua sendo o entrypoint de execucao real.
+- FastAPI com entrypoint em `backend/app/main.py`.
+- Runner oficial de execucao local/CI em `scripts/run-fastapi.mjs`.
+- Testes de backend Python em `backend/tests` (`pytest`).
 
 2. Testes de fallback:
 - Services validam troca de fonte para `mock` e emissao de evento de indisponibilidade.
@@ -90,7 +91,8 @@ Thresholds por modulo critico (gate custom):
 - Foi reportado warning de dependencia nativa do sistema (`lcms2-2.dll`) durante instalacao dos browsers.
 
 2. Cobertura de autenticacao:
-- Hoje a autenticacao e simplificada em memoria (sem backend real/JWT). Testes refletem o estado atual.
+- JWT local ativo no backend FastAPI.
+- OIDC/JWKS mantido por configuracao de ambiente e scripts de smoke dedicados.
 
 3. Cobertura Oracle real:
 - A validacao Oracle em testes automatizados usa mock de pool; conexao real depende de ambiente homolog e credenciais da Sprint 2.

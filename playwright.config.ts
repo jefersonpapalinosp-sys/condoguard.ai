@@ -1,7 +1,12 @@
 import { defineConfig, devices } from '@playwright/test';
 
 const isWindows = process.platform === 'win32';
-const npmExec = isWindows ? 'npm.cmd' : 'npm';
+const buildAndPreviewCommand = isWindows
+  ? 'cmd /c "npm run build && npm run preview -- --host 127.0.0.1 --port 4173"'
+  : 'npm run build && npm run preview -- --host 127.0.0.1 --port 4173';
+const apiMockCommand = isWindows
+  ? 'cmd /c "npm run api:start:mock"'
+  : 'npm run api:start:mock';
 
 export default defineConfig({
   testDir: './tests/e2e',
@@ -17,7 +22,7 @@ export default defineConfig({
   },
   webServer: [
     {
-      command: `${npmExec} run build && ${npmExec} run preview -- --host 127.0.0.1 --port 4173`,
+      command: buildAndPreviewCommand,
       env: {
         ...process.env,
         VITE_API_BASE_URL: 'http://127.0.0.1:4000',
@@ -27,7 +32,7 @@ export default defineConfig({
       timeout: 240000,
     },
     {
-      command: `${npmExec} run api:dev:mock`,
+      command: apiMockCommand,
       env: {
         ...process.env,
         PORT: '4000',

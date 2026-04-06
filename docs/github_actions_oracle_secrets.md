@@ -31,6 +31,7 @@ gh secret set ORACLE_CONNECT_STRING --body "72.61.39.94:1521/FREEPDB1"
 ## Validacao esperada
 
 - Job `oracle-smoke` executa no pipeline.
-- `curl http://localhost:4001/api/health` no job retorna:
+- `curl http://localhost:4000/api/health` no job retorna:
   - `"dialect":"oracle"`
   - `"dbStatus":"oracle_pool_ok"`
+

@@ -27,7 +27,7 @@ Observacao:
 Com a API no ar:
 
 ```powershell
-curl.exe http://localhost:4001/api/health
+curl.exe http://localhost:4000/api/health
 ```
 
 Esperado:
@@ -44,7 +44,7 @@ Esperado:
 
 ```powershell
 $headers = @{ Authorization = "Bearer <TOKEN_REAL>" }
-Invoke-RestMethod -Uri "http://localhost:4001/api/alerts" -Headers $headers
+Invoke-RestMethod -Uri "http://localhost:4000/api/alerts" -Headers $headers
 ```
 
 Esperado:
@@ -62,9 +62,10 @@ Esperado:
 Com token real do provedor (copiar JWT):
 
 ```powershell
-npm.cmd run security:smoke:sprint3:oidc -- -ApiBaseUrl "http://localhost:4001" -AccessToken "<TOKEN_REAL>"
+npm.cmd run security:smoke:sprint3:oidc -- -ApiBaseUrl "http://localhost:4000" -AccessToken "<TOKEN_REAL>"
 ```
 
 Saida esperada:
 - arquivo `docs/sprint3_oidc_smoke_report.md`
 - status final `PASS: S3-01 OIDC closure checks validated.`
+
