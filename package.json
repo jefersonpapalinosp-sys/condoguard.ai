@@ -14,6 +14,7 @@
     "db:smoke:sprint3": "powershell -ExecutionPolicy Bypass -File scripts/db/sprint3-cross-tenant-smoke.ps1",
     "db:smoke:sprint3:rbac": "powershell -ExecutionPolicy Bypass -File scripts/db/sprint3-rbac-smoke.ps1",
     "security:smoke:sprint3:oidc": "powershell -ExecutionPolicy Bypass -File scripts/security/sprint3-oidc-closure-smoke.ps1",
+    "security:smoke:s3:s7:oidc-gate": "powershell -ExecutionPolicy Bypass -File scripts/security/sprint3-s7-oidc-final-gate.ps1",
     "clean": "node -e \"require('node:fs').rmSync('dist', { recursive: true, force: true })\"",
     "lint": "tsc --noEmit",
     "check": "npm run lint && npm run build",

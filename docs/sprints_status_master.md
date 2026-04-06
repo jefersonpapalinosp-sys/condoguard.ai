@@ -139,6 +139,8 @@ Feito:
 - Script de drill de rollback com relatorio (`npm run release:s7:rollback-drill`).
 - Runbook unificado de go-live (`docs/sprint7_go_live_runbook.md`).
 - Plano de rollout piloto e handoff documentados.
+- Runbook especifico de rollback tecnico/dados (`docs/sprint7_rollback_runbook.md`).
+- FAQ operacional e trilha de escalonamento base (`docs/sprint7_operational_faq.md`).
 - Smoke tecnico executado com sucesso:
   - `docs/sprint7_hml_smoke_report.md` -> `failed=0`
 - Drill tecnico executado com sucesso:

@@ -69,8 +69,10 @@ Status da sprint: **concluida**.
 - [x] Smoke automatizado de homolog para fluxos criticos (`npm run release:s7:hml-smoke`).
 - [x] Script de drill de rollback com relatorio (`npm run release:s7:rollback-drill`).
 - [x] Runbook de go-live consolidado (`docs/sprint7_go_live_runbook.md`).
+- [x] Runbook de rollback tecnico/dados (`docs/sprint7_rollback_runbook.md`).
 - [x] Plano de rollout piloto documentado (`docs/sprint7_rollout_pilot_plan.md`).
 - [x] Plano de treinamento e handoff documentado (`docs/sprint7_training_handoff_plan.md`).
+- [x] FAQ operacional e trilha de escalonamento base (`docs/sprint7_operational_faq.md`).
 - [x] Evidencia tecnica de smoke S7-01 (`docs/sprint7_hml_smoke_report.md`) com `failed=0`.
 - [x] Evidencia tecnica de drill S7-03 (`docs/sprint7_rollback_drill_report.md`) com `recovery_failed=0` e `RTO=2s`.
 - [ ] `S7-01` Homolog espelhando producao + identidade real validada.

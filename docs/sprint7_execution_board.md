@@ -16,6 +16,7 @@ Objetivo da sprint: publicar com risco controlado, plano de resposta e operacao 
 - [x] Congelar matriz de variaveis por ambiente (`dev/hml/prod`) em `docs/environment_matrix_s7.md`.
 - [x] Adicionar validador automatico de perfil de ambiente (`npm run env:validate`).
 - [x] Criar smoke automatizado dos fluxos criticos para gate S7-01 (`npm run release:s7:hml-smoke`).
+- [x] Criar gate unificado OIDC para fechamento `S3-01` + `S7-01` (`npm run security:smoke:s3:s7:oidc-gate`).
 - [x] Executar smoke tecnico em homolog Oracle com `failed=0` (evidencia em `docs/sprint7_hml_smoke_report.md`).
 - [ ] Validar gate final de identidade real (`S3-01`) em homolog.
 - [ ] Validar comportamento sem fallback mock em contexto de producao.
@@ -23,15 +24,14 @@ Objetivo da sprint: publicar com risco controlado, plano de resposta e operacao 
 
 ## S7-02 - Rollout piloto
 
-- [ ] Definir condominio(s) piloto e responsaveis.
-- [ ] Definir janela controlada de rollout.
+- [x] Definir plano de condominio(s) piloto, responsaveis e janela (template operacional em `docs/sprint7_rollout_pilot_plan.md`).
 - [ ] Monitorar incidentes durante janela piloto.
 - [ ] Registrar criterios de aprovacao para expandir rollout.
 
 ## S7-03 - Runbook e rollback
 
 - [x] Consolidar runbook unico de operacao (`docs/sprint7_go_live_runbook.md`).
-- [ ] Documentar rollback tecnico e de dados.
+- [x] Documentar rollback tecnico e de dados (`docs/sprint7_rollback_runbook.md`).
 - [x] Criar script de drill de rollback com geracao de relatorio (`npm run release:s7:rollback-drill`).
 - [x] Simulacao tecnica local do drill executada com `recovery_failed=0` (evidencia em `docs/sprint7_rollback_drill_report.md`).
 - [ ] Registrar tempos de resposta (RTO/RPO praticos) com evidencia no relatorio.
@@ -42,7 +42,7 @@ Objetivo da sprint: publicar com risco controlado, plano de resposta e operacao 
 
 - [x] Publicar plano inicial de treinamento e handoff (`docs/sprint7_training_handoff_plan.md`).
 - [ ] Treinar equipe operacional (suporte + negocio).
-- [ ] Fechar FAQ operacional e trilha de escalonamento (com time de operacao).
+- [x] Fechar FAQ operacional e trilha de escalonamento base (`docs/sprint7_operational_faq.md`).
 - [ ] Entregar pacote final de documentacao assinada.
 - [ ] Definir rotina de acompanhamento pos-go-live.
 

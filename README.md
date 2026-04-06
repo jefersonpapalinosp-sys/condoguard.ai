@@ -36,6 +36,7 @@ Credenciais locais de desenvolvimento (P0 auth):
 - `npm run db:smoke:sprint3`: smoke cross-tenant (Sprint 3) em Oracle
 - `npm run db:smoke:sprint3:rbac`: smoke de matriz RBAC (Sprint 3) e gera relatorio markdown
 - `npm run security:smoke:sprint3:oidc`: smoke de fechamento S3-01 com token real OIDC e relatorio markdown
+- `npm run security:smoke:s3:s7:oidc-gate`: gate unificado OIDC (S3-01 + S7-01) com relatorio consolidado
 - `npm run build`: build de producao
 - `npm run lint`: typecheck
 - `npm run check`: lint + build
@@ -223,5 +224,7 @@ Variaveis de threshold:
 ## Go-live controlado (Sprint 7)
 
 - Runbook unico de go-live: `docs/sprint7_go_live_runbook.md`
+- Runbook de rollback tecnico/dados: `docs/sprint7_rollback_runbook.md`
 - Plano de rollout piloto: `docs/sprint7_rollout_pilot_plan.md`
 - Plano de treinamento/handoff: `docs/sprint7_training_handoff_plan.md`
+- FAQ operacional e escalonamento: `docs/sprint7_operational_faq.md`

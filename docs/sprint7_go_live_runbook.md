@@ -49,7 +49,24 @@ powershell -ExecutionPolicy Bypass -File scripts/release/sprint7-hml-go-live-smo
 Relatorio gerado:
 - `docs/sprint7_hml_smoke_report.md`
 
+### 2.2 Gate final OIDC (S3-01 + S7-01)
+
+Comando unico (usa `OIDC_ACCESS_TOKEN` ou `-AccessToken`):
+
+```powershell
+$env:OIDC_ACCESS_TOKEN="<TOKEN_OIDC_REAL>"
+npm.cmd run security:smoke:s3:s7:oidc-gate -- --ApiBaseUrl "http://localhost:4001"
+```
+
+Relatorios gerados:
+- `docs/sprint3_oidc_smoke_report.md`
+- `docs/sprint7_hml_smoke_report.md`
+- `docs/sprint3_s7_oidc_final_gate_report.md`
+
 ## 3) Rollback drill (S7-03)
+
+Runbook detalhado de rollback tecnico/dados:
+- `docs/sprint7_rollback_runbook.md`
 
 Executar simulacao assistida:
 
@@ -96,5 +113,6 @@ No-Go quando:
 
 1. `docs/sprint7_hml_smoke_report.md`
 2. `docs/sprint7_rollback_drill_report.md`
-3. Link do run de CI verde
-4. Registro de decisao Go/No-Go com data e responsaveis
+3. `docs/sprint7_operational_faq.md`
+4. Link do run de CI verde
+5. Registro de decisao Go/No-Go com data e responsaveis
