@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import date, datetime
 
 from app.core.config import settings
 from app.core.errors import create_oracle_unavailable_error
@@ -17,7 +17,7 @@ def _risk_from_audit_status(value: str | None) -> str:
     raw = str(value or "").strip().lower()
     if raw in {"critico", "critical", "alto", "high"}:
         return "high"
-    if raw in {"medio", "médio", "medium", "atencao", "atenção", "warning"}:
+    if raw in {"medio", "medium", "atencao", "warning"}:
         return "medium"
     return "low"
 
@@ -43,6 +43,31 @@ def _next_adjustment(offset_months: int) -> str:
         "Dez",
     ]
     return f"{day:02d} {month_names[normalized_month - 1]} {year}"
+
+
+def _format_oracle_date(value: object, default_offset_months: int) -> str:
+    if isinstance(value, datetime):
+        dt_value = value
+    elif isinstance(value, date):
+        dt_value = datetime.combine(value, datetime.min.time())
+    else:
+        return _next_adjustment(default_offset_months)
+
+    month_names = [
+        "Jan",
+        "Fev",
+        "Mar",
+        "Abr",
+        "Mai",
+        "Jun",
+        "Jul",
+        "Ago",
+        "Set",
+        "Out",
+        "Nov",
+        "Dez",
+    ]
+    return f"{dt_value.day:02d} {month_names[dt_value.month - 1]} {dt_value.year}"
 
 
 def _build_oracle_contract_items(total_amount: float, overdue_amount: float, critical_alerts: int) -> list[dict]:
@@ -89,7 +114,7 @@ def _build_oracle_contract_items(total_amount: float, overdue_amount: float, cri
     return items
 
 
-def _build_contract_items_from_view(rows: list[dict] | None) -> list[dict]:
+def _build_contract_items_from_rows(rows: list[dict] | None) -> list[dict]:
     items = []
     for idx, row in enumerate(rows or []):
         monthly_amount = float(row.get("VALOR_MENSAL") or 0)
@@ -99,7 +124,7 @@ def _build_contract_items_from_view(rows: list[dict] | None) -> list[dict]:
                 "vendor": str(row.get("FORNECEDOR") or f"Fornecedor {idx + 1}"),
                 "monthlyValue": _currency(monthly_amount),
                 "index": str(row.get("INDICE_REAJUSTE") or "IPCA"),
-                "nextAdjustment": _next_adjustment((idx % 3) + 1),
+                "nextAdjustment": _format_oracle_date(row.get("DATA_VENCIMENTO"), (idx % 3) + 1),
                 "risk": _risk_from_audit_status(row.get("STATUS_AUDITORIA_IA")),
                 "note": str(row.get("TIPO_SERVICO") or "Contrato operacional ativo"),
             }
@@ -111,27 +136,49 @@ async def get_contracts_data(condominium_id: int = 1) -> dict:
     if settings.db_dialect == "oracle":
         try:
             contracts_items: list[dict] = []
-            try:
-                contracts_rows = await run_oracle_query(
-                    """
-                    select
-                      contrato_id,
-                      condominio_id,
-                      fornecedor,
-                      tipo_servico,
-                      valor_mensal,
-                      indice_reajuste,
-                      status_auditoria_ia
-                    from mart.vw_contracts
-                    where condominio_id = :condominiumId
-                    order by valor_mensal desc
-                    fetch first 20 rows only
-                    """,
-                    {"condominiumId": condominium_id},
-                )
-                contracts_items = _build_contract_items_from_view(contracts_rows)
-            except Exception:
-                contracts_items = []
+
+            # Prefer APP tables directly to avoid MART grants drift and synthetic vendor labels.
+            for query in (
+                """
+                select
+                  c.contrato_id,
+                  c.condominio_id,
+                  f.razao_social as fornecedor,
+                  c.tipo_servico,
+                  c.valor_mensal_vigente as valor_mensal,
+                  c.indice_reajuste,
+                  c.data_vencimento,
+                  c.status_auditoria_ia
+                from app.contratos c
+                join app.fornecedores f on f.fornecedor_id = c.fornecedor_id
+                where c.condominio_id = :condominiumId
+                order by c.valor_mensal_vigente desc
+                fetch first 20 rows only
+                """,
+                """
+                select
+                  contrato_id,
+                  condominio_id,
+                  fornecedor,
+                  tipo_servico,
+                  valor_mensal,
+                  indice_reajuste,
+                  data_vencimento,
+                  status_auditoria_ia
+                from mart.vw_contracts
+                where condominio_id = :condominiumId
+                order by valor_mensal desc
+                fetch first 20 rows only
+                """,
+            ):
+                try:
+                    contracts_rows = await run_oracle_query(query, {"condominiumId": condominium_id})
+                except Exception:
+                    continue
+
+                contracts_items = _build_contract_items_from_rows(contracts_rows)
+                if contracts_items:
+                    break
 
             totals_rows = await run_oracle_query(
                 """
