@@ -130,10 +130,19 @@ Melhorias sugeridas:
 
 ## Sprint 7 - Go-live controlado
 
-Status geral: Nao iniciada
+Status geral: Em andamento
 
 Feito:
-- Sem entrega oficial de sprint.
+- Matriz de ambientes congelada (`docs/environment_matrix_s7.md`).
+- Validador de perfil de ambiente (`npm run env:validate`).
+- Script de smoke de homolog para gate tecnico (`npm run release:s7:hml-smoke`).
+- Script de drill de rollback com relatorio (`npm run release:s7:rollback-drill`).
+- Runbook unificado de go-live (`docs/sprint7_go_live_runbook.md`).
+- Plano de rollout piloto e handoff documentados.
+- Smoke tecnico executado com sucesso:
+  - `docs/sprint7_hml_smoke_report.md` -> `failed=0`
+- Drill tecnico executado com sucesso:
+  - `docs/sprint7_rollback_drill_report.md` -> `recovery_failed=0`, `RTO=2s`
 
 Pendente:
 - `S7-01` homolog espelhando producao com identidade real validada.

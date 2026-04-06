@@ -133,6 +133,8 @@ Health detalhado (Sprint 2):
 - `npm run test:e2e`: Playwright E2E
 - `npm run test:e2e:install`: instala browsers do Playwright
 - `npm run env:validate`: valida perfil de ambiente (`.env.local`) para gate de go-live
+- `npm run release:s7:hml-smoke`: smoke dos fluxos criticos para gate da Sprint 7 (`S7-01`)
+- `npm run release:s7:rollback-drill`: simulacao assistida de rollback com relatorio (`S7-03`)
 
 ## Chat IA (Sprint 5)
 
@@ -212,8 +214,14 @@ Variaveis de threshold:
 - Guia de setup dos secrets Oracle no GitHub Actions:
   - `docs/github_actions_oracle_secrets.md`
 - Novo endpoint admin para dispatch manual de alertas operacionais:
-  - `POST /api/observability/alerts/dispatch`
+- `POST /api/observability/alerts/dispatch`
 - Configuracao de webhook de alertas:
   - `OBS_ALERT_CHANNEL=webhook`
   - `OBS_ALERT_WEBHOOK_URL=https://seu-endpoint`
   - `OBS_ALERT_WEBHOOK_TIMEOUT_MS=5000`
+
+## Go-live controlado (Sprint 7)
+
+- Runbook unico de go-live: `docs/sprint7_go_live_runbook.md`
+- Plano de rollout piloto: `docs/sprint7_rollout_pilot_plan.md`
+- Plano de treinamento/handoff: `docs/sprint7_training_handoff_plan.md`

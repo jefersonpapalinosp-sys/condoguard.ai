@@ -31,7 +31,9 @@
     "test:e2e:headed": "playwright test --headed",
     "test:e2e:install": "playwright install",
     "test:all": "npm run test && npm run test:e2e",
-    "env:validate": "node scripts/release/validate-env-profile.mjs --env-file .env.local"
+    "env:validate": "node scripts/release/validate-env-profile.mjs --env-file .env.local",
+    "release:s7:hml-smoke": "powershell -ExecutionPolicy Bypass -File scripts/release/sprint7-hml-go-live-smoke.ps1",
+    "release:s7:rollback-drill": "powershell -ExecutionPolicy Bypass -File scripts/release/sprint7-rollback-drill.ps1"
   },
   "dependencies": {
     "@google/genai": "^1.29.0",

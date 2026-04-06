@@ -65,12 +65,20 @@ Status da sprint: **concluida**.
 
 ## Sprint 7 - Go-live controlado
 
+- [x] Automacao de gate de ambiente (`npm run env:validate`).
+- [x] Smoke automatizado de homolog para fluxos criticos (`npm run release:s7:hml-smoke`).
+- [x] Script de drill de rollback com relatorio (`npm run release:s7:rollback-drill`).
+- [x] Runbook de go-live consolidado (`docs/sprint7_go_live_runbook.md`).
+- [x] Plano de rollout piloto documentado (`docs/sprint7_rollout_pilot_plan.md`).
+- [x] Plano de treinamento e handoff documentado (`docs/sprint7_training_handoff_plan.md`).
+- [x] Evidencia tecnica de smoke S7-01 (`docs/sprint7_hml_smoke_report.md`) com `failed=0`.
+- [x] Evidencia tecnica de drill S7-03 (`docs/sprint7_rollback_drill_report.md`) com `recovery_failed=0` e `RTO=2s`.
 - [ ] `S7-01` Homolog espelhando producao + identidade real validada.
 - [ ] `S7-02` Rollout piloto.
 - [ ] `S7-03` Runbook + simulacao de rollback.
 - [ ] `S7-04` Treinamento e handoff final.
 
-Status da sprint: **nao iniciada**.
+Status da sprint: **em andamento**.
 
 ## Validacao geral executada
 
