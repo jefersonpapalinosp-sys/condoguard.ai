@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from fastapi.testclient import TestClient
 
+from app.core.errors import ApiRequestError
 from app.main import app
 
 
@@ -26,6 +27,27 @@ def test_alerts_and_management_contracts():
     assert mgmt.status_code == 200
     mgmt_body = mgmt.json()
     assert 'items' in mgmt_body and 'indicators' in mgmt_body and 'meta' in mgmt_body
+
+
+def test_management_indicators_when_cadastros_unavailable(monkeypatch):
+    client = TestClient(app)
+    headers = _login_headers()
+
+    async def _raise_oracle_unavailable(*_args, **_kwargs):
+        raise ApiRequestError(
+            503,
+            'ORACLE_UNAVAILABLE',
+            'Oracle indisponivel para este ambiente.',
+            {'fallbackAllowed': False},
+        )
+
+    monkeypatch.setattr('app.api.routes.list_cadastros', _raise_oracle_unavailable)
+
+    mgmt = client.get('/api/management/units?page=1&pageSize=20', headers=headers)
+    assert mgmt.status_code == 200
+    indicators = mgmt.json()['indicators']['pending']
+    assert indicators['cadastrosPending'] == 0
+    assert indicators['pendingCount'] == indicators['maintenanceCount']
 
 
 def test_invoices_csv_export_contract():

@@ -90,6 +90,16 @@ describe('invoicesService.markInvoiceAsPaid', () => {
 });
 
 describe('invoicesService.fetchInvoicesData', () => {
+  beforeEach(() => {
+    vi.unstubAllEnvs();
+    vi.resetModules();
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    vi.restoreAllMocks();
+  });
+
   it('returns API response and marks source as api', async () => {
     const apiPayload: InvoicesData = {
       items: [{ id: 'x', unit: 'A-1', resident: 'Teste', reference: 'Abr/2026', dueDate: '2026-04-01', amount: 10, status: 'pending' }],
@@ -129,5 +139,25 @@ describe('invoicesService.fetchInvoicesData', () => {
       module: 'Faturas',
       message: 'API indisponivel (fallback mock ativo)',
     });
+  });
+
+  it('throws when fallback is disabled and marks source as unknown', async () => {
+    vi.stubEnv('VITE_ENABLE_MOCK_FALLBACK', 'false');
+
+    const { requestJson } = await import('../../../src/services/http');
+    const { getInvoicesData } = await import('../../../src/services/mockApi');
+    const { setModuleDataSource, notifyApiFallback } = await import('../../../src/services/apiStatus');
+    const { fetchInvoicesData } = await import('../../../src/services/invoicesService');
+
+    vi.mocked(requestJson).mockRejectedValue(new Error('network'));
+    vi.mocked(getInvoicesData).mockResolvedValue({ items: [] });
+
+    await expect(fetchInvoicesData()).rejects.toThrow(/Falha ao carregar faturas/i);
+    expect(setModuleDataSource).toHaveBeenCalledWith('invoices', 'unknown');
+    expect(notifyApiFallback).toHaveBeenCalledWith({
+      module: 'Faturas',
+      message: 'API indisponivel (fallback mock desativado)',
+    });
+    expect(getInvoicesData).not.toHaveBeenCalled();
   });
 });
