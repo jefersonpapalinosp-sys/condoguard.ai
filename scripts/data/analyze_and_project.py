@@ -2,7 +2,7 @@
 """
 Analisa a planilha CondoGuard, aplica saneamentos basicos e gera:
 - database/reports/data_quality_report.json
-- server/data/*.json (invoices, management_units, chat_bootstrap, alerts)
+- backend/data/*.json (invoices, management_units, chat_bootstrap, alerts)
 """
 
 from __future__ import annotations
@@ -147,12 +147,12 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--xlsx", required=True)
     parser.add_argument("--out-report", default="database/reports/data_quality_report.json")
-    parser.add_argument("--out-server-data", default="server/data")
+    parser.add_argument("--out-backend-data", default="backend/data")
     args = parser.parse_args()
 
     xlsx_path = Path(args.xlsx)
     out_report = Path(args.out_report)
-    out_data = Path(args.out_server_data)
+    out_data = Path(args.out_backend_data)
     out_data.mkdir(parents=True, exist_ok=True)
     out_report.parent.mkdir(parents=True, exist_ok=True)
 
@@ -277,7 +277,7 @@ def main() -> None:
     (out_data / "alerts.json").write_text(json.dumps(alerts_payload, ensure_ascii=False, indent=2), encoding="utf-8")
 
     print(f"Report generated: {out_report}")
-    print(f"Server data generated in: {out_data}")
+    print(f"Backend data generated in: {out_data}")
 
 
 if __name__ == "__main__":

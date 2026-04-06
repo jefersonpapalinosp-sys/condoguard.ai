@@ -67,7 +67,7 @@ Status: **Done tecnico**
 Evidencias:
 - Endpoint `GET /api/alerts` com filtros por `severity`, `status`, `search`, paginacao e ordenacao.
 - Endpoint `PATCH /api/alerts/:id/read` funcional e auditado.
-- Persistencia de leitura por tenant em `server/data/alerts_reads_state.json`.
+- Persistencia de leitura por tenant em `backend/data/alerts_reads_state.json`.
 - Tela de Alertas com:
   - filtro por severidade e estado (`Abertos`, `Lidos`)
   - acao `Marcar como lido` persistente.
@@ -96,7 +96,7 @@ Padrao consolidado:
 - Compatibilidade temporaria preservada onde necessario (`units` em management).
 
 Evidencias:
-- `server/index.mjs` padronizado para invoices, management e alerts.
+- `backend/app/api/routes.py` padronizado para invoices, management e alerts.
 - Services frontend alinhados ao contrato padrao.
 - Suites de API/contract validadas.
 

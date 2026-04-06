@@ -6,8 +6,8 @@ Garantir qualidade profissional cobrindo frontend, backend, API, fallback, healt
 
 ## Stack adotada
 
-- Unit/component/integration/API/contract/smoke: `Vitest` + `Testing Library` + `Supertest`.
-- Contratos de API: `Zod`.
+- Frontend (unit/component/integration): `Vitest` + `Testing Library`.
+- Backend/API/contract/smoke: `pytest` + `FastAPI TestClient`.
 - E2E: `Playwright`.
 
 ## Estrutura de testes
@@ -15,15 +15,13 @@ Garantir qualidade profissional cobrindo frontend, backend, API, fallback, healt
 - `tests/unit`: regras de negocio, hooks/context e services.
 - `tests/components`: componentes criticos de conectividade e estados.
 - `tests/integration`: paginas principais e estados (loading/erro/vazio/sucesso).
-- `tests/api`: endpoints e health em cenarios mock/oracle.
-- `tests/contract`: validacao de payloads da API com schema.
-- `tests/smoke`: checagem rapida de rotas criticas.
+- `backend/tests`: endpoints, contratos e smoke em cenarios mock/oracle.
 - `tests/e2e`: fluxo E2E segmentado por dominio:
 - `auth.e2e.spec.ts`
 - `dashboard.e2e.spec.ts`
 - `invoices.e2e.spec.ts`
 - `alerts.e2e.spec.ts`
-- `tests/factories` e `tests/fixtures`: dados reutilizaveis.
+- `backend/data`: seeds reutilizaveis do backend FastAPI.
 
 ## Cobertura quantitativa (implementado)
 
@@ -74,14 +72,14 @@ Thresholds por modulo critico (gate custom):
 - Cenario `oracle_error_fallback_seed` com falha mockada.
 
 5. Contrato de API:
-- Schemas Zod para `/api/health`, `/api/invoices`, `/api/alerts`, `/api/management/units`, `/api/chat/bootstrap`.
+- Contratos validados em pytest para `/api/health`, `/api/invoices`, `/api/alerts`, `/api/management/units`, `/api/chat/*`, `/api/observability/*`, `/api/security/audit`.
 - Contratos de erro padronizado (`error.code`, `error.message`, `error.details`).
 - Contratos de metadados de listagem (`meta.page`, `meta.pageSize`, `meta.total`, `meta.totalPages`, `meta.hasNext`, `meta.hasPrevious`).
 - Contratos de filtros/enums para endpoints criticos (`status`, `severity`, `block`).
 
 6. Hardening adicional:
-- middleware `helmet`.
 - CORS allowlist.
+- rate limiting por escopo (`api` e `login`).
 - auditoria de eventos de seguranca no backend.
 
 ## Lacunas e riscos atuais

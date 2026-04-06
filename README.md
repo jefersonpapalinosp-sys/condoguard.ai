@@ -87,10 +87,10 @@ py -3 scripts/data/analyze_and_project.py --xlsx "c:\Users\Camila\Downloads\Cond
 Saidas:
 
 - `database/reports/data_quality_report.json`
-- `server/data/invoices.json`
-- `server/data/management_units.json`
-- `server/data/chat_bootstrap.json`
-- `server/data/alerts.json`
+- `backend/data/invoices.json`
+- `backend/data/management_units.json`
+- `backend/data/chat_bootstrap.json`
+- `backend/data/alerts.json`
 
 
 ## Oracle (Sprint 1 adiantado)
@@ -179,7 +179,7 @@ Invoke-RestMethod -Method Get -Uri "http://localhost:4000/api/chat/telemetry?lim
 - `admin` e `sindico`: `/api/invoices`, `/api/management/units`
 - `admin`, `sindico`, `morador`: `/api/alerts`, `/api/chat/bootstrap`, `/api/chat/message`
 - CORS por allowlist (`CORS_ALLOWED_ORIGINS`).
-- Headers de hardening via `helmet`.
+- Headers de hardening no backend FastAPI.
 
 ## Segurança (P1)
 

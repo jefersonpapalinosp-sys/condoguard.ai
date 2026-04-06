@@ -4,7 +4,7 @@ import json
 from pathlib import Path
 from typing import Any
 
-DATA_DIR = Path(__file__).resolve().parents[3] / "server" / "data"
+DATA_DIR = Path(__file__).resolve().parents[3] / "backend" / "data"
 
 
 def read_seed_json(name: str) -> dict[str, Any]:

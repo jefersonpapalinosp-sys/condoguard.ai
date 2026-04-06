@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -11,7 +11,7 @@ from app.observability.metrics_store import record_api_fallback_metric
 from app.repositories.state_store import read_json_state, write_json_state
 from app.utils.seed_loader import read_seed_json
 
-STATUS_FILE = Path(__file__).resolve().parents[3] / "server" / "data" / "invoices_status_state.json"
+STATUS_FILE = Path(__file__).resolve().parents[3] / "backend" / "data" / "invoices_status_state.json"
 
 
 def _to_iso_date(value: Any) -> str:
@@ -91,7 +91,7 @@ async def mark_invoice_as_paid(condominium_id: int, invoice_id: str, actor_sub: 
     tenant = state.setdefault(str(condominium_id), {})
     tenant[str(invoice_id)] = {
         "status": "paid",
-        "paidAt": datetime.utcnow().isoformat() + "Z",
+        "paidAt": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
         "paidBy": actor_sub,
     }
     await write_json_state(STATUS_FILE, state)

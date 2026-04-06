@@ -17,7 +17,7 @@ Scripts Oracle disponiveis em `database/sql/oracle`:
 
 A API FastAPI em `backend/app/main.py` suporta modo por dialeto:
 
-- `DB_DIALECT=mock`: usa seeds de `server/data/*.json`.
+- `DB_DIALECT=mock`: usa seeds de `backend/data/*.json`.
 - `DB_DIALECT=oracle`: usa Oracle (views `MART.*`).
 
 Scripts npm:

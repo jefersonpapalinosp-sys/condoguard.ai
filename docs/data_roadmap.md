@@ -6,7 +6,7 @@
 - Marts para frontend em `database/sql/002_marts_views.sql`
 - Testes de qualidade em `database/sql/003_data_quality_tests.sql`
 - Pipeline de analise e seeds em `scripts/data/analyze_and_project.py`
-- API minima real em `server/index.mjs`
+- API minima real em `backend/app/main.py` (FastAPI)
 
 ## Proxima fase (recomendado)
 

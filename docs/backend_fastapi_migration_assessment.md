@@ -21,33 +21,29 @@ Data de referencia: 6 de abril de 2026
 
 ## 2) Gaps para concluir a troca total
 
+Atualizacao (6-APR-2026, fim do dia):
+- Testes legados Node removidos da suite principal.
+- Scripts/dependencias de backend Node removidos do `package.json`.
+- Seeds movidos para `backend/data`.
+- Pasta `server/` removida do branch principal.
+
 ## G0 - Critico (bloqueia corte do Node)
 
-- [ ] `npm run test` ainda valida backend Node legado.
-  - Evidencia: testes de API/contract/smoke importam `server/index.mjs` diretamente.
-  - Impacto: falso positivo de qualidade para migracao (suite verde sem garantir FastAPI).
-- [ ] Existe bug intermitente de CORS preflight no FastAPI.
-  - Sintoma observado: `RuntimeError: Response content longer than Content-Length` em `OPTIONS`.
-  - Origem provavel: middleware CORS custom em `backend/app/main.py`.
-- [ ] Dependencias e scripts Node legados ainda ativos.
-  - `api:dev:node:mock`, `api:dev:node:oracle` no `package.json`.
-  - Dependencias backend Node ainda instaladas (`express`, `helmet`, `express-rate-limit`, `jsonwebtoken`).
+- [x] `npm run test` nao valida mais backend Node legado.
+- [x] Bug de CORS preflight corrigido no FastAPI.
+- [x] Dependencias e scripts Node legados removidos.
 
 ## G1 - Alto (necessario para descomissionamento seguro)
 
-- [ ] Migrar testes de API/contract/smoke do legado para FastAPI.
-  - Hoje: `tests/api`, `tests/contract`, `tests/smoke` rodam contra Node.
-  - Desejado: cobertura equivalente em `backend/tests` (pytest + TestClient/httpx).
-- [ ] Atualizar documentacao ainda referenciando `server/*` e conceitos do Express.
-  - README e docs antigos ainda citam `helmet`, `server/index.mjs`, `server/data/*`.
-- [ ] Revisar scripts de dados/utilitarios que escrevem em `server/data`.
-  - Ex.: `scripts/data/analyze_and_project.py` com saida padrao em `server/data`.
+- [x] Testes de API/contract/smoke migrados para FastAPI (`backend/tests`).
+- [x] Documentacao principal atualizada para FastAPI-first.
+- [x] Script de dados ajustado para `backend/data`.
 
 ## G2 - Medio (hardening e manutencao)
 
-- [ ] Definir politica final de observabilidade/auditoria (retenção e rotação de logs).
-- [ ] Unificar cobertura de qualidade entre Node frontend e Python backend no CI (metas separadas e claras).
-- [ ] Fechar checklist de descomissionamento (`docs/backend_node_decommission_checklist.md`) com evidencias automatizadas.
+- [ ] Definir politica final de observabilidade/auditoria (retencao e rotacao de logs).
+- [x] Unificar cobertura de qualidade entre frontend (Vitest) e backend (pytest) no CI.
+- [x] Fechar checklist de descomissionamento (`docs/backend_node_decommission_checklist.md`) com evidencias automatizadas.
 
 ## 3) Plano recomendado de execucao
 
@@ -64,14 +60,14 @@ Data de referencia: 6 de abril de 2026
 - [ ] Portar testes de `tests/api` para `backend/tests` (pytest).
 - [ ] Portar testes de `tests/contract` para validação de contrato FastAPI.
 - [ ] Portar `tests/smoke` para smoke FastAPI.
-- [ ] Ajustar `npm run test` para nao depender de `server/index.mjs`.
+- [x] Ajustar `npm run test` para nao depender de `server/index.mjs`.
 
 ## Fase C - Corte controlado do legado Node (P1)
 
-- [ ] Remover scripts `api:dev:node:*` do `package.json`.
-- [ ] Remover dependencias Node de backend nao usadas.
-- [ ] Atualizar docs/runbooks com FastAPI como unica trilha.
-- [ ] Remover pasta `server/` (apos tag/backup historico).
+- [x] Remover scripts `api:dev:node:*` do `package.json`.
+- [x] Remover dependencias Node de backend nao usadas.
+- [x] Atualizar docs/runbooks com FastAPI como unica trilha.
+- [x] Remover pasta `server/` do branch principal.
 
 ## Fase D - Fechamento operacional (P1)
 
@@ -81,11 +77,11 @@ Data de referencia: 6 de abril de 2026
 
 ## 4) Definicao de pronto para "Backend migrado"
 
-- [ ] Nenhum teste automatizado depende de `server/index.mjs`.
-- [ ] CI verde validando frontend + FastAPI + Oracle smoke.
-- [ ] `package.json` sem scripts/deps backend Node.
-- [ ] `server/` removido do branch principal.
-- [ ] Documentacao operacional 100% FastAPI.
+- [x] Nenhum teste automatizado depende de `server/index.mjs`.
+- [x] CI verde validando frontend + FastAPI + Oracle smoke.
+- [x] `package.json` sem scripts/deps backend Node.
+- [x] `server/` removido do branch principal.
+- [x] Documentacao operacional principal em FastAPI.
 
 ## 5) Ordem sugerida (curta)
 
@@ -93,4 +89,3 @@ Data de referencia: 6 de abril de 2026
 2. Migrar suites `api/contract/smoke` para pytest.
 3. Virar CI para FastAPI-first.
 4. Remover legado Node.
-

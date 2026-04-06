@@ -11,7 +11,7 @@ from app.observability.metrics_store import record_api_fallback_metric
 from app.repositories.state_store import read_json_state, write_json_state
 from app.utils.seed_loader import read_seed_json
 
-READS_FILE = Path(__file__).resolve().parents[3] / "server" / "data" / "alerts_reads_state.json"
+READS_FILE = Path(__file__).resolve().parents[3] / "backend" / "data" / "alerts_reads_state.json"
 
 
 def _format_relative(value: Any) -> str:
@@ -112,7 +112,7 @@ async def mark_alert_as_read(condominium_id: int, alert_id: str, actor_sub: str 
 
     state = await read_json_state(READS_FILE)
     tenant = state.setdefault(str(condominium_id), {})
-    tenant[str(alert_id)] = {"read": True, "readAt": datetime.utcnow().isoformat() + "Z", "readBy": actor_sub}
+    tenant[str(alert_id)] = {"read": True, "readAt": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"), "readBy": actor_sub}
     await write_json_state(READS_FILE, state)
 
     refreshed = await get_alerts_data(condominium_id)

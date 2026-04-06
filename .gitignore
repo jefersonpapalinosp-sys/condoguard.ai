@@ -7,7 +7,7 @@ coverage/
 .env*
 !.env.example
 invoices-export.csv
-server/data/*_state.json
+backend/data/*_state.json
 __pycache__/
 *.py[cod]
 .pytest_cache/

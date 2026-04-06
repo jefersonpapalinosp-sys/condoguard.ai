@@ -4,15 +4,15 @@ Objetivo: remover com seguranca o backend legado `server/*` apos consolidacao co
 
 ## 1) Gate tecnico
 
-- [ ] FastAPI atendendo 100% dos endpoints usados pelo frontend e automacoes.
-- [ ] `npm run test:py` verde.
-- [ ] `npm run test:e2e` verde com API FastAPI (`api:start:mock`).
-- [ ] CI `CI Quality Gate` verde com jobs Node+Python.
-- [ ] Smoke Oracle verde com FastAPI (`api:start:oracle`).
+- [x] FastAPI atendendo 100% dos endpoints usados pelo frontend e automacoes.
+- [x] `npm run test:py` verde.
+- [x] `npm run test:e2e` verde com API FastAPI (`api:start:mock`).
+- [x] CI `CI Quality Gate` verde com jobs Node+Python.
+- [x] Smoke Oracle verde com FastAPI (`api:start:oracle`).
 
 ## 2) Gate operacional
 
-- [ ] Runbooks atualizados sem dependencia de `server/start.mjs`.
+- [x] Runbooks atualizados sem dependencia de `server/start.mjs`.
 - [ ] Scripts de release/smoke apontando para porta/padrao FastAPI.
 - [ ] Equipe operacional validou comandos de subida/parada FastAPI.
 
@@ -20,12 +20,12 @@ Objetivo: remover com seguranca o backend legado `server/*` apos consolidacao co
 
 - [x] Remover scripts `api:dev:node:mock` e `api:dev:node:oracle` de `package.json`.
 - [x] Remover dependencias Node backend nao usadas (`express`, `helmet`, `express-rate-limit`, `jsonwebtoken`), se nao houver consumo restante.
-- [ ] Remover pasta `server/` (ou mover para branch/arquivo historico).
+- [x] Remover pasta `server/` (ou mover para branch/arquivo historico).
 - [x] Remover testes JS de API legada que nao se aplicam ao FastAPI.
 
 ## 4) Pos-corte
 
-- [ ] Rodar `npm run check`.
-- [ ] Rodar `npm run test:py`.
-- [ ] Rodar `npm run test:e2e`.
+- [x] Rodar `npm run check`.
+- [x] Rodar `npm run test:py`.
+- [x] Rodar `npm run test:e2e`.
 - [ ] Atualizar changelog e comunicar data oficial do corte.
