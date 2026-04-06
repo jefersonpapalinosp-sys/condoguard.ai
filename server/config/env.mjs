@@ -21,6 +21,10 @@ export function getServerConfig() {
   const securityAuditPersistEnabled = (process.env.SECURITY_AUDIT_PERSIST_ENABLED || 'false').toLowerCase() === 'true';
   const authPasswordLoginEnabled = (process.env.AUTH_PASSWORD_LOGIN_ENABLED || (authProvider === 'local_jwt' || appEnv === 'dev' ? 'true' : 'false'))
     .toLowerCase() === 'true';
+  const observabilityLatencyP95WarnMs = Number(process.env.OBS_ALERT_P95_LATENCY_MS || 1200);
+  const observabilityErrorRateWarnPct = Number(process.env.OBS_ALERT_ERROR_RATE_PCT || 5);
+  const observabilityFallbackWarnCount = Number(process.env.OBS_ALERT_FALLBACK_COUNT || 3);
+  const observabilityAlertChannel = process.env.OBS_ALERT_CHANNEL || 'log';
 
   return {
     appEnv,
@@ -54,6 +58,14 @@ export function getServerConfig() {
       connectString: process.env.ORACLE_CONNECT_STRING || '',
       poolMin: Number(process.env.ORACLE_POOL_MIN || 1),
       poolMax: Number(process.env.ORACLE_POOL_MAX || 8),
+    },
+    observability: {
+      thresholds: {
+        latencyP95WarnMs: Number.isFinite(observabilityLatencyP95WarnMs) ? observabilityLatencyP95WarnMs : 1200,
+        errorRateWarnPct: Number.isFinite(observabilityErrorRateWarnPct) ? observabilityErrorRateWarnPct : 5,
+        fallbackWarnCount: Number.isFinite(observabilityFallbackWarnCount) ? observabilityFallbackWarnCount : 3,
+      },
+      alertChannel: observabilityAlertChannel,
     },
   };
 }

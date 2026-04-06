@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
 import { runOracleQuery } from '../db/oracleClient.mjs';
 import { getServerConfig } from '../config/env.mjs';
+import { recordApiFallbackMetric } from '../observability/metricsStore.mjs';
 
 const DEMO_USERS = new Map([
   ['admin@condoguard.ai', { password: 'password123', role: 'admin', condominiumId: 1 }],
@@ -59,6 +60,7 @@ export async function findAccountForLogin(email, password, configOverride = null
       if (!config.enableDemoAuth) {
         throw error;
       }
+      recordApiFallbackMetric('auth', 'oracle_fallback_demo_auth');
     }
   }
 

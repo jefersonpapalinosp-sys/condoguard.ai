@@ -2,6 +2,7 @@ import { readSeedJson } from '../utils/seedLoader.mjs';
 import { runOracleQuery } from '../db/oracleClient.mjs';
 import { getServerConfig } from '../config/env.mjs';
 import { createOracleUnavailableError } from '../errors/oracleErrors.mjs';
+import { recordApiFallbackMetric } from '../observability/metricsStore.mjs';
 import { readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -98,6 +99,7 @@ export async function getInvoicesData(condominiumId = 1) {
       if (!allowOracleSeedFallback) {
         throw createOracleUnavailableError(error);
       }
+      recordApiFallbackMetric('invoices', 'oracle_fallback_seed');
     }
   }
 

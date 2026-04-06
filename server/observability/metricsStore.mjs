@@ -15,6 +15,7 @@ const state = {
   },
   routes: new Map(),
   errorCodes: new Map(),
+  fallbackByModule: new Map(),
 };
 
 function classifyStatus(status) {
@@ -72,6 +73,7 @@ export function resetObservabilityMetrics() {
   };
   state.routes.clear();
   state.errorCodes.clear();
+  state.fallbackByModule.clear();
 }
 
 export function recordApiRequestMetric({ method, path, status, latencyMs }) {
@@ -105,6 +107,22 @@ export function recordApiErrorCodeMetric(code) {
   state.errorCodes.set(key, (state.errorCodes.get(key) || 0) + 1);
 }
 
+export function recordApiFallbackMetric(moduleName, reason = 'unknown') {
+  const moduleKey = String(moduleName || 'unknown').trim().toLowerCase() || 'unknown';
+  const reasonKey = String(reason || 'unknown').trim().toLowerCase() || 'unknown';
+
+  if (!state.fallbackByModule.has(moduleKey)) {
+    state.fallbackByModule.set(moduleKey, {
+      count: 0,
+      reasons: new Map(),
+    });
+  }
+
+  const moduleEntry = state.fallbackByModule.get(moduleKey);
+  moduleEntry.count += 1;
+  moduleEntry.reasons.set(reasonKey, (moduleEntry.reasons.get(reasonKey) || 0) + 1);
+}
+
 export function getObservabilityMetricsSnapshot({ routeLimit = 10, codeLimit = 10 } = {}) {
   const avgLatency = state.latencies.length > 0
     ? Number((state.latencies.reduce((sum, value) => sum + value, 0) / state.latencies.length).toFixed(2))
@@ -131,6 +149,17 @@ export function getObservabilityMetricsSnapshot({ routeLimit = 10, codeLimit = 1
     .sort((a, b) => b.count - a.count)
     .slice(0, Math.max(1, Number(codeLimit || 10)));
 
+  const fallbackModules = [...state.fallbackByModule.entries()]
+    .map(([module, entry]) => ({
+      module,
+      count: entry.count,
+      reasons: [...entry.reasons.entries()]
+        .map(([reason, count]) => ({ reason, count }))
+        .sort((a, b) => b.count - a.count),
+    }))
+    .sort((a, b) => b.count - a.count);
+  const totalFallbacks = fallbackModules.reduce((acc, item) => acc + item.count, 0);
+
   return {
     generatedAt: new Date().toISOString(),
     startedAt: state.startedAt,
@@ -148,5 +177,9 @@ export function getObservabilityMetricsSnapshot({ routeLimit = 10, codeLimit = 1
     statusClasses: { ...state.statusClasses },
     topRoutes,
     errorCodes,
+    fallbacks: {
+      total: totalFallbacks,
+      modules: fallbackModules,
+    },
   };
 }

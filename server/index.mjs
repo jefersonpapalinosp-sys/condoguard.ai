@@ -277,6 +277,42 @@ function toInvoicesCsv(items) {
     .join('\n');
 }
 
+function buildObservabilityAlerts(metrics, thresholds) {
+  const alerts = [];
+
+  if (metrics.latency.p95Ms >= thresholds.latencyP95WarnMs) {
+    alerts.push({
+      id: 'latency_p95_high',
+      severity: 'warning',
+      message: `P95 de latencia acima do limite (${metrics.latency.p95Ms}ms >= ${thresholds.latencyP95WarnMs}ms).`,
+      value: metrics.latency.p95Ms,
+      threshold: thresholds.latencyP95WarnMs,
+    });
+  }
+
+  if (metrics.counters.errorRatePct >= thresholds.errorRateWarnPct) {
+    alerts.push({
+      id: 'error_rate_high',
+      severity: 'critical',
+      message: `Taxa de erro acima do limite (${metrics.counters.errorRatePct}% >= ${thresholds.errorRateWarnPct}%).`,
+      value: metrics.counters.errorRatePct,
+      threshold: thresholds.errorRateWarnPct,
+    });
+  }
+
+  if (metrics.fallbacks.total >= thresholds.fallbackWarnCount) {
+    alerts.push({
+      id: 'fallback_rate_high',
+      severity: 'warning',
+      message: `Fallback de dados acima do limite (${metrics.fallbacks.total} >= ${thresholds.fallbackWarnCount}).`,
+      value: metrics.fallbacks.total,
+      threshold: thresholds.fallbackWarnCount,
+    });
+  }
+
+  return alerts;
+}
+
 function paginate(list, page, pageSize) {
   const total = list.length;
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
@@ -779,6 +815,24 @@ export function createApp(config = {}) {
     const codeLimit = Math.min(parsePositiveInt(req.query.codeLimit, 10, 'codeLimit'), 100);
     const payload = getObservabilityMetricsSnapshot({ routeLimit, codeLimit });
     res.json(payload);
+  }));
+
+  app.get('/api/observability/alerts', requireAuth(resolvedConfig), requireTenant(resolvedConfig), requireRole(resolvedConfig, ['admin']), asyncRoute(async (_req, res) => {
+    const metrics = getObservabilityMetricsSnapshot({ routeLimit: 20, codeLimit: 20 });
+    const thresholds = resolvedConfig.observability?.thresholds || {
+      latencyP95WarnMs: 1200,
+      errorRateWarnPct: 5,
+      fallbackWarnCount: 3,
+    };
+
+    const items = buildObservabilityAlerts(metrics, thresholds);
+    res.json({
+      generatedAt: new Date().toISOString(),
+      channel: resolvedConfig.observability?.alertChannel || 'log',
+      thresholds,
+      hasAlerts: items.length > 0,
+      items,
+    });
   }));
 
   app.get('/api/alerts', requireAuth(resolvedConfig), requireTenant(resolvedConfig), requireRole(resolvedConfig, AUTH_ROLES), asyncRoute(async (req, res) => {

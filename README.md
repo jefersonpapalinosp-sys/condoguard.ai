@@ -191,3 +191,17 @@ E2E segmentados por dominio:
 
 
 
+
+### Observabilidade - atualizacoes Sprint 6
+
+- Endpoints operacionais (admin):
+  - `GET /api/observability/metrics?routeLimit=10&codeLimit=10`
+  - `GET /api/observability/alerts`
+- O snapshot de metricas agora inclui fallback por modulo (`fallbacks.total` e `fallbacks.modules`).
+- O endpoint de alertas retorna violacoes de threshold para latencia p95, taxa de erro e volume de fallback.
+
+Variaveis de threshold:
+- `OBS_ALERT_P95_LATENCY_MS` (default `1200`)
+- `OBS_ALERT_ERROR_RATE_PCT` (default `5`)
+- `OBS_ALERT_FALLBACK_COUNT` (default `3`)
+- `OBS_ALERT_CHANNEL` (default `log`)

@@ -59,6 +59,14 @@ jobs:
       - name: Run E2E
         run: npm run test:e2e
 
+      - name: Upload Playwright test results (always)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-test-results
+          path: test-results/
+          if-no-files-found: ignore
+
       - name: Upload Playwright report (always)
         if: always()
         uses: actions/upload-artifact@v4
@@ -66,3 +74,48 @@ jobs:
           name: playwright-report
           path: playwright-report/
           if-no-files-found: ignore
+
+  oracle-smoke:
+    name: Oracle Health Smoke
+    runs-on: ubuntu-latest
+    needs: quality
+    if: ${{ secrets.ORACLE_USER != '' && secrets.ORACLE_PASSWORD != '' && secrets.ORACLE_CONNECT_STRING != '' }}
+    env:
+      APP_ENV: hml
+      PORT: 4001
+      DB_DIALECT: oracle
+      ALLOW_ORACLE_SEED_FALLBACK: "false"
+      ENABLE_DEMO_AUTH: "true"
+      AUTH_PROVIDER: local_jwt
+      AUTH_PASSWORD_LOGIN_ENABLED: "true"
+      CORS_ALLOWED_ORIGINS: http://localhost:3000,http://127.0.0.1:3000
+      ORACLE_USER: ${{ secrets.ORACLE_USER }}
+      ORACLE_PASSWORD: ${{ secrets.ORACLE_PASSWORD }}
+      ORACLE_CONNECT_STRING: ${{ secrets.ORACLE_CONNECT_STRING }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Start API (oracle)
+        run: nohup npm run api:dev:oracle > oracle-api.log 2>&1 &
+
+      - name: Wait and validate Oracle health
+        run: |
+          for i in {1..30}; do
+            if curl -sSf http://localhost:4001/api/health > health.json; then
+              break
+            fi
+            sleep 2
+          done
+          cat health.json
+          grep -q '"dialect":"oracle"' health.json
+          grep -q '"dbStatus":"oracle_pool_ok"' health.json

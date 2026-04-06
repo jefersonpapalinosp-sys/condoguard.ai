@@ -344,6 +344,10 @@ describe('API endpoints', () => {
         }),
         topRoutes: expect.any(Array),
         errorCodes: expect.any(Array),
+        fallbacks: expect.objectContaining({
+          total: expect.any(Number),
+          modules: expect.any(Array),
+        }),
       }),
     );
     expect(adminMetrics.body.topRoutes.length).toBeGreaterThan(0);
@@ -351,6 +355,47 @@ describe('API endpoints', () => {
     const forbidden = await request(app)
       .get('/api/observability/metrics')
       .set('Authorization', `Bearer ${moradorToken}`);
+    expect(forbidden.status).toBe(403);
+    expect(forbidden.body.error.code).toBe('FORBIDDEN');
+  });
+
+  it('returns observability operational alerts for admin only', async () => {
+    const { createApp } = await import('../../server/index.mjs');
+    const app = createApp({
+      ...config,
+      observability: {
+        thresholds: {
+          latencyP95WarnMs: 0,
+          errorRateWarnPct: 0,
+          fallbackWarnCount: 0,
+        },
+        alertChannel: 'log',
+      },
+    });
+
+    const adminToken = await loginAndGetToken(app, { email: 'admin@condoguard.ai', password: 'password123' });
+    const sindicoToken = await loginAndGetToken(app, { email: 'sindico@condoguard.ai', password: 'password123' });
+
+    await request(app).get('/api/health');
+    await request(app).get('/api/invoices').set('Authorization', `Bearer ${adminToken}`);
+
+    const adminResponse = await request(app).get('/api/observability/alerts').set('Authorization', `Bearer ${adminToken}`);
+    expect(adminResponse.status).toBe(200);
+    expect(adminResponse.body).toEqual(
+      expect.objectContaining({
+        channel: 'log',
+        hasAlerts: expect.any(Boolean),
+        thresholds: expect.objectContaining({
+          latencyP95WarnMs: 0,
+          errorRateWarnPct: 0,
+          fallbackWarnCount: 0,
+        }),
+        items: expect.any(Array),
+      }),
+    );
+    expect(adminResponse.body.items.length).toBeGreaterThan(0);
+
+    const forbidden = await request(app).get('/api/observability/alerts').set('Authorization', `Bearer ${sindicoToken}`);
     expect(forbidden.status).toBe(403);
     expect(forbidden.body.error.code).toBe('FORBIDDEN');
   });

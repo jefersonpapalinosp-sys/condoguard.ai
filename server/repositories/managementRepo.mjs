@@ -2,6 +2,7 @@ import { readSeedJson } from '../utils/seedLoader.mjs';
 import { runOracleQuery } from '../db/oracleClient.mjs';
 import { getServerConfig } from '../config/env.mjs';
 import { createOracleUnavailableError } from '../errors/oracleErrors.mjs';
+import { recordApiFallbackMetric } from '../observability/metricsStore.mjs';
 
 export async function getManagementUnitsData(condominiumId = 1) {
   const { dbDialect, allowOracleSeedFallback } = getServerConfig();
@@ -39,6 +40,7 @@ export async function getManagementUnitsData(condominiumId = 1) {
       if (!allowOracleSeedFallback) {
         throw createOracleUnavailableError(error);
       }
+      recordApiFallbackMetric('management', 'oracle_fallback_seed');
     }
   }
 
