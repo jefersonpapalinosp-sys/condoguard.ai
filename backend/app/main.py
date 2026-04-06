@@ -6,7 +6,7 @@ from time import perf_counter
 from typing import Any
 
 from fastapi import FastAPI, Request
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, Response
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from app.api.routes import router
@@ -19,6 +19,12 @@ from app.observability.metrics_store import (
 )
 from app.repositories.chat_telemetry_repo import reset_chat_telemetry_store
 from app.utils.logging import configure_logging, log_security_event
+
+
+def _api_error_response(status_code: int, code: str, message: str, details: dict[str, Any] | None = None) -> JSONResponse:
+    record_api_error_code_metric(code)
+    payload = {"error": {"code": code, "message": message, "details": details}}
+    return JSONResponse(status_code=status_code, content=payload)
 
 
 class SecurityHeadersMiddleware(BaseHTTPMiddleware):
@@ -36,10 +42,12 @@ class CorsAllowlistMiddleware(BaseHTTPMiddleware):
         if origin:
             if origin not in settings.allowed_origins:
                 log_security_event("cors_denied", request, {"origin": origin})
-                raise ApiRequestError(403, "CORS_DENIED", "Origem nao permitida por CORS.", {"origin": origin})
+                return _api_error_response(403, "CORS_DENIED", "Origem nao permitida por CORS.", {"origin": origin})
 
             if request.method.upper() == "OPTIONS":
-                response = JSONResponse(status_code=204, content={})
+                # 204 must not include a response body; otherwise uvicorn may raise
+                # "Response content longer than Content-Length" during preflight.
+                response = Response(status_code=204)
                 response.headers["Access-Control-Allow-Origin"] = origin
                 response.headers["Vary"] = "Origin"
                 response.headers["Access-Control-Allow-Methods"] = "GET,POST,PATCH,OPTIONS"
@@ -83,12 +91,12 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
             bucket = self.login_requests[ip]
             if not self._accept(bucket, settings.login_rate_limit_max, settings.rate_limit_window_ms):
                 log_security_event("rate_limit_exceeded", request, {"scope": "login"})
-                raise ApiRequestError(429, "RATE_LIMITED", "Muitas tentativas de login. Aguarde e tente novamente.")
+                return _api_error_response(429, "RATE_LIMITED", "Muitas tentativas de login. Aguarde e tente novamente.")
 
         bucket = self.requests[ip]
         if not self._accept(bucket, settings.rate_limit_max, settings.rate_limit_window_ms):
             log_security_event("rate_limit_exceeded", request, {"scope": "api"})
-            raise ApiRequestError(429, "RATE_LIMITED", "Muitas requisicoes. Tente novamente em instantes.")
+            return _api_error_response(429, "RATE_LIMITED", "Muitas requisicoes. Tente novamente em instantes.")
 
         return await call_next(request)
 

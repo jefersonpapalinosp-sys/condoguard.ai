@@ -18,10 +18,10 @@ Objetivo: remover com seguranca o backend legado `server/*` apos consolidacao co
 
 ## 3) Corte do legado
 
-- [ ] Remover scripts `api:dev:node:mock` e `api:dev:node:oracle` de `package.json`.
-- [ ] Remover dependencias Node backend nao usadas (`express`, `helmet`, `express-rate-limit`, `jsonwebtoken`), se nao houver consumo restante.
+- [x] Remover scripts `api:dev:node:mock` e `api:dev:node:oracle` de `package.json`.
+- [x] Remover dependencias Node backend nao usadas (`express`, `helmet`, `express-rate-limit`, `jsonwebtoken`), se nao houver consumo restante.
 - [ ] Remover pasta `server/` (ou mover para branch/arquivo historico).
-- [ ] Remover testes JS de API legada que nao se aplicam ao FastAPI.
+- [x] Remover testes JS de API legada que nao se aplicam ao FastAPI.
 
 ## 4) Pos-corte
 

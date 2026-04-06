@@ -38,8 +38,6 @@ Credenciais locais de desenvolvimento (P0 auth):
 - `npm run api:dev:oracle`: API FastAPI local (usa DB_DIALECT do ambiente)
 - `npm run api:start:mock`: API FastAPI mock sem reload (ideal para CI/E2E)
 - `npm run api:start:oracle`: API FastAPI Oracle sem reload (ideal para CI)
-- `npm run api:dev:node:mock`: API legada Node/Express com mock
-- `npm run api:dev:node:oracle`: API legada Node/Express com Oracle
 - `npm run db:migrate:flyway`: executa migracoes Flyway no Oracle
 - `npm run db:smoke:sprint3`: smoke cross-tenant (Sprint 3) em Oracle
 - `npm run db:smoke:sprint3:rbac`: smoke de matriz RBAC (Sprint 3) e gera relatorio markdown
@@ -131,13 +129,14 @@ Health detalhado (Sprint 2):
 
 ## Testes automatizados
 
-- `npm run test`: suite Vitest completa (unit, component, integration, api, contract, smoke)
+- `npm run test`: suite principal de frontend (Vitest, sem backend legado Node)
+- `npm run test:frontend`: alias explicito da suite frontend
 - `npm run test:unit`
 - `npm run test:component`
 - `npm run test:integration`
-- `npm run test:api`
-- `npm run test:contract`
-- `npm run test:smoke`
+- `npm run test:api`: paridade de API FastAPI (pytest)
+- `npm run test:contract`: contratos FastAPI (pytest)
+- `npm run test:smoke`: smoke FastAPI (pytest)
 - `npm run test:coverage`
 - `npm run test:coverage:check`
 - `npm run test:e2e`: Playwright E2E
@@ -150,7 +149,6 @@ Health detalhado (Sprint 2):
 ## Deprecacao do backend Node
 
 - Backend oficial: **FastAPI** (`backend/app/main.py`).
-- Scripts `api:dev:node:*` permanecem apenas como contingencia temporaria.
 - Planejamento de remocao do legado: `docs/backend_node_decommission_checklist.md`.
 
 ## Chat IA (Sprint 5)
