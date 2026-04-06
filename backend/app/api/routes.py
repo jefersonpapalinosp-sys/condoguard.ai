@@ -253,7 +253,15 @@ async def management_units(
 ):
     payload = await get_management_units_data(auth["condominiumId"])
     invoices_payload = await get_invoices_data(auth["condominiumId"])
-    cadastros_payload = await list_cadastros(auth["condominiumId"])
+    try:
+        cadastros_payload = await list_cadastros(auth["condominiumId"])
+    except ApiRequestError as exc:
+        # Cadastros is informational for this endpoint. If Oracle is unavailable with fallback disabled,
+        # keep management available and proceed without cadastros pending count.
+        if exc.code == "ORACLE_UNAVAILABLE":
+            cadastros_payload = {"items": []}
+        else:
+            raise
 
     status_f = parse_enum(status, MANAGEMENT_STATUSES, "status")
     block_f = parse_enum(block.lower() if block else None, MANAGEMENT_BLOCKS, "block")

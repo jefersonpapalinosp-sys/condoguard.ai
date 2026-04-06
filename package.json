@@ -14,6 +14,7 @@
     "api:start:oracle": "node scripts/run-fastapi.mjs oracle",
     "db:migrate:flyway": "powershell -ExecutionPolicy Bypass -File scripts/db/flyway-migrate.ps1",
     "db:migrate:contracts:local": "py -3.12 scripts/db/apply_contracts_migrations.py",
+    "db:migrate:cadastros:local": "py -3.12 scripts/db/apply_cadastros_migration.py",
     "db:smoke:sprint3": "powershell -ExecutionPolicy Bypass -File scripts/db/sprint3-cross-tenant-smoke.ps1",
     "db:smoke:sprint3:rbac": "powershell -ExecutionPolicy Bypass -File scripts/db/sprint3-rbac-smoke.ps1",
     "security:smoke:sprint3:oidc": "powershell -ExecutionPolicy Bypass -File scripts/security/sprint3-oidc-closure-smoke.ps1",

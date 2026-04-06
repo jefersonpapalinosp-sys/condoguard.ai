@@ -17,6 +17,7 @@ from app.observability.metrics_store import (
     record_api_request_metric,
     reset_observability_metrics,
 )
+from app.repositories.cadastros_repo import reset_cadastros_store
 from app.repositories.chat_telemetry_repo import reset_chat_telemetry_store
 from app.utils.logging import configure_logging, log_security_event
 
@@ -118,6 +119,7 @@ class ObservabilityMiddleware(BaseHTTPMiddleware):
 configure_logging()
 reset_observability_metrics()
 reset_chat_telemetry_store()
+reset_cadastros_store()
 
 app = FastAPI(title="CondoGuard API (FastAPI)", version="1.0.0")
 app.add_middleware(SecurityHeadersMiddleware)
@@ -130,6 +132,7 @@ app.include_router(router)
 def reset_runtime_state() -> None:
     reset_observability_metrics()
     reset_chat_telemetry_store()
+    reset_cadastros_store()
 
     if app.middleware_stack is None:
         app.middleware_stack = app.build_middleware_stack()
