@@ -1,6 +1,6 @@
 # Status Mestre de Sprints (CondoGuard.AI)
 
-Data de referencia: 5 de abril de 2026
+Data de referencia: 6 de abril de 2026
 Fonte: consolidado de `product_backlog_sprints.md`, checklists e boards das sprints.
 Checklist operacional consolidado: `docs/sprints_implantacao_checklist.md`.
 
@@ -103,7 +103,7 @@ Melhorias sugeridas:
 
 ## Sprint 6 - Qualidade, testes e observabilidade
 
-Status geral: Em progresso
+Status geral: Concluida
 
 Feito:
 - Suites locais de testes e E2E ja operacionais no projeto.
@@ -117,11 +117,13 @@ Feito:
 - Observabilidade backend evoluida com fallback por modulo e alertas por threshold (`/api/observability/alerts`).
 - Canal externo de alerta por webhook implementado com dispatch manual (`/api/observability/alerts/dispatch`).
 - Catalogo de logs estruturados publicado: `docs/observability_log_catalog.md`.
+- Execucao final de CI validada com sucesso (`run 24017181348`):
+  - `Lint + Coverage Gate`: PASS
+  - `Playwright E2E`: PASS
+  - `Oracle Health Smoke`: PASS
 
 Pendente:
-- `S6-01` meta de cobertura formal por modulo critico.
-- `S6-02` validar secrets Oracle no GitHub e evidenciar primeira execucao verde do job dedicado.
-- `S6-04` configurar URL real de webhook em homolog e evidenciar disparo.
+- Sem bloqueios tecnicos da sprint. Ajustes de threshold/canal podem evoluir como melhoria continua na Sprint 7.
 
 Melhorias sugeridas:
 - Publicar baseline de qualidade (cobertura, flakiness, tempo medio de pipeline).

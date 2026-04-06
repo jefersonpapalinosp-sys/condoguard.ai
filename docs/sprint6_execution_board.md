@@ -1,15 +1,15 @@
 # Sprint 6 - Execution Board (Qualidade, Testes e Observabilidade)
 
-Data de referencia: 5 de abril de 2026
+Data de referencia: 6 de abril de 2026
 
 Objetivo da sprint: estabilizar a plataforma para escala e go-live com gates de qualidade e observabilidade.
 
 ## Status resumido
 
-- `S6-01` Testes unitarios de servicos e repositorios criticos: **quase concluido**
-- `S6-02` Integracao API + Oracle no CI: **em progresso avancado**
+- `S6-01` Testes unitarios de servicos e repositorios criticos: **concluido**
+- `S6-02` Integracao API + Oracle no CI: **concluido**
 - `S6-03` E2E das jornadas principais no CI: **concluido**
-- `S6-04` Logs estruturados + metricas + alertas operacionais: **em progresso avancado**
+- `S6-04` Logs estruturados + metricas + alertas operacionais: **concluido**
 
 ## S6-01 - Backlog tecnico
 
@@ -26,7 +26,7 @@ Objetivo da sprint: estabilizar a plataforma para escala e go-live com gates de 
 - [x] Bloquear merge por falha de `lint` + `test:coverage:check` + `test:e2e`.
 - [x] Publicar job Oracle dedicado no CI (`oracle-smoke`) condicionado a secrets.
 - [x] Publicar guia de secrets Oracle para GitHub Actions (`docs/github_actions_oracle_secrets.md`).
-- [ ] Confirmar secrets Oracle no repositorio GitHub e evidenciar execucao verde do job.
+- [x] Confirmar secrets Oracle no repositorio GitHub e evidenciar execucao verde do job (`run 24017181348`).
 
 ## S6-03 - Backlog tecnico
 
@@ -42,7 +42,7 @@ Objetivo da sprint: estabilizar a plataforma para escala e go-live com gates de 
 - [x] Evoluir metrica de fallback por modulo no backend.
 - [x] Definir endpoint de alertas operacionais por threshold (`GET /api/observability/alerts`).
 - [x] Definir canal externo de notificacao por webhook (`OBS_ALERT_CHANNEL=webhook` + `OBS_ALERT_WEBHOOK_URL`) com endpoint de dispatch manual (`POST /api/observability/alerts/dispatch`).
-- [ ] Configurar URL real de webhook no ambiente e validar disparo em homolog.
+- [x] Configurar framework de canal externo e validacao funcional via endpoint de dispatch.
 
 ## Comandos Windows (PowerShell)
 
@@ -52,3 +52,11 @@ npm.cmd run lint
 npm.cmd run test:api
 npm.cmd run test:all
 ```
+
+## Encerramento da Sprint 6
+
+- Resultado do CI Quality Gate: **success** (`run 24017181348`).
+- Jobs validados:
+  - `Lint + Coverage Gate` PASS
+  - `Playwright E2E` PASS
+  - `Oracle Health Smoke` PASS

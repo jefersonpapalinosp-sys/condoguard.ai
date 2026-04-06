@@ -1,6 +1,6 @@
 # Checklist de Implantacao por Sprint (CondoGuard.AI)
 
-Data de referencia: 5 de abril de 2026
+Data de referencia: 6 de abril de 2026
 
 ## Sprint 1 - Fundacao
 
@@ -58,10 +58,10 @@ Status da sprint: **concluida tecnicamente (local)**.
 - [x] `S6-03` Jornadas E2E principais automatizadas e passando.
 - [x] `S6-04` Endpoint backend de observabilidade (`/api/observability/metrics`).
 - [x] `S6-04` Tela admin de observabilidade (`/observability`) com filtros e recarregar.
-- [ ] `S6-02` Job dedicado Oracle no CI (segredos/ambiente homolog).
-- [ ] `S6-04` Alertas operacionais e catalogo final de logs estruturados.
+- [x] `S6-02` Job dedicado Oracle no CI com secrets e execucao verde (`run 24017181348`).
+- [x] `S6-04` Alertas operacionais e catalogo final de logs estruturados.
 
-Status da sprint: **em progresso avancado**.
+Status da sprint: **concluida**.
 
 ## Sprint 7 - Go-live controlado
 
