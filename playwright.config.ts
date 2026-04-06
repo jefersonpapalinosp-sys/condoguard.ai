@@ -2,17 +2,6 @@ import { defineConfig, devices } from '@playwright/test';
 
 const isWindows = process.platform === 'win32';
 const npmExec = isWindows ? 'npm.cmd' : 'npm';
-const joinCmd = isWindows ? '&&' : '&&';
-
-function withEnv(command: string, env: Record<string, string>) {
-  const pairs = Object.entries(env);
-  if (isWindows) {
-    const envPrefix = pairs.map(([key, value]) => `set ${key}=${value}`).join(` ${joinCmd} `);
-    return `${envPrefix} ${joinCmd} ${command}`;
-  }
-  const envPrefix = pairs.map(([key, value]) => `${key}=${value}`).join(' ');
-  return `${envPrefix} ${command}`;
-}
 
 export default defineConfig({
   testDir: './tests/e2e',
@@ -28,28 +17,26 @@ export default defineConfig({
   },
   webServer: [
     {
-      command: withEnv(
-        `${npmExec} run build ${joinCmd} ${npmExec} run preview -- --host 127.0.0.1 --port 4173`,
-        {
-          VITE_API_BASE_URL: 'http://127.0.0.1:4000',
-        },
-      ),
+      command: `${npmExec} run build && ${npmExec} run preview -- --host 127.0.0.1 --port 4173`,
+      env: {
+        ...process.env,
+        VITE_API_BASE_URL: 'http://127.0.0.1:4000',
+      },
       url: 'http://127.0.0.1:4173',
       reuseExistingServer: false,
       timeout: 240000,
     },
     {
-      command: withEnv(
-        `${npmExec} run api:dev:mock`,
-        {
-          PORT: '4000',
-          APP_ENV: 'dev',
-          AUTH_PROVIDER: 'local_jwt',
-          AUTH_PASSWORD_LOGIN_ENABLED: 'true',
-          ENABLE_DEMO_AUTH: 'true',
-          CORS_ALLOWED_ORIGINS: 'http://127.0.0.1:4173,http://localhost:4173',
-        },
-      ),
+      command: `${npmExec} run api:dev:mock`,
+      env: {
+        ...process.env,
+        PORT: '4000',
+        APP_ENV: 'dev',
+        AUTH_PROVIDER: 'local_jwt',
+        AUTH_PASSWORD_LOGIN_ENABLED: 'true',
+        ENABLE_DEMO_AUTH: 'true',
+        CORS_ALLOWED_ORIGINS: 'http://127.0.0.1:4173,http://localhost:4173',
+      },
       url: 'http://127.0.0.1:4000/api/health',
       reuseExistingServer: false,
       timeout: 120000,

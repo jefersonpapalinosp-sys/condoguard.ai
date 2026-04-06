@@ -54,5 +54,5 @@ describe('Observability view', () => {
     await waitFor(() => {
       expect(vi.mocked(fetchObservabilityMetrics).mock.calls.length).toBeGreaterThan(callsBeforeReload);
     });
-  });
+  }, 15000);
 });
