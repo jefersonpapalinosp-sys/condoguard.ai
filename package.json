@@ -30,7 +30,8 @@
     "test:e2e": "playwright test",
     "test:e2e:headed": "playwright test --headed",
     "test:e2e:install": "playwright install",
-    "test:all": "npm run test && npm run test:e2e"
+    "test:all": "npm run test && npm run test:e2e",
+    "env:validate": "node scripts/release/validate-env-profile.mjs --env-file .env.local"
   },
   "dependencies": {
     "@google/genai": "^1.29.0",

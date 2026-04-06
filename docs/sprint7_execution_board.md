@@ -13,7 +13,8 @@ Objetivo da sprint: publicar com risco controlado, plano de resposta e operacao 
 
 ## S7-01 - Homolog espelhando producao
 
-- [ ] Congelar matriz de variaveis por ambiente (`dev/hml/prod`).
+- [x] Congelar matriz de variaveis por ambiente (`dev/hml/prod`) em `docs/environment_matrix_s7.md`.
+- [x] Adicionar validador automatico de perfil de ambiente (`npm run env:validate`).
 - [ ] Validar gate final de identidade real (`S3-01`) em homolog.
 - [ ] Validar comportamento sem fallback mock em contexto de producao.
 - [ ] Executar regressao dos fluxos criticos (financeiro, alertas, chat, observabilidade).

@@ -132,6 +132,7 @@ Health detalhado (Sprint 2):
 - `npm run test:coverage:check`
 - `npm run test:e2e`: Playwright E2E
 - `npm run test:e2e:install`: instala browsers do Playwright
+- `npm run env:validate`: valida perfil de ambiente (`.env.local`) para gate de go-live
 
 ## Chat IA (Sprint 5)
 
