@@ -37,3 +37,28 @@ def test_invoices_csv_export_contract():
     assert csv_resp.headers.get('content-type', '').startswith('text/csv')
     text = csv_resp.text.splitlines()[0]
     assert '"id"' in text and '"status"' in text
+
+
+def test_dashboard_consumption_contracts_reports_endpoints():
+    client = TestClient(app)
+    headers = _login_headers()
+
+    dashboard = client.get('/api/dashboard', headers=headers)
+    assert dashboard.status_code == 200
+    dashboard_body = dashboard.json()
+    assert 'metrics' in dashboard_body and 'recentAlerts' in dashboard_body
+
+    consumption = client.get('/api/consumption', headers=headers)
+    assert consumption.status_code == 200
+    consumption_body = consumption.json()
+    assert 'kpis' in consumption_body and 'anomalies' in consumption_body
+
+    contracts = client.get('/api/contracts', headers=headers)
+    assert contracts.status_code == 200
+    contracts_body = contracts.json()
+    assert 'estimatedQuarterImpact' in contracts_body and 'items' in contracts_body
+
+    reports = client.get('/api/reports', headers=headers)
+    assert reports.status_code == 200
+    reports_body = reports.json()
+    assert 'executiveTitle' in reports_body and 'items' in reports_body

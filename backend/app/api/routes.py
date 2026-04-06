@@ -35,6 +35,10 @@ from app.repositories.chat_telemetry_repo import (
 )
 from app.repositories.invoices_repo import get_invoices_data, mark_invoice_as_paid
 from app.repositories.management_repo import get_management_units_data
+from app.repositories.dashboard_repo import get_dashboard_data
+from app.repositories.consumption_repo import get_consumption_data
+from app.repositories.contracts_repo import get_contracts_data
+from app.repositories.reports_repo import get_reports_data
 from app.schemas.requests import CadastroCreateBody, CadastroStatusBody, ChatFeedbackBody, ChatMessageBody, LoginBody
 from app.services.chat_context_service import build_chat_context
 from app.services.observability_alerts import dispatch_observability_alerts
@@ -147,6 +151,26 @@ async def health() -> dict[str, Any]:
         "errorSummary": error_summary,
         "timestamp": datetime.now(timezone.utc).isoformat(),
     }
+
+
+@router.get("/dashboard")
+async def dashboard(auth: dict = Depends(require_tenant_scope), _role: dict = Depends(require_roles(AUTH_ROLES))):
+    return await get_dashboard_data(auth["condominiumId"])
+
+
+@router.get("/consumption")
+async def consumption(auth: dict = Depends(require_tenant_scope), _role: dict = Depends(require_roles(AUTH_ROLES))):
+    return await get_consumption_data(auth["condominiumId"])
+
+
+@router.get("/contracts")
+async def contracts(auth: dict = Depends(require_tenant_scope), _role: dict = Depends(require_roles(AUTH_ROLES))):
+    return await get_contracts_data(auth["condominiumId"])
+
+
+@router.get("/reports")
+async def reports(auth: dict = Depends(require_tenant_scope), _role: dict = Depends(require_roles(AUTH_ROLES))):
+    return await get_reports_data(auth["condominiumId"])
 
 
 @router.post("/auth/login")

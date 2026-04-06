@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
-import { getReportsData, type ReportsData } from '../services/mockApi';
+import { fetchReportsData } from '../services/reportsService';
+import type { ReportsData } from '../services/mockApi';
+import { DataSourceBadge } from '../shared/ui/DataSourceBadge';
 import { LoadingState } from '../shared/ui/states/LoadingState';
 import { ErrorState } from '../shared/ui/states/ErrorState';
 import { EmptyState } from '../shared/ui/states/EmptyState';
@@ -15,7 +17,7 @@ export default function Reports() {
     async function load() {
       try {
         setLoading(true);
-        const response = await getReportsData();
+        const response = await fetchReportsData();
         if (active) {
           setData(response);
           setError(null);
@@ -52,11 +54,13 @@ export default function Reports() {
   return (
     <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-8">
       <section>
-        <h2 className="font-headline text-2xl md:text-4xl font-extrabold tracking-tight">Relatorios inteligentes</h2>
-        <p className="text-on-surface-variant mt-2">Consolidado gerencial e operacional baseado no periodo vigente.</p>
-        <p className="mt-2 inline-flex items-center rounded-full bg-secondary-container px-3 py-1 text-[11px] font-bold uppercase tracking-widest text-on-secondary-container">
-          Exportacao e visualizador completo na Sprint 4
-        </p>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <h2 className="font-headline text-2xl md:text-4xl font-extrabold tracking-tight">Relatorios inteligentes</h2>
+            <p className="text-on-surface-variant mt-2">Consolidado gerencial e operacional baseado no periodo vigente.</p>
+          </div>
+          <DataSourceBadge module="reports" />
+        </div>
       </section>
 
       <section className="bg-primary-container text-white rounded-xl p-4 md:p-8">

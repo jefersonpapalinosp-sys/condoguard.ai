@@ -100,6 +100,10 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
 
         return await call_next(request)
 
+    def reset_state(self):
+        self.requests.clear()
+        self.login_requests.clear()
+
 
 class ObservabilityMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
@@ -121,6 +125,21 @@ app.add_middleware(CorsAllowlistMiddleware)
 app.add_middleware(RateLimitMiddleware)
 app.add_middleware(ObservabilityMiddleware)
 app.include_router(router)
+
+
+def reset_runtime_state() -> None:
+    reset_observability_metrics()
+    reset_chat_telemetry_store()
+
+    if app.middleware_stack is None:
+        app.middleware_stack = app.build_middleware_stack()
+
+    current = app.middleware_stack
+    while current is not None:
+        if isinstance(current, RateLimitMiddleware):
+            current.reset_state()
+            break
+        current = getattr(current, "app", None)
 
 
 @app.exception_handler(ApiRequestError)

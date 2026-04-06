@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import { getDashboardData, type DashboardData } from '../services/mockApi';
+import { fetchDashboardData } from '../services/dashboardService';
+import type { DashboardData } from '../services/mockApi';
+import { DataSourceBadge } from '../shared/ui/DataSourceBadge';
 import { LoadingState } from '../shared/ui/states/LoadingState';
 import { ErrorState } from '../shared/ui/states/ErrorState';
 import { EmptyState } from '../shared/ui/states/EmptyState';
@@ -24,7 +26,7 @@ export default function Dashboard() {
     async function load() {
       try {
         setLoading(true);
-        const response = await getDashboardData();
+        const response = await fetchDashboardData();
         if (active) {
           setData(response);
           setError(null);
@@ -62,11 +64,13 @@ export default function Dashboard() {
   return (
     <div className="p-4 md:p-8 space-y-8 max-w-7xl mx-auto">
       <section>
-        <h3 className="font-headline text-2xl md:text-4xl font-extrabold tracking-tighter text-on-surface">Dashboard</h3>
-        <p className="text-on-surface-variant font-body mt-2">Visao geral da inteligencia predial e performance operacional.</p>
-        <p className="mt-2 inline-flex items-center rounded-full bg-secondary-container px-3 py-1 text-[11px] font-bold uppercase tracking-widest text-on-secondary-container">
-          Indicadores sinteticos temporarios
-        </p>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <h3 className="font-headline text-2xl md:text-4xl font-extrabold tracking-tighter text-on-surface">Dashboard</h3>
+            <p className="text-on-surface-variant font-body mt-2">Visao geral da inteligencia predial e performance operacional.</p>
+          </div>
+          <DataSourceBadge module="dashboard" />
+        </div>
       </section>
 
       {forbiddenByRole ? (

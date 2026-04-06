@@ -1,0 +1,33 @@
+{
+  "estimatedQuarterImpact": "R$ 14.200,00",
+  "totalMonthlySpend": "R$ 142.800,00",
+  "items": [
+    {
+      "id": "ct1",
+      "vendor": "Sentinel Security Ltda",
+      "monthlyValue": "R$ 45.200,00",
+      "index": "IPCA",
+      "nextAdjustment": "15 Ago 2026",
+      "risk": "high",
+      "note": "Reajuste acima do indice contratual detectado."
+    },
+    {
+      "id": "ct2",
+      "vendor": "LimpaPro Servicos",
+      "monthlyValue": "R$ 28.500,00",
+      "index": "IGP-M",
+      "nextAdjustment": "02 Out 2026",
+      "risk": "medium",
+      "note": "Contrato vence em 60 dias sem proposta de renovacao."
+    },
+    {
+      "id": "ct3",
+      "vendor": "TechLift Elevadores",
+      "monthlyValue": "R$ 12.800,00",
+      "index": "IPCA",
+      "nextAdjustment": "12 Jan 2027",
+      "risk": "low",
+      "note": "Contrato com parametros em conformidade."
+    }
+  ]
+}

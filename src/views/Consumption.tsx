@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
-import { getConsumptionData, type ConsumptionData } from '../services/mockApi';
+import { fetchConsumptionData } from '../services/consumptionService';
+import type { ConsumptionData } from '../services/mockApi';
+import { DataSourceBadge } from '../shared/ui/DataSourceBadge';
 import { LoadingState } from '../shared/ui/states/LoadingState';
 import { ErrorState } from '../shared/ui/states/ErrorState';
 import { EmptyState } from '../shared/ui/states/EmptyState';
@@ -21,7 +23,7 @@ export default function Consumption() {
     async function load() {
       try {
         setLoading(true);
-        const response = await getConsumptionData();
+        const response = await fetchConsumptionData();
         if (active) {
           setData(response);
           setError(null);
@@ -58,11 +60,13 @@ export default function Consumption() {
   return (
     <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-8">
       <section>
-        <h2 className="font-headline text-2xl md:text-4xl font-extrabold tracking-tight">Consumo e Telemetria</h2>
-        <p className="text-on-surface-variant mt-2">Monitoramento operacional de energia, agua e gas.</p>
-        <p className="mt-2 inline-flex items-center rounded-full bg-secondary-container px-3 py-1 text-[11px] font-bold uppercase tracking-widest text-on-secondary-container">
-          Telemetria detalhada entra na Sprint 4
-        </p>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <h2 className="font-headline text-2xl md:text-4xl font-extrabold tracking-tight">Consumo e Telemetria</h2>
+            <p className="text-on-surface-variant mt-2">Monitoramento operacional de energia, agua e gas.</p>
+          </div>
+          <DataSourceBadge module="consumption" />
+        </div>
       </section>
 
       <section className="grid grid-cols-1 md:grid-cols-3 gap-6">

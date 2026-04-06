@@ -2,14 +2,14 @@ import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import Dashboard from '../../../src/views/Dashboard';
 
-vi.mock('../../../src/services/mockApi', () => ({
-  getDashboardData: vi.fn(),
+vi.mock('../../../src/services/dashboardService', () => ({
+  fetchDashboardData: vi.fn(),
 }));
 
 describe('Dashboard view', () => {
   it('shows forbidden message when redirected without permission', async () => {
-    const { getDashboardData } = await import('../../../src/services/mockApi');
-    vi.mocked(getDashboardData).mockResolvedValue({
+    const { fetchDashboardData } = await import('../../../src/services/dashboardService');
+    vi.mocked(fetchDashboardData).mockResolvedValue({
       metrics: {
         activeAlerts: 1,
         monthlySavings: 'R$ 1.200',

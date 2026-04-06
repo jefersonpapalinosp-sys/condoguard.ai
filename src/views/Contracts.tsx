@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
-import { getContractsData, type ContractsData, type ContractItem } from '../services/mockApi';
+import { fetchContractsData } from '../services/contractsService';
+import type { ContractsData, ContractItem } from '../services/mockApi';
+import { DataSourceBadge } from '../shared/ui/DataSourceBadge';
 import { LoadingState } from '../shared/ui/states/LoadingState';
 import { ErrorState } from '../shared/ui/states/ErrorState';
 import { EmptyState } from '../shared/ui/states/EmptyState';
@@ -27,7 +29,7 @@ export default function Contracts() {
     async function load() {
       try {
         setLoading(true);
-        const response = await getContractsData();
+        const response = await fetchContractsData();
         if (active) {
           setData(response);
           setError(null);
@@ -67,12 +69,12 @@ export default function Contracts() {
         <div>
           <h2 className="font-headline text-2xl md:text-4xl font-extrabold tracking-tight">Auditoria de contratos</h2>
           <p className="text-on-surface-variant mt-2">Analise automatica de reajustes, vencimentos e risco financeiro.</p>
-          <p className="mt-2 inline-flex items-center rounded-full bg-secondary-container px-3 py-1 text-[11px] font-bold uppercase tracking-widest text-on-secondary-container">
-            Dados de contratos ainda sinteticos
-          </p>
         </div>
-        <div className="text-sm font-bold bg-surface-container-highest px-4 py-3 rounded-lg">
-          Impacto trimestral estimado: {data.estimatedQuarterImpact}
+        <div className="flex items-center gap-3">
+          <DataSourceBadge module="contracts" />
+          <div className="text-sm font-bold bg-surface-container-highest px-4 py-3 rounded-lg">
+            Impacto trimestral estimado: {data.estimatedQuarterImpact}
+          </div>
         </div>
       </section>
 
