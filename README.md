@@ -51,9 +51,11 @@ Credenciais locais de desenvolvimento (P0 auth):
 ## API Integration (Fallback)
 
 - `src/services/http.ts` usa `VITE_API_BASE_URL`.
-- Se API falhar, `Invoices`, `Chat`, `Management` e `Alerts` usam fallback para mock.
+- Politica de fallback frontend:
+  - `VITE_ENABLE_MOCK_FALLBACK=true|false` (override explicito)
+  - se nao definido: fallback mock **ativo em dev** e **desativado em hml/prod**.
 - Retry automatico para falhas de rede/timeout/5xx.
-- Toast de conectividade + badge visual de fonte (`API real` ou `fallback mock`).
+- Toast de conectividade + badge visual de fonte (`API real`, `fallback mock` ou `indefinida`).
 
 ## Paginas do frontend
 
@@ -107,6 +109,7 @@ Saidas:
 - Runbook Flyway homolog: docs/flyway_homolog_runbook.md.
 - Relatorio de smoke Oracle da Sprint 2: docs/sprint2_oracle_smoke_report.md.
 - Board executavel da Sprint 3: docs/sprint3_execution_board.md.
+- Board executavel da Sprint 8 (eliminacao de sintetico): docs/sprint8_execution_board.md.
 - Templates de issues da Sprint 2 (GitHub):
   - docs/github_issues/s2-01_oracle_homolog_segredos.md
   - docs/github_issues/s2-02_migracoes_flyway.md

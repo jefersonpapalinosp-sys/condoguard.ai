@@ -1,4 +1,5 @@
 import { notifyApiFallback, setModuleDataSource } from './apiStatus';
+import { isMockFallbackEnabled } from './fallbackPolicy';
 import { requestJson } from './http';
 import { getInvoicesData, type InvoicesData } from './mockApi';
 import { getAccessToken } from './authTokenStore';
@@ -67,8 +68,13 @@ export async function fetchInvoicesData(params: InvoiceListQuery = {}): Promise<
     setModuleDataSource(MODULE_NAME, 'api');
     return response;
   } catch {
+    if (!isMockFallbackEnabled()) {
+      setModuleDataSource(MODULE_NAME, 'unknown');
+      notifyApiFallback({ module: 'Faturas', message: 'API indisponivel (fallback mock desativado)' });
+      throw new Error('Falha ao carregar faturas.');
+    }
     setModuleDataSource(MODULE_NAME, 'mock');
-    notifyApiFallback({ module: 'Faturas', message: 'API indisponivel' });
+    notifyApiFallback({ module: 'Faturas', message: 'API indisponivel (fallback mock ativo)' });
     return getInvoicesData();
   }
 }

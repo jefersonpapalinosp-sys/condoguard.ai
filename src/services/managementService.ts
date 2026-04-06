@@ -1,4 +1,5 @@
 import { notifyApiFallback, setModuleDataSource } from './apiStatus';
+import { isMockFallbackEnabled } from './fallbackPolicy';
 import { requestJson } from './http';
 import { getManagementData } from './mockApi';
 
@@ -86,8 +87,13 @@ export async function fetchManagementData(params: ManagementListQuery = {}): Pro
       sort: response.sort,
     };
   } catch {
+    if (!isMockFallbackEnabled()) {
+      setModuleDataSource(MODULE_NAME, 'unknown');
+      notifyApiFallback({ module: 'Gestao', message: 'API indisponivel (fallback mock desativado)' });
+      throw new Error('Falha ao carregar gestao.');
+    }
     setModuleDataSource(MODULE_NAME, 'mock');
-    notifyApiFallback({ module: 'Gestao', message: 'API indisponivel' });
+    notifyApiFallback({ module: 'Gestao', message: 'API indisponivel (fallback mock ativo)' });
     const fallback = await getManagementData();
     return { items: fallback.units, units: fallback.units };
   }

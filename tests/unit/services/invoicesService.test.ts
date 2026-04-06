@@ -127,7 +127,7 @@ describe('invoicesService.fetchInvoicesData', () => {
     expect(setModuleDataSource).toHaveBeenCalledWith('invoices', 'mock');
     expect(notifyApiFallback).toHaveBeenCalledWith({
       module: 'Faturas',
-      message: 'API indisponivel',
+      message: 'API indisponivel (fallback mock ativo)',
     });
   });
 });

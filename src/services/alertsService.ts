@@ -1,4 +1,5 @@
 import { notifyApiFallback, setModuleDataSource } from './apiStatus';
+import { isMockFallbackEnabled } from './fallbackPolicy';
 import { requestJson } from './http';
 import { getAlertsData, type AlertsData } from './mockApi';
 
@@ -58,8 +59,13 @@ export async function fetchAlertsData(params: AlertsListQuery = {}): Promise<Ale
     setModuleDataSource(MODULE_NAME, 'api');
     return response;
   } catch {
+    if (!isMockFallbackEnabled()) {
+      setModuleDataSource(MODULE_NAME, 'unknown');
+      notifyApiFallback({ module: 'Alertas', message: 'API indisponivel (fallback mock desativado)' });
+      throw new Error('Falha ao carregar alertas.');
+    }
     setModuleDataSource(MODULE_NAME, 'mock');
-    notifyApiFallback({ module: 'Alertas', message: 'API indisponivel' });
+    notifyApiFallback({ module: 'Alertas', message: 'API indisponivel (fallback mock ativo)' });
     return getAlertsData();
   }
 }

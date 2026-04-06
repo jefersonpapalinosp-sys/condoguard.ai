@@ -1,4 +1,5 @@
 import { notifyApiFallback, setModuleDataSource } from './apiStatus';
+import { isMockFallbackEnabled } from './fallbackPolicy';
 import { requestJson } from './http';
 import { getChatData, sendChatMessage, type ChatData, type ChatMessage } from './mockApi';
 
@@ -44,8 +45,13 @@ export async function fetchChatBootstrap(): Promise<ChatData> {
     setModuleDataSource(MODULE_NAME, 'api');
     return response;
   } catch {
+    if (!isMockFallbackEnabled()) {
+      setModuleDataSource(MODULE_NAME, 'unknown');
+      notifyApiFallback({ module: 'Chat', message: 'API indisponivel (fallback mock desativado)' });
+      throw new Error('Falha ao carregar chat.');
+    }
     setModuleDataSource(MODULE_NAME, 'mock');
-    notifyApiFallback({ module: 'Chat', message: 'API indisponivel' });
+    notifyApiFallback({ module: 'Chat', message: 'API indisponivel (fallback mock ativo)' });
     return getChatData();
   }
 }
@@ -59,8 +65,13 @@ export async function postChatMessage(message: string): Promise<ChatMessage> {
     setModuleDataSource(MODULE_NAME, 'api');
     return response;
   } catch {
+    if (!isMockFallbackEnabled()) {
+      setModuleDataSource(MODULE_NAME, 'unknown');
+      notifyApiFallback({ module: 'Chat', message: 'API indisponivel (fallback mock desativado)' });
+      throw new Error('Falha ao enviar mensagem no chat.');
+    }
     setModuleDataSource(MODULE_NAME, 'mock');
-    notifyApiFallback({ module: 'Chat', message: 'API indisponivel' });
+    notifyApiFallback({ module: 'Chat', message: 'API indisponivel (fallback mock ativo)' });
     return sendChatMessage(message);
   }
 }
@@ -73,7 +84,7 @@ export async function sendChatFeedback(messageId: string, rating: 'up' | 'down',
     });
     setModuleDataSource(MODULE_NAME, 'api');
   } catch {
-    setModuleDataSource(MODULE_NAME, 'mock');
+    setModuleDataSource(MODULE_NAME, isMockFallbackEnabled() ? 'mock' : 'unknown');
   }
 }
 
