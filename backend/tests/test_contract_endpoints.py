@@ -62,3 +62,8 @@ def test_dashboard_consumption_contracts_reports_endpoints():
     assert reports.status_code == 200
     reports_body = reports.json()
     assert 'executiveTitle' in reports_body and 'items' in reports_body
+
+    settings = client.get('/api/settings', headers=headers)
+    assert settings.status_code == 200
+    settings_body = settings.json()
+    assert 'platform' in settings_body and 'security' in settings_body and 'observability' in settings_body
