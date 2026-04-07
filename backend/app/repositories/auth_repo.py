@@ -1,25 +1,41 @@
 from __future__ import annotations
 
-import hashlib
 from typing import Any
 
 from app.core.config import settings
 from app.db.oracle_client import run_oracle_query
 from app.observability.metrics_store import record_api_fallback_metric
 
+try:
+    from passlib.context import CryptContext as _CryptContext
+    _pwd_context = _CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+    def _hash_password(value: str) -> str:
+        return _pwd_context.hash(value)
+
+    def _verify_password(password: str, password_hash: str | None) -> bool:
+        if not password_hash:
+            return False
+        # Support legacy SHA256 hashes (hex, 64 chars) during migration
+        if len(str(password_hash)) == 64 and all(c in "0123456789abcdef" for c in str(password_hash).lower()):
+            import hashlib
+            return hashlib.sha256(password.encode()).hexdigest() == str(password_hash).lower()
+        return _pwd_context.verify(password, str(password_hash))
+
+except ImportError:
+    import hashlib as _hashlib
+
+    def _hash_password(value: str) -> str:  # type: ignore[misc]
+        return _hashlib.sha256(value.encode("utf-8")).hexdigest()
+
+    def _verify_password(password: str, password_hash: str | None) -> bool:  # type: ignore[misc]
+        return _hash_password(password) == str(password_hash or "").lower()
+
 DEMO_USERS = {
     "admin@condoguard.ai": {"password": "password123", "role": "admin", "condominiumId": 1},
     "sindico@condoguard.ai": {"password": "password123", "role": "sindico", "condominiumId": 1},
     "morador@condoguard.ai": {"password": "password123", "role": "morador", "condominiumId": 1},
 }
-
-
-def _hash_password(value: str) -> str:
-    return hashlib.sha256(value.encode("utf-8")).hexdigest()
-
-
-def _verify_password(password: str, password_hash: str | None) -> bool:
-    return _hash_password(password) == str(password_hash or "").lower()
 
 
 async def find_account_for_login(email: str, password: str) -> dict[str, Any] | None:

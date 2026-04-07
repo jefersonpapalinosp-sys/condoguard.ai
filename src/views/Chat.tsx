@@ -3,7 +3,6 @@ import {
   fetchChatBootstrap,
   fetchChatTelemetry,
   postChatMessage,
-  resumeChatPendingAction,
   sendChatFeedback,
   type ChatTelemetrySnapshot,
 } from '../services/chatService';
@@ -43,7 +42,6 @@ export default function Chat() {
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [feedbackByMessage, setFeedbackByMessage] = useState<Record<string, 'up' | 'down'>>({});
-  const [pendingDecisionByAction, setPendingDecisionByAction] = useState<Record<string, 'confirm' | 'cancel'>>({});
   const [telemetry, setTelemetry] = useState<ChatTelemetrySnapshot | null>(null);
   const [eventFilter, setEventFilter] = useState<'all' | 'message' | 'feedback' | 'error'>('all');
   const [visibleEventCount, setVisibleEventCount] = useState(8);
@@ -161,41 +159,6 @@ export default function Chat() {
       const snapshot = await fetchChatTelemetry(15);
       setTelemetry(snapshot);
     }
-  }
-
-  async function handlePendingAction(messageId: string, pendingActionId: string, decision: 'confirm' | 'cancel') {
-    if (!pendingActionId || pendingDecisionByAction[pendingActionId]) {
-      return;
-    }
-
-    setPendingDecisionByAction((current) => ({ ...current, [pendingActionId]: decision }));
-    try {
-      const response = await resumeChatPendingAction(pendingActionId, decision);
-      setMessages((current) => [...current, response]);
-      if (canViewTelemetry) {
-        const snapshot = await fetchChatTelemetry(15);
-        setTelemetry(snapshot);
-      }
-    } catch {
-      setMessages((current) => [
-        ...current,
-        {
-          id: `assistant-error-${Date.now()}`,
-          role: 'assistant',
-          text: `Nao foi possivel ${decision === 'confirm' ? 'confirmar' : 'cancelar'} a acao pendente agora.`,
-          time: nowTime(),
-        },
-      ]);
-      setPendingDecisionByAction((current) => {
-        const next = { ...current };
-        delete next[pendingActionId];
-        return next;
-      });
-    }
-    // mantem o estado bloqueado para evitar reenvio da mesma pendencia no mesmo card
-    setMessages((current) =>
-      current.map((item) => (item.id === messageId ? { ...item, pendingAction: undefined } : item)),
-    );
   }
 
   if (loading) {
@@ -318,11 +281,6 @@ export default function Chat() {
             ) : null}
             {message.role === 'assistant' ? (
               <div className="mt-2 space-y-1">
-                {message.agent?.domain ? (
-                  <p className="text-[10px] opacity-80">
-                    Agente: {message.agent.domain} / {message.agent.action || 'general_overview'}
-                  </p>
-                ) : null}
                 {message.confidence ? (
                   <p className="text-[10px] opacity-80">
                     Confianca: {message.confidence}
@@ -351,51 +309,6 @@ export default function Chat() {
                     Nao util
                   </button>
                 </div>
-                {message.pendingAction ? (
-                  <div className="mt-2 rounded-lg bg-surface-container-low p-2">
-                    <p className="text-[11px] font-semibold">
-                      Acao pendente: {message.pendingAction.targetLabel}
-                    </p>
-                    <p className="text-[10px] opacity-80 mt-1">
-                      {message.pendingAction.confirmationPrompt}
-                    </p>
-                    <p className="text-[10px] opacity-80 mt-1">
-                      Expira em: {new Date(message.pendingAction.expiresAt).toLocaleTimeString('pt-BR')}
-                    </p>
-                    <div className="mt-2 flex items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={() => void handlePendingAction(message.id, message.pendingAction!.id, 'confirm')}
-                        disabled={Boolean(pendingDecisionByAction[message.pendingAction.id])}
-                        className="text-[10px] px-2 py-1 rounded bg-primary text-on-primary disabled:opacity-50"
-                      >
-                        Confirmar
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => void handlePendingAction(message.id, message.pendingAction!.id, 'cancel')}
-                        disabled={Boolean(pendingDecisionByAction[message.pendingAction.id])}
-                        className="text-[10px] px-2 py-1 rounded bg-surface-container-highest disabled:opacity-50"
-                      >
-                        Cancelar
-                      </button>
-                    </div>
-                  </div>
-                ) : null}
-                {message.followUps && message.followUps.length > 0 ? (
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    {message.followUps.slice(0, 3).map((followUp) => (
-                      <button
-                        key={`${message.id}-${followUp}`}
-                        type="button"
-                        onClick={() => void submitMessage(followUp)}
-                        className="text-[10px] px-2 py-1 rounded bg-surface-container-low"
-                      >
-                        {followUp}
-                      </button>
-                    ))}
-                  </div>
-                ) : null}
               </div>
             ) : null}
             <span className="text-[10px] opacity-70 mt-2 block">{message.time}</span>

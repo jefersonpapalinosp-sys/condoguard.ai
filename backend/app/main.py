@@ -20,7 +20,6 @@ from app.observability.metrics_store import (
     reset_observability_metrics,
 )
 from app.repositories.cadastros_repo import reset_cadastros_store
-from app.repositories.chat_pending_repo import reset_chat_pending_actions_store
 from app.repositories.chat_telemetry_repo import reset_chat_telemetry_store
 from app.repositories.contracts_management_repo import reset_contracts_management_state
 from app.integrations.enel.repository import reset_enel_integration_state
@@ -39,6 +38,10 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         response.headers["X-Content-Type-Options"] = "nosniff"
         response.headers["X-Frame-Options"] = "DENY"
         response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+        response.headers["X-XSS-Protection"] = "1; mode=block"
+        response.headers["Content-Security-Policy"] = "default-src 'none'; frame-ancestors 'none'"
+        if settings.effective_env != "dev":
+            response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
         return response
 
 
@@ -76,14 +79,18 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         self.requests = defaultdict(deque)
         self.login_requests = defaultdict(deque)
 
-    def _accept(self, bucket: deque, limit: int, window_ms: int) -> bool:
+    def _accept(self, store: dict, key: str, limit: int, window_ms: int) -> bool:
         now = perf_counter()
         window_s = window_ms / 1000
+        bucket = store[key]
         while bucket and now - bucket[0] > window_s:
             bucket.popleft()
         if len(bucket) >= limit:
             return False
         bucket.append(now)
+        # Remove the entry when empty to prevent unbounded memory growth
+        if not bucket:
+            store.pop(key, None)
         return True
 
     async def dispatch(self, request: Request, call_next):
@@ -94,13 +101,11 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         ip = request.client.host if request.client else "unknown"
 
         if path == "/api/auth/login" and request.method.upper() == "POST":
-            bucket = self.login_requests[ip]
-            if not self._accept(bucket, settings.login_rate_limit_max, settings.rate_limit_window_ms):
+            if not self._accept(self.login_requests, ip, settings.login_rate_limit_max, settings.rate_limit_window_ms):
                 log_security_event("rate_limit_exceeded", request, {"scope": "login"})
                 return _api_error_response(429, "RATE_LIMITED", "Muitas tentativas de login. Aguarde e tente novamente.")
 
-        bucket = self.requests[ip]
-        if not self._accept(bucket, settings.rate_limit_max, settings.rate_limit_window_ms):
+        if not self._accept(self.requests, ip, settings.rate_limit_max, settings.rate_limit_window_ms):
             log_security_event("rate_limit_exceeded", request, {"scope": "api"})
             return _api_error_response(429, "RATE_LIMITED", "Muitas requisicoes. Tente novamente em instantes.")
 
@@ -124,7 +129,6 @@ class ObservabilityMiddleware(BaseHTTPMiddleware):
 configure_logging()
 reset_observability_metrics()
 reset_chat_telemetry_store()
-reset_chat_pending_actions_store()
 reset_cadastros_store()
 reset_contracts_management_state()
 reset_enel_integration_state()
@@ -142,7 +146,6 @@ app.include_router(enel_router)
 def reset_runtime_state() -> None:
     reset_observability_metrics()
     reset_chat_telemetry_store()
-    reset_chat_pending_actions_store()
     reset_cadastros_store()
     reset_contracts_management_state()
     reset_enel_integration_state()

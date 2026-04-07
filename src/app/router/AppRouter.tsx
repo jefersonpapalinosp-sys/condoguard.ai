@@ -64,10 +64,7 @@ export function AppRouter() {
             </ProtectedRoute>
           )}
         />
-        <Route path="cadastros-gerais">
-          <Route index element={<Navigate to="todos" replace />} />
-          <Route path=":tipoSlug" element={<CadastrosGeraisPage />} />
-        </Route>
+        <Route path="cadastros-gerais" element={<CadastrosGeraisPage />} />
         <Route path="reports" element={<ReportsPage />} />
         <Route
           path="observability"

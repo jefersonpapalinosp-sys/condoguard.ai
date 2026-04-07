@@ -129,25 +129,6 @@ def test_invalid_filters_return_standardized_400():
     assert bad_alert_page.json()["error"]["code"] == "INVALID_QUERY_PARAM"
 
 
-def test_cadastros_filters_contract():
-    client = TestClient(app)
-    headers = _login_headers()
-
-    response = client.get("/api/cadastros?tipo=unidade&status=active&search=a&page=1&pageSize=20", headers=headers)
-    assert response.status_code == 200
-    payload = response.json()
-
-    assert "items" in payload and "meta" in payload and "filters" in payload
-    assert payload["filters"]["tipo"] == "unidade"
-    assert payload["filters"]["status"] == "active"
-    assert payload["meta"]["page"] == 1
-    assert payload["meta"]["pageSize"] == 20
-
-    for item in payload["items"]:
-        assert item["tipo"] == "unidade"
-        assert item["status"] == "active"
-
-
 def test_tenant_scope_protection_and_isolation():
     client = TestClient(app)
 

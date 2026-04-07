@@ -23,7 +23,7 @@ async def get_oracle_pool():
     if not settings.oracle_user or not settings.oracle_password or not settings.oracle_connect_string:
         raise RuntimeError("Credenciais Oracle incompletas no ambiente.")
 
-    _pool = oracledb.create_pool(
+    _pool = await oracledb.create_pool_async(
         user=settings.oracle_user,
         password=settings.oracle_password,
         dsn=settings.oracle_connect_string,
@@ -39,18 +39,14 @@ async def run_oracle_query(sql: str, binds: dict[str, Any] | None = None) -> lis
     if pool is None:
         return None
 
-    conn = pool.acquire()
-    try:
-        cursor = conn.cursor()
-        cursor.execute(sql, binds or {})
-        columns = [c[0] for c in cursor.description or []]
-        return [dict(zip(columns, row)) for row in cursor.fetchall()]
-    finally:
-        try:
-            cursor.close()
-        except Exception:
-            pass
-        conn.close()
+    async with pool.acquire() as conn:
+        async with conn.cursor() as cursor:
+            await cursor.execute(sql, binds or {})
+            if cursor.description is None:
+                return []
+            columns = [c[0] for c in cursor.description]
+            rows = await cursor.fetchall()
+            return [dict(zip(columns, row)) for row in rows]
 
 
 async def run_oracle_execute(sql: str, binds: dict[str, Any] | None = None) -> int | None:
@@ -58,22 +54,15 @@ async def run_oracle_execute(sql: str, binds: dict[str, Any] | None = None) -> i
     if pool is None:
         return None
 
-    conn = pool.acquire()
-    try:
-        cursor = conn.cursor()
-        cursor.execute(sql, binds or {})
-        conn.commit()
-        return int(cursor.rowcount or 0)
-    finally:
-        try:
-            cursor.close()
-        except Exception:
-            pass
-        conn.close()
+    async with pool.acquire() as conn:
+        async with conn.cursor() as cursor:
+            await cursor.execute(sql, binds or {})
+            await conn.commit()
+            return int(cursor.rowcount or 0)
 
 
 async def close_oracle_pool() -> None:
     global _pool
     if _pool is not None:
-        _pool.close(force=True)
+        await _pool.close(force=True)
         _pool = None

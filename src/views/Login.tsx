@@ -4,6 +4,8 @@ import { useAuth } from '../features/auth/context/AuthContext';
 import { loginWithPassword } from '../services/authService';
 import { ApiError } from '../services/http';
 
+const IS_DEV = import.meta.env.VITE_APP_ENV === 'dev' || import.meta.env.DEV;
+
 export default function Login() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -104,7 +106,7 @@ export default function Login() {
                   name="email"
                   placeholder="nome@organizacao.ai"
                   required
-                  defaultValue="admin@condoguard.ai"
+                  defaultValue={IS_DEV ? 'admin@condoguard.ai' : ''}
                   className="w-full pl-12 pr-4 py-4 bg-surface-container border-0 focus:ring-2 focus:ring-primary-fixed rounded-lg transition-all text-on-surface"
                 />
               </div>
@@ -124,7 +126,7 @@ export default function Login() {
                   name="password"
                   placeholder="************"
                   required
-                  defaultValue="password123"
+                  defaultValue={IS_DEV ? 'password123' : ''}
                   className="w-full pl-12 pr-4 py-4 bg-surface-container border-0 focus:ring-2 focus:ring-primary-fixed rounded-lg transition-all text-on-surface"
                 />
               </div>

@@ -100,7 +100,8 @@ def paginate(items: list[dict[str, Any]], page: int, page_size: int) -> tuple[li
 
 def csv_cell(value: Any) -> str:
     raw = "" if value is None else str(value)
-    return f'"{raw.replace("\"", "\"\"")}"'
+    escaped = raw.replace('"', '""')
+    return f'"{escaped}"'
 
 
 def invoices_to_csv(items: list[dict[str, Any]]) -> str:

@@ -1,8 +1,12 @@
 import type { InvoicesData } from '../../../src/services/mockApi';
 
-vi.mock('../../../src/services/http', () => ({
-  requestJson: vi.fn(),
-}));
+vi.mock('../../../src/services/http', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../../src/services/http')>();
+  return {
+    ...actual,
+    requestJson: vi.fn(),
+  };
+});
 
 vi.mock('../../../src/services/mockApi', () => ({
   getInvoicesData: vi.fn(),
@@ -68,7 +72,7 @@ describe('invoicesService.exportInvoicesCsv', () => {
       blob: async () => new Blob(),
     } as unknown as Response);
 
-    await expect(exportInvoicesCsv()).rejects.toThrow(/Falha ao exportar CSV/i);
+    await expect(exportInvoicesCsv()).rejects.toThrow(/HTTP 401/i);
     expect(notifyUnauthorized).toHaveBeenCalledTimes(1);
   });
 });

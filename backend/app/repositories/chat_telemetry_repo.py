@@ -50,13 +50,16 @@ def _push_event(state: dict[str, Any], event: dict[str, Any]) -> None:
 def record_chat_message_telemetry(condominium_id: int, payload: dict[str, Any]) -> None:
     state = _state(condominium_id)
     state["counters"]["messages"] += 1
-    if payload.get("guardrails", {}).get("blocked"):
+    guardrails = payload.get("guardrails", {})
+    if guardrails.get("blocked"):
         state["counters"]["blocked"] += 1
+        if guardrails.get("reason") == "OUT_OF_SCOPE":
+            state["counters"]["outOfScope"] += 1
+    # fallback = rule-based response (Gemini unavailable but not blocked)
+    if not payload.get("aiPowered") and not guardrails.get("blocked"):
         state["counters"]["fallback"] += 1
     if payload.get("confidence") == "low":
         state["counters"]["lowConfidence"] += 1
-    if payload.get("guardrails", {}).get("reason") == "OUT_OF_SCOPE":
-        state["counters"]["outOfScope"] += 1
 
     _push_event(
         state,

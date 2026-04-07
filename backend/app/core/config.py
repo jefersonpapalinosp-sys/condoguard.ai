@@ -4,8 +4,10 @@ import re
 from pathlib import Path
 from typing import Literal
 
-from pydantic import Field
+from pydantic import Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+_UNSAFE_SECRETS = {"dev-only-change-me", "change-me", "secret", "changeme", ""}
 
 
 class Settings(BaseSettings):
@@ -16,13 +18,28 @@ class Settings(BaseSettings):
     port: int = Field(default=4000, alias="PORT")
 
     db_dialect: Literal["oracle", "mock"] = Field(default="mock", alias="DB_DIALECT")
-    allow_oracle_seed_fallback: bool = Field(default=True, alias="ALLOW_ORACLE_SEED_FALLBACK")
+    allow_oracle_seed_fallback: bool = Field(default=False, alias="ALLOW_ORACLE_SEED_FALLBACK")
 
     auth_provider: str = Field(default="local_jwt", alias="AUTH_PROVIDER")
     auth_password_login_enabled: bool = Field(default=True, alias="AUTH_PASSWORD_LOGIN_ENABLED")
-    enable_demo_auth: bool = Field(default=True, alias="ENABLE_DEMO_AUTH")
+    enable_demo_auth: bool = Field(default=False, alias="ENABLE_DEMO_AUTH")
 
     jwt_secret: str = Field(default="dev-only-change-me", alias="JWT_SECRET")
+
+    @model_validator(mode="after")
+    def _validate_secrets(self) -> "Settings":
+        env = (self.app_env or self.node_env or "dev").lower()
+        if env != "dev" and self.jwt_secret in _UNSAFE_SECRETS:
+            raise ValueError(
+                "JWT_SECRET nao pode usar o valor padrao em ambientes nao-dev. "
+                "Defina JWT_SECRET com um segredo aleatorio de pelo menos 32 caracteres."
+            )
+        if env != "dev" and self.enable_demo_auth:
+            raise ValueError(
+                "ENABLE_DEMO_AUTH nao pode ser True em ambientes nao-dev. "
+                "Defina ENABLE_DEMO_AUTH=false no ambiente de producao/homologacao."
+            )
+        return self
     jwt_expires_seconds: int = Field(default=3600, alias="JWT_EXPIRES_SECONDS")
     jwt_expires_in: str = Field(default="1h", alias="JWT_EXPIRES_IN")
 
@@ -41,6 +58,9 @@ class Settings(BaseSettings):
     oidc_jwks_url: str = Field(default="", alias="OIDC_JWKS_URL")
     oidc_role_claim: str = Field(default="roles", alias="OIDC_ROLE_CLAIM")
     oidc_tenant_claim: str = Field(default="condominium_id", alias="OIDC_TENANT_CLAIM")
+
+    gemini_api_key: str = Field(default="", alias="GEMINI_API_KEY")
+    gemini_model: str = Field(default="gemini-2.0-flash", alias="GEMINI_MODEL")
 
     oracle_user: str = Field(default="", alias="ORACLE_USER")
     oracle_password: str = Field(default="", alias="ORACLE_PASSWORD")

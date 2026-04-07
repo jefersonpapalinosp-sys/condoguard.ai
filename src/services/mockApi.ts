@@ -114,27 +114,6 @@ export type ChatMessage = {
     reason: string | null;
     policyVersion: string;
   };
-  agent?: {
-    domain?: string;
-    action?: string;
-    mode?: string;
-    confidence?: 'low' | 'medium' | 'high';
-    entities?: Record<string, string | null | undefined>;
-  };
-  agentPlan?: {
-    goal?: string;
-    steps?: string[];
-    nextBestPrompts?: string[];
-  };
-  pendingAction?: {
-    id: string;
-    actionType: string;
-    targetId: string;
-    targetLabel: string;
-    confirmationPrompt: string;
-    expiresAt: string;
-  };
-  followUps?: string[];
 };
 
 export type ChatData = {
@@ -420,12 +399,6 @@ export async function sendChatMessage(userMessage: string): Promise<ChatMessage>
         blocked: false,
         reason: null,
         policyVersion: 'mock',
-      },
-      agent: {
-        domain: 'geral',
-        action: 'general_overview',
-        mode: 'analytical',
-        confidence: 'low',
       },
     },
     500,

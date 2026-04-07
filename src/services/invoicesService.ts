@@ -1,6 +1,6 @@
 import { notifyApiFallback, setModuleDataSource } from './apiStatus';
 import { isMockFallbackEnabled } from './fallbackPolicy';
-import { requestJson } from './http';
+import { ApiError, requestJson } from './http';
 import { getInvoicesData, type InvoicesData } from './mockApi';
 import { getAccessToken } from './authTokenStore';
 import { notifyUnauthorized } from './authEvents';
@@ -53,15 +53,6 @@ function buildQuery(params: InvoiceListQuery = {}) {
   return suffix ? `?${suffix}` : '';
 }
 
-function buildApiUrl(path: string) {
-  const base = import.meta.env.VITE_API_BASE_URL?.trim();
-  if (!base) {
-    throw new Error('VITE_API_BASE_URL nao configurada.');
-  }
-  const normalizedPath = path.startsWith('/') ? path : `/${path}`;
-  return new URL(normalizedPath, base).toString();
-}
-
 export async function fetchInvoicesData(params: InvoiceListQuery = {}): Promise<InvoicesApiResponse> {
   try {
     const response = await requestJson<InvoicesApiResponse>(`/api/invoices${buildQuery(params)}`);
@@ -80,10 +71,18 @@ export async function fetchInvoicesData(params: InvoiceListQuery = {}): Promise<
 }
 
 export async function exportInvoicesCsv(params: InvoiceListQuery = {}): Promise<Blob> {
+  const base = import.meta.env.VITE_API_BASE_URL?.trim();
+  if (!base) {
+    throw new ApiError('VITE_API_BASE_URL nao configurada.');
+  }
+  const path = `/api/invoices/export.csv${buildQuery(params)}`;
+  const url = new URL(path.startsWith('/') ? path : `/${path}`, base).toString();
   const token = getAccessToken();
-  const response = await fetch(buildApiUrl(`/api/invoices/export.csv${buildQuery(params)}`), {
+
+  const response = await fetch(url, {
     method: 'GET',
     headers: {
+      'Content-Type': 'application/json',
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
   });
@@ -91,8 +90,12 @@ export async function exportInvoicesCsv(params: InvoiceListQuery = {}): Promise<
   if (!response.ok) {
     if (response.status === 401) {
       notifyUnauthorized();
+      throw new ApiError('HTTP 401', 401);
     }
-    throw new Error(`Falha ao exportar CSV (${response.status}).`);
+    if (response.status === 403) {
+      throw new ApiError('Acesso negado. Voce nao tem permissao para exportar faturas.', 403);
+    }
+    throw new ApiError(`Falha ao exportar CSV (${response.status}).`, response.status);
   }
 
   return response.blob();

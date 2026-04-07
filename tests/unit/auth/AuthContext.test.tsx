@@ -8,7 +8,7 @@ function AuthConsumer() {
   return (
     <div>
       <span data-testid="auth-state">{String(isAuthenticated)}</span>
-      <button onClick={login}>login</button>
+      <button onClick={() => login()}>login</button>
       <button onClick={logout}>logout</button>
     </div>
   );

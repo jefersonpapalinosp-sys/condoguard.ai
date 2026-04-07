@@ -34,14 +34,39 @@ export type SettingsData = {
   };
 };
 
+const SETTINGS_FALLBACK: SettingsData = {
+  generatedAt: new Date().toISOString(),
+  tenant: { condominiumId: 0 },
+  platform: {
+    environment: import.meta.env.VITE_APP_ENV ?? 'dev',
+    dbDialect: 'mock',
+    authProvider: 'local_jwt',
+    oidcConfigured: false,
+    allowOracleSeedFallback: false,
+    authPasswordLoginEnabled: true,
+  },
+  security: {
+    rateLimitWindowMs: 60000,
+    rateLimitMax: 120,
+    loginRateLimitMax: 20,
+    securityAuditEnabled: false,
+    securityAuditPersistEnabled: false,
+  },
+  observability: {
+    channel: 'log',
+    thresholds: { latencyP95WarnMs: 1200, errorRateWarnPct: 5, fallbackWarnCount: 3 },
+    fallbackEventsTotal: 0,
+  },
+};
+
 export async function fetchSettingsData(): Promise<SettingsData> {
   try {
     const response = await requestJson<SettingsData>('/api/settings');
     setModuleDataSource(MODULE_NAME, 'api');
     return response;
   } catch {
-    setModuleDataSource(MODULE_NAME, 'unknown');
-    notifyApiFallback({ module: 'Configuracoes', message: 'API indisponivel' });
-    throw new Error('Falha ao carregar configuracoes.');
+    setModuleDataSource(MODULE_NAME, 'mock');
+    notifyApiFallback({ module: 'Configuracoes', message: 'API indisponivel — exibindo valores padrao' });
+    return SETTINGS_FALLBACK;
   }
 }

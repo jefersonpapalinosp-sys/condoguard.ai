@@ -7,7 +7,6 @@ vi.mock('../../../src/services/chatService', () => ({
   fetchChatBootstrap: vi.fn(),
   fetchChatTelemetry: vi.fn(),
   postChatMessage: vi.fn(),
-  resumeChatPendingAction: vi.fn(),
   sendChatFeedback: vi.fn(),
 }));
 

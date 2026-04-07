@@ -1,11 +1,9 @@
 import { FormEvent, useEffect, useMemo, useState } from 'react';
-import { NavLink } from 'react-router-dom';
 import { createCadastroData, fetchCadastrosData, updateCadastroStatusData, type CadastroRegistro, type CadastroStatus, type CadastroTipo } from '../services/cadastrosService';
 import { DataSourceBadge } from '../shared/ui/DataSourceBadge';
 import { EmptyState } from '../shared/ui/states/EmptyState';
 import { ErrorState } from '../shared/ui/states/ErrorState';
 import { LoadingState } from '../shared/ui/states/LoadingState';
-import { CADASTROS_TABS, getCadastrosTab, type CadastrosTabSlug } from '../features/cadastros/constants/cadastrosTabs';
 
 const statusClass: Record<CadastroStatus, string> = {
   active: 'bg-tertiary-fixed-dim/30 text-on-tertiary-fixed-variant',
@@ -26,15 +24,6 @@ const tipoLabel: Record<CadastroTipo, string> = {
   servico: 'Servico',
 };
 
-const EMPTY_META = {
-  page: 1,
-  pageSize: 20,
-  total: 0,
-  totalPages: 1,
-  hasNext: false,
-  hasPrevious: false,
-};
-
 function formatUpdatedAt(isoDate: string) {
   const date = new Date(isoDate);
   if (Number.isNaN(date.getTime())) {
@@ -50,30 +39,12 @@ function formatUpdatedAt(isoDate: string) {
   });
 }
 
-function quickSearchPlaceholder(slug: CadastrosTabSlug) {
-  if (slug === 'todos') {
-    return 'Busque por nome, unidade, fornecedor ou servico...';
-  }
-  return `Busque em ${getCadastrosTab(slug).label.toLowerCase()}...`;
-}
-
-type CadastrosGeraisProps = {
-  activeTabSlug: CadastrosTabSlug;
-};
-
-export default function CadastrosGerais({ activeTabSlug }: CadastrosGeraisProps) {
-  const activeTab = getCadastrosTab(activeTabSlug);
-  const fixedTipo = activeTab.tipo;
-
-  const [statusFilter, setStatusFilter] = useState<'todos' | CadastroStatus>('todos');
+export default function CadastrosGerais() {
+  const [tipo, setTipo] = useState<'todos' | CadastroTipo>('todos');
   const [busca, setBusca] = useState('');
-  const [debouncedBusca, setDebouncedBusca] = useState('');
-  const [page, setPage] = useState(1);
   const [items, setItems] = useState<CadastroRegistro[]>([]);
-  const [meta, setMeta] = useState(EMPTY_META);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [reloadKey, setReloadKey] = useState(0);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [creating, setCreating] = useState(false);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
@@ -81,34 +52,14 @@ export default function CadastrosGerais({ activeTabSlug }: CadastrosGeraisProps)
   const [createSuccess, setCreateSuccess] = useState<string | null>(null);
 
   useEffect(() => {
-    setPage(1);
-  }, [activeTabSlug]);
-
-  useEffect(() => {
-    const timeout = setTimeout(() => {
-      setDebouncedBusca(busca.trim());
-    }, 250);
-
-    return () => clearTimeout(timeout);
-  }, [busca]);
-
-  useEffect(() => {
     let active = true;
 
     async function load() {
       try {
         setLoading(true);
-        const response = await fetchCadastrosData({
-          tipo: fixedTipo ?? undefined,
-          status: statusFilter === 'todos' ? undefined : statusFilter,
-          search: debouncedBusca || undefined,
-          page,
-          pageSize: meta.pageSize,
-        });
-
+        const response = await fetchCadastrosData();
         if (active) {
           setItems(response.items);
-          setMeta(response.meta ?? EMPTY_META);
           setError(null);
         }
       } catch {
@@ -126,14 +77,26 @@ export default function CadastrosGerais({ activeTabSlug }: CadastrosGeraisProps)
     return () => {
       active = false;
     };
-  }, [debouncedBusca, fixedTipo, meta.pageSize, page, reloadKey, statusFilter]);
+  }, []);
+
+  const filtrados = useMemo(() => {
+    return items.filter((item) => {
+      const matchTipo = tipo === 'todos' || item.tipo === tipo;
+      const termo = busca.trim().toLowerCase();
+      const matchBusca =
+        termo.length === 0 ||
+        item.titulo.toLowerCase().includes(termo) ||
+        item.descricao.toLowerCase().includes(termo);
+      return matchTipo && matchBusca;
+    });
+  }, [busca, tipo, items]);
 
   const indicadores = useMemo(() => {
     const ativos = items.filter((item) => item.status === 'active').length;
     const pendentes = items.filter((item) => item.status === 'pending').length;
     const inativos = items.filter((item) => item.status === 'inactive').length;
-    return { total: meta.total, ativos, pendentes, inativos };
-  }, [items, meta.total]);
+    return { total: items.length, ativos, pendentes, inativos };
+  }, [items]);
 
   async function handleCreateSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -141,9 +104,8 @@ export default function CadastrosGerais({ activeTabSlug }: CadastrosGeraisProps)
     setCreateSuccess(null);
 
     const form = new FormData(event.currentTarget);
-    const tipoFromForm = String(form.get('tipo') || '') as CadastroTipo;
     const payload = {
-      tipo: (fixedTipo ?? tipoFromForm) as CadastroTipo,
+      tipo: String(form.get('tipo') || '') as CadastroTipo,
       titulo: String(form.get('titulo') || '').trim(),
       descricao: String(form.get('descricao') || '').trim(),
       status: String(form.get('status') || '') as CadastroStatus,
@@ -156,11 +118,10 @@ export default function CadastrosGerais({ activeTabSlug }: CadastrosGeraisProps)
 
     try {
       setCreating(true);
-      await createCadastroData(payload);
+      const created = await createCadastroData(payload);
+      setItems((current) => [created, ...current]);
       setShowCreateForm(false);
       setCreateSuccess('Cadastro criado com sucesso.');
-      setPage(1);
-      setReloadKey((value) => value + 1);
       (event.currentTarget as HTMLFormElement).reset();
     } catch {
       setCreateError('Nao foi possivel criar o cadastro no momento.');
@@ -175,9 +136,9 @@ export default function CadastrosGerais({ activeTabSlug }: CadastrosGeraisProps)
     setUpdatingId(id);
 
     try {
-      await updateCadastroStatusData(id, status);
+      const updated = await updateCadastroStatusData(id, status);
+      setItems((current) => current.map((item) => (item.id === id ? updated : item)));
       setCreateSuccess('Status atualizado com sucesso.');
-      setReloadKey((value) => value + 1);
     } catch {
       setCreateError('Nao foi possivel atualizar o status no momento.');
     } finally {
@@ -197,7 +158,7 @@ export default function CadastrosGerais({ activeTabSlug }: CadastrosGeraisProps)
     <div className="p-4 md:p-8 space-y-8 max-w-7xl mx-auto">
       <section className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
         <div>
-          <h3 className="font-headline text-2xl md:text-4xl font-extrabold tracking-tighter text-on-surface">{activeTab.heading}</h3>
+          <h3 className="font-headline text-2xl md:text-4xl font-extrabold tracking-tighter text-on-surface">Cadastros Gerais</h3>
           <p className="text-on-surface-variant font-body mt-2">
             Centro unificado para cadastros de unidades, moradores, fornecedores e servicos.
           </p>
@@ -227,26 +188,15 @@ export default function CadastrosGerais({ activeTabSlug }: CadastrosGeraisProps)
       {showCreateForm ? (
         <section className="bg-surface-container-low rounded-xl p-6">
           <form className="grid grid-cols-1 md:grid-cols-2 gap-4" onSubmit={handleCreateSubmit}>
-            {fixedTipo ? (
-              <label className="text-xs font-bold uppercase tracking-widest text-on-surface-variant">
-                Tipo
-                <input
-                  value={tipoLabel[fixedTipo]}
-                  readOnly
-                  className="mt-2 w-full px-3 py-2 rounded-lg bg-surface-container-highest text-on-surface-variant"
-                />
-              </label>
-            ) : (
-              <label className="text-xs font-bold uppercase tracking-widest text-on-surface-variant">
-                Tipo
-                <select name="tipo" className="mt-2 w-full px-3 py-2 rounded-lg bg-surface-container-highest">
-                  <option value="unidade">Unidade</option>
-                  <option value="morador">Morador</option>
-                  <option value="fornecedor">Fornecedor</option>
-                  <option value="servico">Servico</option>
-                </select>
-              </label>
-            )}
+            <label className="text-xs font-bold uppercase tracking-widest text-on-surface-variant">
+              Tipo
+              <select name="tipo" className="mt-2 w-full px-3 py-2 rounded-lg bg-surface-container-highest">
+                <option value="unidade">Unidade</option>
+                <option value="morador">Morador</option>
+                <option value="fornecedor">Fornecedor</option>
+                <option value="servico">Servico</option>
+              </select>
+            </label>
 
             <label className="text-xs font-bold uppercase tracking-widest text-on-surface-variant">
               Status
@@ -303,83 +253,81 @@ export default function CadastrosGerais({ activeTabSlug }: CadastrosGeraisProps)
 
       <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <article className="bg-surface-container-highest p-6 rounded-xl">
-          <p className="text-on-surface-variant text-xs uppercase tracking-widest">Total filtrado</p>
+          <p className="text-on-surface-variant text-xs uppercase tracking-widest">Total de registros</p>
           <h4 className="text-2xl md:text-3xl font-headline font-extrabold mt-2">{indicadores.total}</h4>
         </article>
         <article className="bg-surface-container-highest p-6 rounded-xl">
-          <p className="text-on-surface-variant text-xs uppercase tracking-widest">Ativos (pagina)</p>
+          <p className="text-on-surface-variant text-xs uppercase tracking-widest">Ativos</p>
           <h4 className="text-2xl md:text-3xl font-headline font-extrabold mt-2">{indicadores.ativos}</h4>
         </article>
         <article className="bg-surface-container-highest p-6 rounded-xl">
-          <p className="text-on-surface-variant text-xs uppercase tracking-widest">Pendentes (pagina)</p>
+          <p className="text-on-surface-variant text-xs uppercase tracking-widest">Pendentes</p>
           <h4 className="text-2xl md:text-3xl font-headline font-extrabold mt-2">{indicadores.pendentes}</h4>
         </article>
         <article className="bg-surface-container-highest p-6 rounded-xl">
-          <p className="text-on-surface-variant text-xs uppercase tracking-widest">Inativos (pagina)</p>
+          <p className="text-on-surface-variant text-xs uppercase tracking-widest">Inativos</p>
           <h4 className="text-2xl md:text-3xl font-headline font-extrabold mt-2">{indicadores.inativos}</h4>
         </article>
       </section>
 
       <section className="bg-surface-container-low rounded-xl p-6 space-y-4">
         <div className="flex flex-wrap gap-2">
-          {CADASTROS_TABS.map((tab) => (
-            <NavLink
-              key={tab.slug}
-              to={`/cadastros-gerais/${tab.slug}`}
-              className={({ isActive }) =>
-                `px-4 py-2 rounded-full text-xs font-bold transition-colors ${
-                  isActive ? 'bg-primary text-on-primary' : 'bg-surface-container-highest text-on-surface hover:bg-surface-container-high'
-                }`
-              }
-            >
-              {tab.label}
-            </NavLink>
-          ))}
+          <button
+            type="button"
+            className={`px-4 py-2 rounded-full text-xs font-bold ${tipo === 'todos' ? 'bg-primary text-on-primary' : 'bg-surface-container-highest text-on-surface'}`}
+            onClick={() => setTipo('todos')}
+          >
+            Todos
+          </button>
+          <button
+            type="button"
+            className={`px-4 py-2 rounded-full text-xs font-bold ${tipo === 'unidade' ? 'bg-primary text-on-primary' : 'bg-surface-container-highest text-on-surface'}`}
+            onClick={() => setTipo('unidade')}
+          >
+            Unidades
+          </button>
+          <button
+            type="button"
+            className={`px-4 py-2 rounded-full text-xs font-bold ${tipo === 'morador' ? 'bg-primary text-on-primary' : 'bg-surface-container-highest text-on-surface'}`}
+            onClick={() => setTipo('morador')}
+          >
+            Moradores
+          </button>
+          <button
+            type="button"
+            className={`px-4 py-2 rounded-full text-xs font-bold ${tipo === 'fornecedor' ? 'bg-primary text-on-primary' : 'bg-surface-container-highest text-on-surface'}`}
+            onClick={() => setTipo('fornecedor')}
+          >
+            Fornecedores
+          </button>
+          <button
+            type="button"
+            className={`px-4 py-2 rounded-full text-xs font-bold ${tipo === 'servico' ? 'bg-primary text-on-primary' : 'bg-surface-container-highest text-on-surface'}`}
+            onClick={() => setTipo('servico')}
+          >
+            Servicos
+          </button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          <div className="md:col-span-2">
-            <label htmlFor="busca-cadastro" className="block text-xs font-bold uppercase tracking-widest text-on-surface-variant mb-2">
-              Busca rapida
-            </label>
-            <input
-              id="busca-cadastro"
-              value={busca}
-              onChange={(event) => {
-                setPage(1);
-                setBusca(event.target.value);
-              }}
-              placeholder={quickSearchPlaceholder(activeTabSlug)}
-              className="w-full px-4 py-3 bg-surface-container-highest rounded-lg outline-none focus:ring-2 focus:ring-primary-fixed"
-            />
-          </div>
-          <div>
-            <label htmlFor="status-cadastro" className="block text-xs font-bold uppercase tracking-widest text-on-surface-variant mb-2">
-              Status
-            </label>
-            <select
-              id="status-cadastro"
-              value={statusFilter}
-              onChange={(event) => {
-                setPage(1);
-                setStatusFilter(event.target.value as 'todos' | CadastroStatus);
-              }}
-              className="w-full px-4 py-3 bg-surface-container-highest rounded-lg outline-none focus:ring-2 focus:ring-primary-fixed"
-            >
-              <option value="todos">Todos</option>
-              <option value="active">Ativo</option>
-              <option value="pending">Pendente</option>
-              <option value="inactive">Inativo</option>
-            </select>
-          </div>
+        <div>
+          <label htmlFor="busca-cadastro" className="block text-xs font-bold uppercase tracking-widest text-on-surface-variant mb-2">
+            Busca rapida
+          </label>
+          <input
+            id="busca-cadastro"
+            value={busca}
+            onChange={(event) => setBusca(event.target.value)}
+            placeholder="Busque por nome, unidade, fornecedor ou servico..."
+            className="w-full px-4 py-3 bg-surface-container-highest rounded-lg outline-none focus:ring-2 focus:ring-primary-fixed"
+          />
         </div>
       </section>
 
       <section className="space-y-3">
-        {items.length === 0 ? (
+        {filtrados.length === 0 ? (
           <EmptyState message="Nenhum registro encontrado para os filtros selecionados." />
         ) : (
-          items.map((item) => (
+          filtrados.map((item) => (
             <article key={item.id} className="bg-surface-container-low rounded-xl p-5">
               <div className="flex items-start justify-between gap-4">
                 <div>
@@ -430,32 +378,6 @@ export default function CadastrosGerais({ activeTabSlug }: CadastrosGeraisProps)
             </article>
           ))
         )}
-
-        {meta.totalPages > 1 ? (
-          <div className="flex items-center justify-between gap-4 rounded-xl bg-surface-container-low px-4 py-3">
-            <p className="text-xs text-on-surface-variant">
-              Pagina {meta.page} de {meta.totalPages} | Total: {meta.total}
-            </p>
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => setPage((current) => Math.max(1, current - 1))}
-                disabled={!meta.hasPrevious}
-                className="px-3 py-2 rounded text-xs font-bold bg-surface-container-highest disabled:opacity-50"
-              >
-                Anterior
-              </button>
-              <button
-                type="button"
-                onClick={() => setPage((current) => current + 1)}
-                disabled={!meta.hasNext}
-                className="px-3 py-2 rounded text-xs font-bold bg-primary text-on-primary disabled:opacity-50"
-              >
-                Proxima
-              </button>
-            </div>
-          </div>
-        ) : null}
       </section>
     </div>
   );

@@ -59,6 +59,9 @@ async function performRequest<T>(path: string, init?: RequestInit): Promise<T> {
       if (response.status === 401) {
         notifyUnauthorized();
       }
+      if (response.status === 403) {
+        throw new ApiError('Acesso negado. Voce nao tem permissao para esta acao.', 403);
+      }
       throw new ApiError(`HTTP ${response.status}`, response.status);
     }
 

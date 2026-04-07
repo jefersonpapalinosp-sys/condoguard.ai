@@ -12,17 +12,13 @@ class LoginBody(BaseModel):
 
 class ChatMessageBody(BaseModel):
     message: str = Field(min_length=1, max_length=2000)
+    sessionId: str | None = Field(default=None, max_length=128)
 
 
 class ChatFeedbackBody(BaseModel):
     messageId: str = Field(min_length=1, max_length=120)
     rating: Literal["up", "down"]
     comment: str | None = Field(default=None, max_length=500)
-
-
-class ChatResumeBody(BaseModel):
-    pendingActionId: str = Field(min_length=1, max_length=120)
-    decision: Literal["confirm", "cancel"]
 
 
 class CadastroCreateBody(BaseModel):
