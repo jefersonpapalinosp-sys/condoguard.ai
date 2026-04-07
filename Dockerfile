@@ -8,6 +8,7 @@ RUN npm ci
 
 COPY . .
 
+
 ARG VITE_API_BASE_URL=http://localhost:4000
 ARG VITE_APP_ENV=prod
 ARG VITE_ENABLE_MOCK_FALLBACK=false
