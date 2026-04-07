@@ -26,6 +26,8 @@ export default defineConfig({
       env: {
         ...process.env,
         VITE_API_BASE_URL: 'http://127.0.0.1:4010',
+        VITE_APP_ENV: 'dev',
+        VITE_ENABLE_MOCK_FALLBACK: 'true',
       },
       url: 'http://127.0.0.1:4173',
       reuseExistingServer: !process.env.CI,

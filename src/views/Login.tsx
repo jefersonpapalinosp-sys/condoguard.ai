@@ -2,6 +2,7 @@ import { FormEvent, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../features/auth/context/AuthContext';
 import { loginWithPassword } from '../services/authService';
+import { ApiError } from '../services/http';
 
 export default function Login() {
   const navigate = useNavigate();
@@ -24,16 +25,26 @@ export default function Login() {
       login(session);
       const nextPath = (location.state as { from?: string } | null)?.from ?? '/dashboard';
       navigate(nextPath, { replace: true });
-    } catch {
-      setError('Credenciais invalidas ou servico indisponivel.');
+    } catch (rawError) {
+      if (rawError instanceof ApiError) {
+        if (rawError.status === 401) {
+          setError('Credenciais invalidas.');
+        } else if (rawError.status === 429) {
+          setError('Muitas tentativas de login. Aguarde e tente novamente.');
+        } else {
+          setError('Servico de autenticacao indisponivel. Verifique se a API esta ativa.');
+        }
+      } else {
+        setError('Credenciais invalidas ou servico indisponivel.');
+      }
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <main className="min-h-screen flex bg-surface text-on-surface font-body antialiased overflow-hidden">
-      <section className="hidden lg:flex lg:w-7/12 relative overflow-hidden bg-primary-container">
+    <main className="min-h-[100dvh] flex bg-surface text-on-surface font-body antialiased overflow-x-hidden">
+      <section className="hidden lg:flex lg:w-7/12 relative overflow-hidden bg-primary-container min-h-[100dvh]">
         <div className="absolute inset-0 z-0">
           <img
             src="https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=2070&auto=format&fit=crop"
@@ -43,7 +54,7 @@ export default function Login() {
         </div>
         <div className="absolute inset-0 bg-gradient-to-tr from-primary via-transparent to-primary-container opacity-90 z-10"></div>
 
-        <div className="relative z-20 flex flex-col justify-between p-16 h-full">
+        <div className="relative z-20 flex flex-col justify-between p-10 xl:p-16 h-full">
           <div>
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-primary-fixed flex items-center justify-center rounded-lg">
@@ -69,10 +80,10 @@ export default function Login() {
         </div>
       </section>
 
-      <section className="w-full lg:w-5/12 bg-surface flex items-center justify-center px-4 md:px-8 lg:px-16 py-12 relative">
+      <section className="w-full lg:w-5/12 bg-surface flex items-center justify-center px-4 md:px-8 lg:px-16 py-8 md:py-12 lg:py-16 relative overflow-y-auto">
         <div className="absolute inset-0 bg-surface-container-low opacity-40 -z-10"></div>
 
-        <div className="w-full max-w-md">
+        <div className="w-full max-w-md my-4">
           <header className="mb-10">
             <h2 className="text-2xl md:text-3xl font-headline font-extrabold text-on-surface tracking-tight">Acessar Plataforma</h2>
             <p className="mt-2 text-on-surface-variant font-body">Acesso autenticado no backend com credenciais validas.</p>
