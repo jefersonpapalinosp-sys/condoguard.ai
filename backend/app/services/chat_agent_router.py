@@ -1,0 +1,121 @@
+from __future__ import annotations
+
+import re
+import unicodedata
+from typing import Any
+
+
+ACTIONABLE_ACTIONS = {
+    "invoice_mark_paid",
+    "alert_mark_read",
+    "contract_renew",
+    "contract_close",
+}
+
+
+ACTION_TO_DOMAIN = {
+    "invoice_mark_paid": "financeiro",
+    "invoices_overview": "financeiro",
+    "alert_mark_read": "alertas",
+    "alerts_overview": "alertas",
+    "consumption_overview": "consumo",
+    "contract_renew": "contratos",
+    "contract_close": "contratos",
+    "contracts_overview": "contratos",
+    "contracts_expiring_overview": "contratos",
+    "contracts_adjustments_overview": "contratos",
+    "contracts_documents_overview": "contratos",
+    "cadastros_overview": "cadastros",
+    "general_overview": "geral",
+}
+
+
+DOMAIN_KEYWORDS = {
+    "financeiro": ["fatura", "inadimpl", "cobranca", "pagamento", "vencid"],
+    "alertas": ["alerta", "incidente", "risco", "critico", "urgente"],
+    "consumo": ["consumo", "energia", "agua", "telemetria", "anomalia"],
+    "contratos": ["contrato", "fornecedor", "reajuste", "vencimento", "renovacao"],
+    "cadastros": ["cadastro", "morador", "unidade", "fornecedor", "servico"],
+}
+
+
+def _normalize(value: str) -> str:
+    text = (value or "").lower().strip()
+    text = unicodedata.normalize("NFD", text)
+    text = "".join(ch for ch in text if unicodedata.category(ch) != "Mn")
+    return text
+
+
+def _has_any(text: str, terms: list[str]) -> bool:
+    return any(term in text for term in terms)
+
+
+def _extract_first(pattern: str, text: str) -> str | None:
+    match = re.search(pattern, text)
+    return match.group(0) if match else None
+
+
+def route_chat_message(message: str) -> dict[str, Any]:
+    normalized = _normalize(message)
+    entities = {
+        "invoiceId": _extract_first(r"\binv-\d+\b", normalized),
+        "alertId": _extract_first(r"\ba\d+\b", normalized),
+        "contractId": _extract_first(r"\b(?:ct\d+|ctr-[a-z0-9-]+|seed-\d+)\b", normalized),
+        "unit": _extract_first(r"\b[a-z]-\d{2,4}\b", normalized),
+    }
+
+    if entities["unit"]:
+        entities["unit"] = entities["unit"].upper()
+
+    action = "general_overview"
+    if _has_any(normalized, ["pagar fatura", "quitar fatura", "baixar fatura", "marcar fatura como paga", "marcar fatura paga"]):
+        action = "invoice_mark_paid"
+    elif _has_any(normalized, ["marcar alerta lido", "marcar alerta como lido", "resolver alerta", "fechar alerta"]):
+        action = "alert_mark_read"
+    elif _has_any(normalized, ["renovar contrato", "renovar o contrato", "renovacao do contrato", "renovacao contrato"]):
+        action = "contract_renew"
+    elif _has_any(normalized, ["encerrar contrato", "encerrar o contrato", "fechar contrato", "cancelar contrato"]):
+        action = "contract_close"
+    elif "reajuste" in normalized and "contrat" in normalized:
+        action = "contracts_adjustments_overview"
+    elif _has_any(normalized, ["vencimento", "vencer", "expira", "expirar"]) and "contrat" in normalized:
+        action = "contracts_expiring_overview"
+    elif "document" in normalized and "contrat" in normalized:
+        action = "contracts_documents_overview"
+    elif "contrat" in normalized:
+        action = "contracts_overview"
+    elif "cadastro" in normalized or "morador" in normalized or ("unidade" in normalized and "fatura" not in normalized):
+        action = "cadastros_overview"
+    elif "fatura" in normalized or "inadimpl" in normalized or "cobranca" in normalized:
+        action = "invoices_overview"
+    elif "alerta" in normalized or "incidente" in normalized or "risco" in normalized:
+        action = "alerts_overview"
+    elif "consumo" in normalized or "energia" in normalized or "agua" in normalized:
+        action = "consumption_overview"
+
+    domain_scores = {domain: sum(1 for term in terms if term in normalized) for domain, terms in DOMAIN_KEYWORDS.items()}
+    detected_domain = max(domain_scores, key=domain_scores.get) if domain_scores else "geral"
+    domain = ACTION_TO_DOMAIN.get(action) or (detected_domain if domain_scores.get(detected_domain, 0) > 0 else "geral")
+
+    required_entity = {
+        "invoice_mark_paid": "invoiceId",
+        "alert_mark_read": "alertId",
+        "contract_renew": "contractId",
+        "contract_close": "contractId",
+    }.get(action)
+
+    if action in ACTIONABLE_ACTIONS:
+        confidence = "high" if required_entity and entities.get(required_entity) else "medium"
+    elif action == "general_overview" and domain_scores.get(detected_domain, 0) == 0:
+        confidence = "low"
+    else:
+        confidence = "high" if domain_scores.get(detected_domain, 0) >= 3 else "medium"
+
+    return {
+        "domain": domain,
+        "action": action,
+        "mode": "transactional" if action in ACTIONABLE_ACTIONS else "analytical",
+        "confidence": confidence,
+        "requiresConfirmation": action in ACTIONABLE_ACTIONS,
+        "entities": entities,
+    }

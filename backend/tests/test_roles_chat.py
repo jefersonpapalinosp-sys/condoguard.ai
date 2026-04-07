@@ -31,3 +31,31 @@ def test_chat_feedback_and_telemetry():
     tel = client.get('/api/chat/telemetry?limit=5', headers=headers)
     assert tel.status_code == 200
     assert tel.json()['satisfaction']['total'] >= 1
+
+
+def test_chat_resume_confirm_contract_renew():
+    client, headers = _login('admin@condoguard.ai')
+    listing = client.get('/api/contracts/lista?page=1&pageSize=20', headers=headers)
+    assert listing.status_code == 200
+    contract = listing.json()['items'][0]
+    contract_id = contract['id']
+
+    ask = client.post('/api/chat/message', json={'message': f"Pode renovar o contrato {contract_id}?"}, headers=headers)
+    assert ask.status_code == 200
+    payload = ask.json()
+    assert payload.get('pendingAction') is not None
+    assert payload['pendingAction']['actionType'] == 'contract_renew'
+
+    resume = client.post(
+        '/api/chat/resume',
+        json={'pendingActionId': payload['pendingAction']['id'], 'decision': 'confirm'},
+        headers=headers,
+    )
+    assert resume.status_code == 200
+    assert 'renovado' in resume.json()['text'].lower()
+
+    refreshed = client.get(f"/api/contracts/{contract_id}", headers=headers)
+    assert refreshed.status_code == 200
+    updated = refreshed.json()['item']
+    assert updated is not None
+    assert updated['renewalStatus'] == 'renewed'

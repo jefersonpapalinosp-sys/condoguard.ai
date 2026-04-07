@@ -33,9 +33,28 @@ export type CadastrosResponse = {
 
 const MODULE_NAME = 'cadastros';
 
-export async function fetchCadastrosData(): Promise<CadastrosResponse> {
+export type CadastrosListQuery = {
+  tipo?: CadastroTipo;
+  status?: CadastroStatus;
+  search?: string;
+  page?: number;
+  pageSize?: number;
+};
+
+function buildQuery(params: CadastrosListQuery = {}) {
+  const query = new URLSearchParams();
+  if (params.tipo) query.set('tipo', params.tipo);
+  if (params.status) query.set('status', params.status);
+  if (params.search) query.set('search', params.search);
+  query.set('page', String(params.page ?? 1));
+  query.set('pageSize', String(params.pageSize ?? 20));
+  const suffix = query.toString();
+  return suffix ? `?${suffix}` : '';
+}
+
+export async function fetchCadastrosData(params: CadastrosListQuery = {}): Promise<CadastrosResponse> {
   try {
-    const response = await requestJson<CadastrosResponse>('/api/cadastros?page=1&pageSize=200');
+    const response = await requestJson<CadastrosResponse>(`/api/cadastros${buildQuery(params)}`);
     setModuleDataSource(MODULE_NAME, 'api');
     return response;
   } catch {

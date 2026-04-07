@@ -26,7 +26,7 @@ from app.repositories.alerts_repo import get_alerts_data, mark_alert_as_read
 from app.repositories.auth_repo import find_account_for_login
 from app.repositories.cadastros_repo import create_cadastro, list_cadastros, update_cadastro_status
 from app.repositories.chat_intents_repo import get_chat_intent_catalog
-from app.repositories.chat_repo import ask_chat, get_chat_bootstrap
+from app.repositories.chat_repo import ask_chat, get_chat_bootstrap, resume_chat_action
 from app.repositories.chat_telemetry_repo import (
     get_chat_telemetry_snapshot,
     record_chat_error_telemetry,
@@ -40,7 +40,7 @@ from app.repositories.consumption_repo import get_consumption_data
 from app.repositories.contracts_repo import get_contracts_data
 from app.repositories.reports_repo import get_reports_data
 from app.repositories.settings_repo import get_settings_data
-from app.schemas.requests import CadastroCreateBody, CadastroStatusBody, ChatFeedbackBody, ChatMessageBody, LoginBody
+from app.schemas.requests import CadastroCreateBody, CadastroStatusBody, ChatFeedbackBody, ChatMessageBody, ChatResumeBody, LoginBody
 from app.services.chat_context_service import build_chat_context
 from app.services.observability_alerts import dispatch_observability_alerts
 from app.audit.security_audit import query_security_audit_events
@@ -461,7 +461,18 @@ async def read_alert(alert_id: str, request: Request, auth: dict = Depends(requi
 @router.post("/chat/message")
 async def chat_message(body: ChatMessageBody, auth: dict = Depends(require_tenant_scope), _role: dict = Depends(require_roles(AUTH_ROLES))):
     try:
-        payload = await ask_chat(body.message.strip(), auth["condominiumId"])
+        payload = await ask_chat(body.message.strip(), auth["condominiumId"], auth.get("sub"))
+    except Exception as exc:
+        record_chat_error_telemetry(auth["condominiumId"], getattr(exc, "code", "CHAT_ERROR"))
+        raise
+    record_chat_message_telemetry(auth["condominiumId"], payload)
+    return payload
+
+
+@router.post("/chat/resume")
+async def chat_resume(body: ChatResumeBody, auth: dict = Depends(require_tenant_scope), _role: dict = Depends(require_roles(AUTH_ROLES))):
+    try:
+        payload = await resume_chat_action(body.pendingActionId, body.decision, auth["condominiumId"], auth.get("sub"))
     except Exception as exc:
         record_chat_error_telemetry(auth["condominiumId"], getattr(exc, "code", "CHAT_ERROR"))
         raise

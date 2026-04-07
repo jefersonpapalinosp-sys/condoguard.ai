@@ -20,6 +20,11 @@ class ChatFeedbackBody(BaseModel):
     comment: str | None = Field(default=None, max_length=500)
 
 
+class ChatResumeBody(BaseModel):
+    pendingActionId: str = Field(min_length=1, max_length=120)
+    decision: Literal["confirm", "cancel"]
+
+
 class CadastroCreateBody(BaseModel):
     tipo: Literal["unidade", "morador", "fornecedor", "servico"]
     titulo: str = Field(min_length=1, max_length=120)

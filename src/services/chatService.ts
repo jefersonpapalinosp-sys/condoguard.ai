@@ -76,6 +76,46 @@ export async function postChatMessage(message: string): Promise<ChatMessage> {
   }
 }
 
+export async function resumeChatPendingAction(
+  pendingActionId: string,
+  decision: 'confirm' | 'cancel',
+): Promise<ChatMessage> {
+  try {
+    const response = await requestJson<ChatMessage>('/api/chat/resume', {
+      method: 'POST',
+      body: JSON.stringify({ pendingActionId, decision }),
+    });
+    setModuleDataSource(MODULE_NAME, 'api');
+    return response;
+  } catch {
+    if (!isMockFallbackEnabled()) {
+      setModuleDataSource(MODULE_NAME, 'unknown');
+      notifyApiFallback({ module: 'Chat', message: 'API indisponivel (fallback mock desativado)' });
+      throw new Error('Falha ao retomar acao pendente no chat.');
+    }
+    setModuleDataSource(MODULE_NAME, 'mock');
+    notifyApiFallback({ module: 'Chat', message: 'API indisponivel (fallback mock ativo)' });
+    return {
+      id: `bot-${Date.now()}`,
+      role: 'assistant',
+      text:
+        decision === 'confirm'
+          ? `Acao ${pendingActionId} confirmada em modo mock.`
+          : `Acao ${pendingActionId} cancelada em modo mock.`,
+      time: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+      intentId: 'action_plan',
+      confidence: 'low',
+      promptCatalogVersion: 'mock',
+      sources: ['mock:chat'],
+      guardrails: {
+        blocked: false,
+        reason: null,
+        policyVersion: 'mock',
+      },
+    };
+  }
+}
+
 export async function sendChatFeedback(messageId: string, rating: 'up' | 'down', comment?: string): Promise<void> {
   try {
     await requestJson<{ ok: boolean }>('/api/chat/feedback', {

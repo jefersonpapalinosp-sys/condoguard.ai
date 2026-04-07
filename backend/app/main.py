@@ -20,6 +20,7 @@ from app.observability.metrics_store import (
     reset_observability_metrics,
 )
 from app.repositories.cadastros_repo import reset_cadastros_store
+from app.repositories.chat_pending_repo import reset_chat_pending_actions_store
 from app.repositories.chat_telemetry_repo import reset_chat_telemetry_store
 from app.repositories.contracts_management_repo import reset_contracts_management_state
 from app.integrations.enel.repository import reset_enel_integration_state
@@ -123,6 +124,7 @@ class ObservabilityMiddleware(BaseHTTPMiddleware):
 configure_logging()
 reset_observability_metrics()
 reset_chat_telemetry_store()
+reset_chat_pending_actions_store()
 reset_cadastros_store()
 reset_contracts_management_state()
 reset_enel_integration_state()
@@ -140,6 +142,7 @@ app.include_router(enel_router)
 def reset_runtime_state() -> None:
     reset_observability_metrics()
     reset_chat_telemetry_store()
+    reset_chat_pending_actions_store()
     reset_cadastros_store()
     reset_contracts_management_state()
     reset_enel_integration_state()
