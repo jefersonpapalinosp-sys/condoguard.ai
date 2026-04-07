@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 from app.core.config import settings
+from app.core.errors import ApiRequestError
 from app.db.oracle_client import run_oracle_query
 from app.observability.metrics_store import record_api_fallback_metric
 
@@ -16,11 +17,17 @@ try:
     def _verify_password(password: str, password_hash: str | None) -> bool:
         if not password_hash:
             return False
+        normalized_hash = str(password_hash).strip()
+        if not normalized_hash:
+            return False
         # Support legacy SHA256 hashes (hex, 64 chars) during migration
-        if len(str(password_hash)) == 64 and all(c in "0123456789abcdef" for c in str(password_hash).lower()):
+        if len(normalized_hash) == 64 and all(c in "0123456789abcdef" for c in normalized_hash.lower()):
             import hashlib
-            return hashlib.sha256(password.encode()).hexdigest() == str(password_hash).lower()
-        return _pwd_context.verify(password, str(password_hash))
+            return hashlib.sha256(password.encode()).hexdigest() == normalized_hash.lower()
+        try:
+            return _pwd_context.verify(password, normalized_hash)
+        except Exception:
+            return False
 
 except ImportError:
     import hashlib as _hashlib
@@ -50,7 +57,6 @@ async def find_account_for_login(email: str, password: str) -> dict[str, Any] | 
                 select email, password_hash, role, condominium_id, active
                 from app.usuarios
                 where lower(email) = :email
-                fetch first 1 rows only
                 """,
                 {"email": normalized_email},
             )
@@ -66,7 +72,11 @@ async def find_account_for_login(email: str, password: str) -> dict[str, Any] | 
                 }
         except Exception:
             if not settings.enable_demo_auth:
-                raise
+                raise ApiRequestError(
+                    503,
+                    "AUTH_PROVIDER_UNAVAILABLE",
+                    "Servico de autenticacao indisponivel no momento.",
+                )
             record_api_fallback_metric("auth", "oracle_fallback_demo_auth")
 
     if not settings.enable_demo_auth:
