@@ -1,0 +1,38 @@
+name: Flyway Homolog
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "database/flyway/sql/**"
+      - "scripts/db/flyway-migrate.ps1"
+      - ".github/workflows/flyway-homolog.yml"
+
+jobs:
+  migrate-homolog:
+    runs-on: ubuntu-latest
+    env:
+      ORACLE_USER: ${{ secrets.ORACLE_USER }}
+      ORACLE_PASSWORD: ${{ secrets.ORACLE_PASSWORD }}
+      ORACLE_CONNECT_STRING: ${{ secrets.ORACLE_CONNECT_STRING }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate secrets
+        run: |
+          test -n "$ORACLE_USER"
+          test -n "$ORACLE_PASSWORD"
+          test -n "$ORACLE_CONNECT_STRING"
+
+      - name: Run Flyway migrate
+        run: |
+          docker run --rm \
+            -v "$PWD/database/flyway/sql:/flyway/sql" \
+            flyway/flyway:10.17.1 \
+            -url="jdbc:oracle:thin:@$ORACLE_CONNECT_STRING" \
+            -user="$ORACLE_USER" \
+            -password="$ORACLE_PASSWORD" \
+            -locations="filesystem:/flyway/sql" \
+            migrate

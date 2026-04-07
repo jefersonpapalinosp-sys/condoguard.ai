@@ -1,0 +1,184 @@
+{
+  "items": [
+    {
+      "id": "inv-1",
+      "unit": "A-100",
+      "resident": "Benicio Duarte",
+      "reference": "Abr/2026",
+      "dueDate": "2026-04-10",
+      "amount": 797.35,
+      "status": "pending"
+    },
+    {
+      "id": "inv-2",
+      "unit": "A-101",
+      "resident": "Davi Lucca Abreu",
+      "reference": "Abr/2026",
+      "dueDate": "2026-04-10",
+      "amount": 814.7,
+      "status": "pending"
+    },
+    {
+      "id": "inv-3",
+      "unit": "A-104",
+      "resident": "Thiago Alves",
+      "reference": "Abr/2026",
+      "dueDate": "2026-04-10",
+      "amount": 832.05,
+      "status": "paid"
+    },
+    {
+      "id": "inv-4",
+      "unit": "A-105",
+      "resident": "Maria Isis Marques",
+      "reference": "Abr/2026",
+      "dueDate": "2026-04-10",
+      "amount": 849.4,
+      "status": "pending"
+    },
+    {
+      "id": "inv-5",
+      "unit": "A-106",
+      "resident": "Dante Cunha",
+      "reference": "Abr/2026",
+      "dueDate": "2026-04-10",
+      "amount": 866.75,
+      "status": "overdue"
+    },
+    {
+      "id": "inv-6",
+      "unit": "A-108",
+      "resident": "Clarice Jesus",
+      "reference": "Abr/2026",
+      "dueDate": "2026-04-10",
+      "amount": 884.1,
+      "status": "paid"
+    },
+    {
+      "id": "inv-7",
+      "unit": "A-110",
+      "resident": "Antonella Novaes",
+      "reference": "Abr/2026",
+      "dueDate": "2026-04-10",
+      "amount": 901.45,
+      "status": "pending"
+    },
+    {
+      "id": "inv-8",
+      "unit": "A-111",
+      "resident": "Luana Azevedo",
+      "reference": "Abr/2026",
+      "dueDate": "2026-04-10",
+      "amount": 918.8,
+      "status": "pending"
+    },
+    {
+      "id": "inv-9",
+      "unit": "A-112",
+      "resident": "Isabela Montenegro",
+      "reference": "Abr/2026",
+      "dueDate": "2026-04-10",
+      "amount": 936.15,
+      "status": "paid"
+    },
+    {
+      "id": "inv-10",
+      "unit": "A-113",
+      "resident": "Mariana Correia",
+      "reference": "Abr/2026",
+      "dueDate": "2026-04-10",
+      "amount": 953.5,
+      "status": "overdue"
+    },
+    {
+      "id": "inv-11",
+      "unit": "A-114",
+      "resident": "Gustavo Henrique Cirino",
+      "reference": "Abr/2026",
+      "dueDate": "2026-04-10",
+      "amount": 970.85,
+      "status": "pending"
+    },
+    {
+      "id": "inv-12",
+      "unit": "A-118",
+      "resident": "Marcela Garcia",
+      "reference": "Abr/2026",
+      "dueDate": "2026-04-10",
+      "amount": 988.2,
+      "status": "paid"
+    },
+    {
+      "id": "inv-13",
+      "unit": "A-122",
+      "resident": "Dra. Fernanda Mendonça",
+      "reference": "Abr/2026",
+      "dueDate": "2026-04-10",
+      "amount": 1005.55,
+      "status": "pending"
+    },
+    {
+      "id": "inv-14",
+      "unit": "A-125",
+      "resident": "Srta. Mariane Peixoto",
+      "reference": "Abr/2026",
+      "dueDate": "2026-04-10",
+      "amount": 1022.9,
+      "status": "pending"
+    },
+    {
+      "id": "inv-15",
+      "unit": "A-127",
+      "resident": "Dr. Brayan Pereira",
+      "reference": "Abr/2026",
+      "dueDate": "2026-04-10",
+      "amount": 1040.25,
+      "status": "overdue"
+    },
+    {
+      "id": "inv-16",
+      "unit": "A-128",
+      "resident": "Ana Laura da Costa",
+      "reference": "Abr/2026",
+      "dueDate": "2026-04-10",
+      "amount": 1057.6,
+      "status": "pending"
+    },
+    {
+      "id": "inv-17",
+      "unit": "A-130",
+      "resident": "Antony Fonseca",
+      "reference": "Abr/2026",
+      "dueDate": "2026-04-10",
+      "amount": 1074.95,
+      "status": "pending"
+    },
+    {
+      "id": "inv-18",
+      "unit": "A-133",
+      "resident": "Olivia Barros",
+      "reference": "Abr/2026",
+      "dueDate": "2026-04-10",
+      "amount": 1092.3,
+      "status": "paid"
+    },
+    {
+      "id": "inv-19",
+      "unit": "A-134",
+      "resident": "João da Mata",
+      "reference": "Abr/2026",
+      "dueDate": "2026-04-10",
+      "amount": 1109.65,
+      "status": "pending"
+    },
+    {
+      "id": "inv-20",
+      "unit": "A-135",
+      "resident": "Amanda Alves",
+      "reference": "Abr/2026",
+      "dueDate": "2026-04-10",
+      "amount": 1127.0,
+      "status": "overdue"
+    }
+  ]
+}

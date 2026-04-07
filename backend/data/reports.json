@@ -1,0 +1,24 @@
+{
+  "executiveTitle": "Resumo executivo mensal",
+  "executiveSummary": "Reducao de 4.2% no consumo geral de energia com aumento de 12% no custo de manutencao corretiva de elevadores.",
+  "items": [
+    {
+      "id": "r1",
+      "title": "Fechamento financeiro",
+      "subtitle": "Receitas, despesas e inadimplencia do ultimo mes",
+      "generatedAt": "ha 2 dias"
+    },
+    {
+      "id": "r2",
+      "title": "Eficiencia energetica",
+      "subtitle": "Comparativo de consumo e picos de demanda",
+      "generatedAt": "ha 5 dias"
+    },
+    {
+      "id": "r3",
+      "title": "Manutencao preventiva",
+      "subtitle": "Status dos equipamentos criticos e cronograma",
+      "generatedAt": "ha 1 semana"
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+node_modules/
+build/
+dist/
+coverage/
+.DS_Store
+*.log
+.env*
+!.env.example
+invoices-export.csv
+backend/data/*_state.json
+__pycache__/
+*.py[cod]
+.pytest_cache/

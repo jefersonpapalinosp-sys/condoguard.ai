@@ -1,0 +1,324 @@
+{
+  "units": [
+    {
+      "id": "u1",
+      "block": "A",
+      "unit": "100",
+      "resident": "Benicio Duarte",
+      "status": "occupied",
+      "lastUpdate": "Agora"
+    },
+    {
+      "id": "u2",
+      "block": "A",
+      "unit": "101",
+      "resident": "Davi Lucca Abreu",
+      "status": "occupied",
+      "lastUpdate": "Agora"
+    },
+    {
+      "id": "u3",
+      "block": "A",
+      "unit": "102",
+      "resident": "Dra. Isadora Carvalho",
+      "status": "occupied",
+      "lastUpdate": "Agora"
+    },
+    {
+      "id": "u4",
+      "block": "B",
+      "unit": "103",
+      "resident": "Thomas Albuquerque",
+      "status": "occupied",
+      "lastUpdate": "Agora"
+    },
+    {
+      "id": "u5",
+      "block": "B",
+      "unit": "104",
+      "resident": "Thiago Alves",
+      "status": "occupied",
+      "lastUpdate": "Agora"
+    },
+    {
+      "id": "u6",
+      "block": "B",
+      "unit": "105",
+      "resident": "Maria Isis Marques",
+      "status": "occupied",
+      "lastUpdate": "Agora"
+    },
+    {
+      "id": "u7",
+      "block": "A",
+      "unit": "106",
+      "resident": "Dante Cunha",
+      "status": "occupied",
+      "lastUpdate": "Agora"
+    },
+    {
+      "id": "u8",
+      "block": "B",
+      "unit": "107",
+      "resident": "Lara Costa",
+      "status": "occupied",
+      "lastUpdate": "Agora"
+    },
+    {
+      "id": "u9",
+      "block": "A",
+      "unit": "108",
+      "resident": "Clarice Jesus",
+      "status": "maintenance",
+      "lastUpdate": "Agora"
+    },
+    {
+      "id": "u10",
+      "block": "B",
+      "unit": "109",
+      "resident": "Milena Barbosa",
+      "status": "occupied",
+      "lastUpdate": "Agora"
+    },
+    {
+      "id": "u11",
+      "block": "A",
+      "unit": "110",
+      "resident": "Antonella Novaes",
+      "status": "occupied",
+      "lastUpdate": "Agora"
+    },
+    {
+      "id": "u12",
+      "block": "A",
+      "unit": "111",
+      "resident": "Luana Azevedo",
+      "status": "occupied",
+      "lastUpdate": "Agora"
+    },
+    {
+      "id": "u13",
+      "block": "A",
+      "unit": "112",
+      "resident": "Isabela Montenegro",
+      "status": "occupied",
+      "lastUpdate": "Agora"
+    },
+    {
+      "id": "u14",
+      "block": "A",
+      "unit": "113",
+      "resident": "Mariana Correia",
+      "status": "occupied",
+      "lastUpdate": "Agora"
+    },
+    {
+      "id": "u15",
+      "block": "B",
+      "unit": "114",
+      "resident": "Gustavo Henrique Cirino",
+      "status": "occupied",
+      "lastUpdate": "Agora"
+    },
+    {
+      "id": "u16",
+      "block": "B",
+      "unit": "115",
+      "resident": "Rael Borges",
+      "status": "occupied",
+      "lastUpdate": "Agora"
+    },
+    {
+      "id": "u17",
+      "block": "B",
+      "unit": "116",
+      "resident": "Caio Mendes",
+      "status": "occupied",
+      "lastUpdate": "Agora"
+    },
+    {
+      "id": "u18",
+      "block": "A",
+      "unit": "117",
+      "resident": "-",
+      "status": "maintenance",
+      "lastUpdate": "Agora"
+    },
+    {
+      "id": "u19",
+      "block": "B",
+      "unit": "118",
+      "resident": "Marcela Garcia",
+      "status": "occupied",
+      "lastUpdate": "Agora"
+    },
+    {
+      "id": "u20",
+      "block": "A",
+      "unit": "119",
+      "resident": "-",
+      "status": "vacant",
+      "lastUpdate": "Agora"
+    },
+    {
+      "id": "u21",
+      "block": "B",
+      "unit": "120",
+      "resident": "-",
+      "status": "vacant",
+      "lastUpdate": "Agora"
+    },
+    {
+      "id": "u22",
+      "block": "A",
+      "unit": "121",
+      "resident": "-",
+      "status": "vacant",
+      "lastUpdate": "Agora"
+    },
+    {
+      "id": "u23",
+      "block": "A",
+      "unit": "122",
+      "resident": "Dra. Fernanda Mendonça",
+      "status": "occupied",
+      "lastUpdate": "Agora"
+    },
+    {
+      "id": "u24",
+      "block": "A",
+      "unit": "123",
+      "resident": "-",
+      "status": "vacant",
+      "lastUpdate": "Agora"
+    },
+    {
+      "id": "u25",
+      "block": "B",
+      "unit": "124",
+      "resident": "Cauã Aragão",
+      "status": "occupied",
+      "lastUpdate": "Agora"
+    },
+    {
+      "id": "u26",
+      "block": "A",
+      "unit": "125",
+      "resident": "Srta. Mariane Peixoto",
+      "status": "occupied",
+      "lastUpdate": "Agora"
+    },
+    {
+      "id": "u27",
+      "block": "B",
+      "unit": "126",
+      "resident": "Luan Casa Grande",
+      "status": "maintenance",
+      "lastUpdate": "Agora"
+    },
+    {
+      "id": "u28",
+      "block": "A",
+      "unit": "127",
+      "resident": "Dr. Brayan Pereira",
+      "status": "occupied",
+      "lastUpdate": "Agora"
+    },
+    {
+      "id": "u29",
+      "block": "A",
+      "unit": "128",
+      "resident": "Ana Laura da Costa",
+      "status": "occupied",
+      "lastUpdate": "Agora"
+    },
+    {
+      "id": "u30",
+      "block": "B",
+      "unit": "129",
+      "resident": "-",
+      "status": "vacant",
+      "lastUpdate": "Agora"
+    },
+    {
+      "id": "u31",
+      "block": "B",
+      "unit": "130",
+      "resident": "Antony Fonseca",
+      "status": "occupied",
+      "lastUpdate": "Agora"
+    },
+    {
+      "id": "u32",
+      "block": "A",
+      "unit": "131",
+      "resident": "Dr. Pedro Henrique Caldeira",
+      "status": "occupied",
+      "lastUpdate": "Agora"
+    },
+    {
+      "id": "u33",
+      "block": "A",
+      "unit": "132",
+      "resident": "-",
+      "status": "vacant",
+      "lastUpdate": "Agora"
+    },
+    {
+      "id": "u34",
+      "block": "A",
+      "unit": "133",
+      "resident": "Olivia Barros",
+      "status": "occupied",
+      "lastUpdate": "Agora"
+    },
+    {
+      "id": "u35",
+      "block": "A",
+      "unit": "134",
+      "resident": "João da Mata",
+      "status": "occupied",
+      "lastUpdate": "Agora"
+    },
+    {
+      "id": "u36",
+      "block": "B",
+      "unit": "135",
+      "resident": "Amanda Alves",
+      "status": "maintenance",
+      "lastUpdate": "Agora"
+    },
+    {
+      "id": "u37",
+      "block": "B",
+      "unit": "136",
+      "resident": "Manuella Correia",
+      "status": "occupied",
+      "lastUpdate": "Agora"
+    },
+    {
+      "id": "u38",
+      "block": "A",
+      "unit": "137",
+      "resident": "Mariah Vieira",
+      "status": "occupied",
+      "lastUpdate": "Agora"
+    },
+    {
+      "id": "u39",
+      "block": "B",
+      "unit": "138",
+      "resident": "Sr. Gael Fonseca",
+      "status": "occupied",
+      "lastUpdate": "Agora"
+    },
+    {
+      "id": "u40",
+      "block": "B",
+      "unit": "139",
+      "resident": "Rhavi Moreira",
+      "status": "occupied",
+      "lastUpdate": "Agora"
+    }
+  ]
+}

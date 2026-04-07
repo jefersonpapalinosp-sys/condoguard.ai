@@ -1,0 +1,75 @@
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap');
+
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-headline: "Manrope", ui-sans-serif, system-ui, sans-serif;
+  --font-body: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-label: "Inter", ui-sans-serif, system-ui, sans-serif;
+
+  --color-surface-container-low: #f2f3ff;
+  --color-tertiary-fixed: #6bff8f;
+  --color-primary-container: #131b2e;
+  --color-on-secondary: #ffffff;
+  --color-outline: #76777d;
+  --color-on-secondary-container: #54647a;
+  --color-surface-container-lowest: #ffffff;
+  --color-on-primary: #ffffff;
+  --color-secondary-fixed-dim: #b7c8e1;
+  --color-tertiary-container: #002109;
+  --color-primary-fixed: #dae2fd;
+  --color-surface-variant: #dae2fd;
+  --color-outline-variant: #c6c6cd;
+  --color-secondary-fixed: #d3e4fe;
+  --color-tertiary-fixed-dim: #4ae176;
+  --color-on-tertiary-fixed-variant: #005321;
+  --color-on-error: #ffffff;
+  --color-on-tertiary-container: #009844;
+  --color-surface-bright: #faf8ff;
+  --color-tertiary: #000000;
+  --color-secondary-container: #d0e1fb;
+  --color-inverse-on-surface: #eef0ff;
+  --color-surface-dim: #d2d9f4;
+  --color-surface-container-highest: #dae2fd;
+  --color-surface: #faf8ff;
+  --color-on-surface-variant: #45464d;
+  --color-on-error-container: #93000a;
+  --color-primary-fixed-dim: #bec6e0;
+  --color-on-tertiary-fixed: #002109;
+  --color-on-secondary-fixed-variant: #38485d;
+  --color-surface-tint: #565e74;
+  --color-error: #ba1a1a;
+  --color-on-tertiary: #ffffff;
+  --color-on-primary-fixed: #131b2e;
+  --color-on-primary-container: #7c839b;
+  --color-on-surface: #131b2e;
+  --color-inverse-surface: #283044;
+  --color-secondary: #505f76;
+  --color-surface-container: #eaedff;
+  --color-background: #faf8ff;
+  --color-error-container: #ffdad6;
+  --color-primary: #000000;
+  --color-surface-container-high: #e2e7ff;
+  --color-on-primary-fixed-variant: #3f465c;
+  --color-inverse-primary: #bec6e0;
+  --color-on-background: #131b2e;
+  --color-on-secondary-fixed: #0b1c30;
+}
+
+.material-symbols-outlined {
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
+
+.monolith-gradient {
+  background: linear-gradient(135deg, #000000 0%, #131b2e 100%);
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+    display: none;
+}
+.scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}

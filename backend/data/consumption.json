@@ -1,0 +1,30 @@
+{
+  "kpis": {
+    "monitoredUnits": 120,
+    "peakLoad": "12.4 kWh as 14:45",
+    "projectedCost": "R$ 4.820,00"
+  },
+  "anomalies": [
+    {
+      "id": "c1",
+      "title": "Unidade 402B - Vazamento de agua",
+      "sigma": "3.5 sigma",
+      "severity": "critical",
+      "description": "Fluxo de 12 L/min por 4 horas. Desvio estatistico indica falha de valvula."
+    },
+    {
+      "id": "c2",
+      "title": "Chiller central - Desequilibrio de fase",
+      "sigma": "2.1 sigma",
+      "severity": "warning",
+      "description": "Pico de potencia reativa no compressor 2 com perda de eficiencia."
+    },
+    {
+      "id": "c3",
+      "title": "HVAC do lobby - Ciclagem curta",
+      "sigma": "1.8 sigma",
+      "severity": "info",
+      "description": "Frequencia de liga/desliga 40% acima da media sazonal."
+    }
+  ]
+}

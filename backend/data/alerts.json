@@ -1,0 +1,355 @@
+{
+  "activeCount": 120,
+  "items": [
+    {
+      "id": "a1",
+      "severity": "warning",
+      "title": "valor acima contrato",
+      "description": "Anomalia detectada automaticamente",
+      "time": "80 d atras"
+    },
+    {
+      "id": "a2",
+      "severity": "critical",
+      "title": "servico nao executado",
+      "description": "Anomalia detectada automaticamente",
+      "time": "145 d atras"
+    },
+    {
+      "id": "a3",
+      "severity": "info",
+      "title": "pagamento atrasado",
+      "description": "Anomalia detectada automaticamente",
+      "time": "73 d atras"
+    },
+    {
+      "id": "a4",
+      "severity": "critical",
+      "title": "pagamento atrasado",
+      "description": "Anomalia detectada automaticamente",
+      "time": "146 d atras"
+    },
+    {
+      "id": "a5",
+      "severity": "warning",
+      "title": "valor acima contrato",
+      "description": "Anomalia detectada automaticamente",
+      "time": "170 d atras"
+    },
+    {
+      "id": "a6",
+      "severity": "warning",
+      "title": "consumo anormal unidade",
+      "description": "Anomalia detectada automaticamente",
+      "time": "348 d atras"
+    },
+    {
+      "id": "a7",
+      "severity": "info",
+      "title": "consumo anormal unidade",
+      "description": "Anomalia detectada automaticamente",
+      "time": "154 d atras"
+    },
+    {
+      "id": "a8",
+      "severity": "critical",
+      "title": "servico nao executado",
+      "description": "Anomalia detectada automaticamente",
+      "time": "182 d atras"
+    },
+    {
+      "id": "a9",
+      "severity": "critical",
+      "title": "servico nao executado",
+      "description": "Anomalia detectada automaticamente",
+      "time": "14 d atras"
+    },
+    {
+      "id": "a10",
+      "severity": "critical",
+      "title": "consumo anormal unidade",
+      "description": "Anomalia detectada automaticamente",
+      "time": "130 d atras"
+    },
+    {
+      "id": "a11",
+      "severity": "warning",
+      "title": "servico nao executado",
+      "description": "Anomalia detectada automaticamente",
+      "time": "107 d atras"
+    },
+    {
+      "id": "a12",
+      "severity": "info",
+      "title": "pagamento atrasado",
+      "description": "Anomalia detectada automaticamente",
+      "time": "163 d atras"
+    },
+    {
+      "id": "a13",
+      "severity": "warning",
+      "title": "valor acima contrato",
+      "description": "Anomalia detectada automaticamente",
+      "time": "174 d atras"
+    },
+    {
+      "id": "a14",
+      "severity": "info",
+      "title": "consumo anormal unidade",
+      "description": "Anomalia detectada automaticamente",
+      "time": "323 d atras"
+    },
+    {
+      "id": "a15",
+      "severity": "warning",
+      "title": "servico nao executado",
+      "description": "Anomalia detectada automaticamente",
+      "time": "130 d atras"
+    },
+    {
+      "id": "a16",
+      "severity": "warning",
+      "title": "servico nao executado",
+      "description": "Anomalia detectada automaticamente",
+      "time": "37 d atras"
+    },
+    {
+      "id": "a17",
+      "severity": "warning",
+      "title": "servico nao executado",
+      "description": "Anomalia detectada automaticamente",
+      "time": "232 d atras"
+    },
+    {
+      "id": "a18",
+      "severity": "warning",
+      "title": "pagamento atrasado",
+      "description": "Anomalia detectada automaticamente",
+      "time": "128 d atras"
+    },
+    {
+      "id": "a19",
+      "severity": "critical",
+      "title": "pagamento atrasado",
+      "description": "Anomalia detectada automaticamente",
+      "time": "13 d atras"
+    },
+    {
+      "id": "a20",
+      "severity": "info",
+      "title": "consumo anormal unidade",
+      "description": "Anomalia detectada automaticamente",
+      "time": "182 d atras"
+    },
+    {
+      "id": "a21",
+      "severity": "info",
+      "title": "valor acima contrato",
+      "description": "Anomalia detectada automaticamente",
+      "time": "31 d atras"
+    },
+    {
+      "id": "a22",
+      "severity": "info",
+      "title": "pagamento atrasado",
+      "description": "Anomalia detectada automaticamente",
+      "time": "334 d atras"
+    },
+    {
+      "id": "a23",
+      "severity": "warning",
+      "title": "valor acima contrato",
+      "description": "Anomalia detectada automaticamente",
+      "time": "225 d atras"
+    },
+    {
+      "id": "a24",
+      "severity": "critical",
+      "title": "servico nao executado",
+      "description": "Anomalia detectada automaticamente",
+      "time": "41 d atras"
+    },
+    {
+      "id": "a25",
+      "severity": "info",
+      "title": "valor acima contrato",
+      "description": "Anomalia detectada automaticamente",
+      "time": "336 d atras"
+    },
+    {
+      "id": "a26",
+      "severity": "info",
+      "title": "servico nao executado",
+      "description": "Anomalia detectada automaticamente",
+      "time": "224 d atras"
+    },
+    {
+      "id": "a27",
+      "severity": "warning",
+      "title": "consumo anormal unidade",
+      "description": "Anomalia detectada automaticamente",
+      "time": "305 d atras"
+    },
+    {
+      "id": "a28",
+      "severity": "info",
+      "title": "valor acima contrato",
+      "description": "Anomalia detectada automaticamente",
+      "time": "90 d atras"
+    },
+    {
+      "id": "a29",
+      "severity": "info",
+      "title": "pagamento atrasado",
+      "description": "Anomalia detectada automaticamente",
+      "time": "310 d atras"
+    },
+    {
+      "id": "a30",
+      "severity": "critical",
+      "title": "servico nao executado",
+      "description": "Anomalia detectada automaticamente",
+      "time": "114 d atras"
+    },
+    {
+      "id": "a31",
+      "severity": "warning",
+      "title": "valor acima contrato",
+      "description": "Anomalia detectada automaticamente",
+      "time": "189 d atras"
+    },
+    {
+      "id": "a32",
+      "severity": "critical",
+      "title": "consumo anormal unidade",
+      "description": "Anomalia detectada automaticamente",
+      "time": "172 d atras"
+    },
+    {
+      "id": "a33",
+      "severity": "info",
+      "title": "servico nao executado",
+      "description": "Anomalia detectada automaticamente",
+      "time": "375 d atras"
+    },
+    {
+      "id": "a34",
+      "severity": "warning",
+      "title": "valor acima contrato",
+      "description": "Anomalia detectada automaticamente",
+      "time": "203 d atras"
+    },
+    {
+      "id": "a35",
+      "severity": "warning",
+      "title": "servico nao executado",
+      "description": "Anomalia detectada automaticamente",
+      "time": "75 d atras"
+    },
+    {
+      "id": "a36",
+      "severity": "info",
+      "title": "servico nao executado",
+      "description": "Anomalia detectada automaticamente",
+      "time": "297 d atras"
+    },
+    {
+      "id": "a37",
+      "severity": "warning",
+      "title": "valor acima contrato",
+      "description": "Anomalia detectada automaticamente",
+      "time": "167 d atras"
+    },
+    {
+      "id": "a38",
+      "severity": "info",
+      "title": "servico nao executado",
+      "description": "Anomalia detectada automaticamente",
+      "time": "262 d atras"
+    },
+    {
+      "id": "a39",
+      "severity": "critical",
+      "title": "consumo anormal unidade",
+      "description": "Anomalia detectada automaticamente",
+      "time": "258 d atras"
+    },
+    {
+      "id": "a40",
+      "severity": "info",
+      "title": "consumo anormal unidade",
+      "description": "Anomalia detectada automaticamente",
+      "time": "126 d atras"
+    },
+    {
+      "id": "a41",
+      "severity": "warning",
+      "title": "valor acima contrato",
+      "description": "Anomalia detectada automaticamente",
+      "time": "256 d atras"
+    },
+    {
+      "id": "a42",
+      "severity": "warning",
+      "title": "valor acima contrato",
+      "description": "Anomalia detectada automaticamente",
+      "time": "123 d atras"
+    },
+    {
+      "id": "a43",
+      "severity": "critical",
+      "title": "servico nao executado",
+      "description": "Anomalia detectada automaticamente",
+      "time": "231 d atras"
+    },
+    {
+      "id": "a44",
+      "severity": "warning",
+      "title": "pagamento atrasado",
+      "description": "Anomalia detectada automaticamente",
+      "time": "100 d atras"
+    },
+    {
+      "id": "a45",
+      "severity": "critical",
+      "title": "servico nao executado",
+      "description": "Anomalia detectada automaticamente",
+      "time": "376 d atras"
+    },
+    {
+      "id": "a46",
+      "severity": "critical",
+      "title": "servico nao executado",
+      "description": "Anomalia detectada automaticamente",
+      "time": "42 d atras"
+    },
+    {
+      "id": "a47",
+      "severity": "info",
+      "title": "consumo anormal unidade",
+      "description": "Anomalia detectada automaticamente",
+      "time": "150 d atras"
+    },
+    {
+      "id": "a48",
+      "severity": "warning",
+      "title": "valor acima contrato",
+      "description": "Anomalia detectada automaticamente",
+      "time": "124 d atras"
+    },
+    {
+      "id": "a49",
+      "severity": "info",
+      "title": "consumo anormal unidade",
+      "description": "Anomalia detectada automaticamente",
+      "time": "143 d atras"
+    },
+    {
+      "id": "a50",
+      "severity": "info",
+      "title": "servico nao executado",
+      "description": "Anomalia detectada automaticamente",
+      "time": "163 d atras"
+    }
+  ]
+}

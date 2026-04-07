@@ -1,0 +1,30 @@
+{
+  "generated_at": "2026-04-03T13:35:55.475513+00:00",
+  "source_file": "c:\\Users\\Camila\\Downloads\\CondoGuardAI - Base de Dados.xlsx",
+  "table_count": 13,
+  "issues": {
+    "eventos_anomalia.duplicated_anomalia_id": 99,
+    "consumo_unidade.unidade_id.orphans": [
+      "404"
+    ],
+    "notas_fiscais.fornecedor_id.orphans": [
+      "501",
+      "502",
+      "503",
+      "505",
+      "507"
+    ],
+    "notas_fiscais.contrato_id.orphans": [
+      "8001",
+      "8002"
+    ],
+    "eventos_anomalia.status_revisao.values": {
+      "pendente": 219,
+      "Pendente": 55
+    },
+    "consumo_unidade.unidade_medida.values": {
+      "m3": 14400,
+      "850": 2
+    }
+  }
+}
