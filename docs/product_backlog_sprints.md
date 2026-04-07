@@ -155,6 +155,75 @@ Criterio de aceite: time consegue executar rollback em simulacao.
 Prioridade: P1 | Estimativa: 3 pts  
 Criterio de aceite: equipe treinada e documentacao final assinada.
 
+## Sprint 8 - Eliminacao de dados sinteticos
+
+Objetivo: remover dados sinteticos/hardcoded remanescentes para comportamento Oracle-first.
+
+1. `S8-01` Cadastros Oracle real end-to-end  
+Prioridade: P0 | Estimativa: 5 pts  
+Criterio de aceite: GET/POST/PATCH de cadastros sem seed invisivel quando fallback desativado.
+2. `S8-02` Dashboard sem KPI hardcoded  
+Prioridade: P0 | Estimativa: 3 pts  
+Criterio de aceite: `monthlySavings` e `currentConsumption` calculados dinamicamente.
+3. `S8-03` Management sem dependencia de sintetico  
+Prioridade: P0 | Estimativa: 3 pts  
+Criterio de aceite: `pendingCount` consistente com fonte real ou indisponibilidade explicita.
+4. `S8-04` Settings funcional minima  
+Prioridade: P1 | Estimativa: 3 pts  
+Criterio de aceite: tela Settings consumindo endpoint real com loading/erro.
+5. `S8-05` Politica de fallback por ambiente  
+Prioridade: P0 | Estimativa: 3 pts  
+Criterio de aceite: fallback mock desativado por padrao em `hml/prod`.
+6. `S8-06` Regressao e evidencias  
+Prioridade: P0 | Estimativa: 3 pts  
+Criterio de aceite: lint + suites + smoke Oracle PASS com relatorio da sprint.
+
+## Sprint 9 - Integracao de faturas de concessionaria (ENEL)
+
+Objetivo: analisar e implementar MVP assistido para ingestao de faturas externas no CondoGuard.
+
+1. `S9-01` Analise tecnica e desenho da solucao  
+Prioridade: P0 | Estimativa: 3 pts  
+Criterio de aceite: arquitetura, riscos e abordagem recomendada documentados.
+2. `S9-02` Modelo de dados de integracao e migracoes  
+Prioridade: P0 | Estimativa: 5 pts  
+Criterio de aceite: tabelas de execucao/itens e regras de dedupe versionadas em Flyway.
+3. `S9-03` Orquestrador backend (MVP assistido)  
+Prioridade: P0 | Estimativa: 5 pts  
+Criterio de aceite: run manual importa dados sem duplicidade e com trilha de erro por item.
+4. `S9-04` Endpoints de operacao e historico  
+Prioridade: P0 | Estimativa: 3 pts  
+Criterio de aceite: APIs para criar run e consultar historico/detalhes com RBAC.
+5. `S9-05` Observabilidade e seguranca  
+Prioridade: P1 | Estimativa: 3 pts  
+Criterio de aceite: metricas/logs por run e segredos sem hardcode.
+6. `S9-06` Testes, smoke e fechamento  
+Prioridade: P0 | Estimativa: 3 pts  
+Criterio de aceite: testes do parser/endpoints + relatorio final com evidencias.
+
+## Sprint 10 - Cadastros por tipo
+
+Objetivo: criar paginas separadas por tipo de cadastro com navegacao por abas e URL dedicada.
+
+1. `S10-01` Desenho de UX e arquitetura de rotas  
+Prioridade: P0 | Estimativa: 3 pts  
+Criterio de aceite: mapa oficial `aba/slug/tipo` aprovado e documentado.
+2. `S10-02` Router e subrotas por tipo  
+Prioridade: P0 | Estimativa: 5 pts  
+Criterio de aceite: rotas `/cadastros-gerais` e subrotas por tipo funcionando com fallback de rota invalida.
+3. `S10-03` Service/API com filtros dinamicos  
+Prioridade: P0 | Estimativa: 3 pts  
+Criterio de aceite: listagem por tipo/search/status consumindo query params da API.
+4. `S10-04` Componentizacao e padrao visual das abas  
+Prioridade: P1 | Estimativa: 3 pts  
+Criterio de aceite: tabs no padrao visual esperado, com estado ativo por URL.
+5. `S10-05` Testes de regressao do modulo  
+Prioridade: P0 | Estimativa: 5 pts  
+Criterio de aceite: unit + integration cobrindo navegacao entre abas e fluxos de create/update.
+6. `S10-06` Smoke e evidencias finais  
+Prioridade: P0 | Estimativa: 3 pts  
+Criterio de aceite: lint/test/test:py PASS e relatorio final de sprint publicado.
+
 ## Definicao de pronto (DoD) para todas as sprints
 
 - Code review concluido.

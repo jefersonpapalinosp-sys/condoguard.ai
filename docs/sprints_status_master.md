@@ -184,6 +184,56 @@ Artefato da sprint:
 - `docs/sprint8_execution_board.md`
 - `docs/sprint8_closing_report.md`
 
+## Sprint 9 - Integracao de faturas de concessionaria (ENEL)
+
+Status geral: Planejada
+
+Objetivo:
+- Definir e implementar MVP assistido para ingestao de faturas externas no CondoGuard.
+
+Escopo planejado:
+- Analise tecnica formal da integracao e seus riscos.
+- Modelo de dados para trilha de execucao e itens processados.
+- Endpoints de run manual e historico de execucoes.
+- Integracao inicial com modulo de faturas existente.
+- Observabilidade, seguranca e auditoria do fluxo.
+
+Pendente:
+- Validacao juridica/compliance da automacao de portal externo.
+- Definicao final da estrategia de operacao assistida em homolog.
+
+Melhorias sugeridas:
+- Manter automacao total fora do caminho critico ate estabilizar parser e governanca.
+
+Artefatos da sprint:
+- `docs/sprint9_enel_integration_technical_analysis.md`
+- `docs/sprint9_execution_board.md`
+
+## Sprint 10 - Cadastros por tipo
+
+Status geral: Planejada
+
+Objetivo:
+- Separar Cadastros Gerais em paginas por tipo com navegacao por abas e URL dedicada.
+
+Escopo planejado:
+- Subrotas de cadastros por tipo (`todos`, `unidades`, `moradores`, `fornecedores`, `servicos`).
+- Evolucao do service para filtros dinamicos de API.
+- Reuso de componentes de listagem e busca rapida por contexto.
+- Regressao de create/update status sem quebrar fluxo existente.
+- Evidencias de testes e smoke do modulo.
+
+Pendente:
+- Definicao final do desenho de formularios especificos por tipo (fora do escopo inicial).
+- Priorizacao de push-down de filtros direto no Oracle para ganho de performance.
+
+Melhorias sugeridas:
+- Centralizar mapa de `slug -> tipo` para reduzir regressao entre rota, tabs e API.
+
+Artefatos da sprint:
+- `docs/sprint10_cadastros_por_tipo_technical_analysis.md`
+- `docs/sprint10_execution_board.md`
+
 ## Riscos transversais atuais
 
 1. Divergencia de status entre documentos de sprint (necessita fonte unica de verdade).
