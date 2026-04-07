@@ -247,3 +247,23 @@ Variaveis de threshold:
 - FAQ operacional e escalonamento: `docs/sprint7_operational_faq.md`
 - Checklist de decisao Go/No-Go: `docs/sprint7_go_no_go_checklist.md`
 - Template de ata de handoff: `docs/sprint7_handoff_minutes_template.md`
+
+## Deploy no EasyPanel (Hostinger)
+
+Configure dois servicos separados:
+
+- `frontend`
+  - Build context: `.`
+  - Dockerfile path: `Dockerfile`
+  - Porta interna: `80`
+  - Build args: `VITE_API_BASE_URL`, `VITE_APP_ENV`, `VITE_ENABLE_MOCK_FALLBACK`
+- `backend`
+  - Build context: `backend`
+  - Dockerfile path: `Dockerfile`
+  - Porta interna: `4000`
+  - Env vars: `APP_ENV`, `DB_DIALECT`, `JWT_SECRET`, `CORS_ALLOWED_ORIGINS`, `ORACLE_*` (quando `DB_DIALECT=oracle`)
+
+Importante:
+
+- Nao use `Dockerfile` como pasta/contexto no EasyPanel.
+- Se o painel pedir `.env file path`, deixe vazio ou use `.env` na raiz correta do servico.
