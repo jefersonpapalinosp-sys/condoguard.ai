@@ -44,6 +44,23 @@ DEMO_USERS = {
     "morador@condoguard.ai": {"password": "password123", "role": "morador", "condominiumId": 1},
 }
 
+_AUTH_QUERY_BY_SCHEMA = """
+    select email, password_hash, role, condominium_id, active
+    from app.usuarios
+    where lower(email) = :email
+"""
+
+_AUTH_QUERY_BY_DEFAULT_SCHEMA = """
+    select email, password_hash, role, condominium_id, active
+    from usuarios
+    where lower(email) = :email
+"""
+
+
+def _is_missing_table_error(exc: Exception) -> bool:
+    raw = str(exc).upper()
+    return "ORA-00942" in raw or "TABLE OR VIEW DOES NOT EXIST" in raw
+
 
 async def find_account_for_login(email: str, password: str) -> dict[str, Any] | None:
     normalized_email = (email or "").strip().lower()
@@ -52,14 +69,14 @@ async def find_account_for_login(email: str, password: str) -> dict[str, Any] | 
 
     if settings.db_dialect == "oracle":
         try:
-            rows = await run_oracle_query(
-                """
-                select email, password_hash, role, condominium_id, active
-                from app.usuarios
-                where lower(email) = :email
-                """,
-                {"email": normalized_email},
-            )
+            rows = []
+            try:
+                rows = await run_oracle_query(_AUTH_QUERY_BY_SCHEMA, {"email": normalized_email}) or []
+            except Exception as schema_exc:
+                if not _is_missing_table_error(schema_exc):
+                    raise
+                rows = await run_oracle_query(_AUTH_QUERY_BY_DEFAULT_SCHEMA, {"email": normalized_email}) or []
+
             if rows:
                 row = rows[0]
                 if int(row.get("ACTIVE") or 0) != 1:

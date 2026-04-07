@@ -62,6 +62,8 @@ async def run_oracle_execute(sql: str, binds: dict[str, Any] | None = None) -> i
             await conn.commit()
             return int(cursor.rowcount or 0)
         # return None
+        # return int(cursor.rowcount or 0)
+        
 
 async def close_oracle_pool() -> None:
     global _pool
