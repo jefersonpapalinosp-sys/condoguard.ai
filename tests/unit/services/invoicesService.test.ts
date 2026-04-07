@@ -75,6 +75,63 @@ describe('invoicesService.exportInvoicesCsv', () => {
     await expect(exportInvoicesCsv()).rejects.toThrow(/HTTP 401/i);
     expect(notifyUnauthorized).toHaveBeenCalledTimes(1);
   });
+
+  it('throws forbidden message on 403', async () => {
+    const { getAccessToken } = await import('../../../src/services/authTokenStore');
+    const { exportInvoicesCsv } = await import('../../../src/services/invoicesService');
+
+    vi.mocked(getAccessToken).mockReturnValue('token-123');
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue({
+      ok: false,
+      status: 403,
+      blob: async () => new Blob(),
+    } as unknown as Response);
+
+    await expect(exportInvoicesCsv()).rejects.toThrow(/Acesso negado/i);
+  });
+
+  it('throws generic message for non-401/403 export errors', async () => {
+    const { getAccessToken } = await import('../../../src/services/authTokenStore');
+    const { exportInvoicesCsv } = await import('../../../src/services/invoicesService');
+
+    vi.mocked(getAccessToken).mockReturnValue('token-123');
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue({
+      ok: false,
+      status: 500,
+      blob: async () => new Blob(),
+    } as unknown as Response);
+
+    await expect(exportInvoicesCsv()).rejects.toThrow(/Falha ao exportar CSV \(500\)/i);
+  });
+
+  it('requests csv without Authorization header when token is missing', async () => {
+    const csvBlob = new Blob(['id,unit\n1,A-101'], { type: 'text/csv' });
+    const { getAccessToken } = await import('../../../src/services/authTokenStore');
+    const { exportInvoicesCsv } = await import('../../../src/services/invoicesService');
+
+    vi.mocked(getAccessToken).mockReturnValue(null);
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue({
+      ok: true,
+      status: 200,
+      blob: async () => csvBlob,
+    } as unknown as Response);
+
+    await exportInvoicesCsv();
+    expect(globalThis.fetch).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({
+        headers: expect.not.objectContaining({
+          Authorization: expect.any(String),
+        }),
+      }),
+    );
+  });
+
+  it('throws when VITE_API_BASE_URL is missing', async () => {
+    vi.stubEnv('VITE_API_BASE_URL', '');
+    const { exportInvoicesCsv } = await import('../../../src/services/invoicesService');
+    await expect(exportInvoicesCsv()).rejects.toThrow(/VITE_API_BASE_URL nao configurada/i);
+  });
 });
 
 describe('invoicesService.markInvoiceAsPaid', () => {
@@ -97,6 +154,7 @@ describe('invoicesService.fetchInvoicesData', () => {
   beforeEach(() => {
     vi.unstubAllEnvs();
     vi.resetModules();
+    vi.stubEnv('VITE_ENABLE_MOCK_FALLBACK', 'true');
   });
 
   afterEach(() => {
@@ -120,6 +178,27 @@ describe('invoicesService.fetchInvoicesData', () => {
     expect(result).toEqual(apiPayload);
     expect(setModuleDataSource).toHaveBeenCalledWith('invoices', 'api');
     expect(notifyApiFallback).not.toHaveBeenCalled();
+  });
+
+  it('builds query params for list filters and sorting', async () => {
+    const { requestJson } = await import('../../../src/services/http');
+    const { fetchInvoicesData } = await import('../../../src/services/invoicesService');
+
+    vi.mocked(requestJson).mockResolvedValue({ items: [] });
+
+    await fetchInvoicesData({
+      page: 2,
+      pageSize: 10,
+      status: 'pending',
+      unit: 'A-101',
+      search: 'mar',
+      sortBy: 'dueDate',
+      sortOrder: 'asc',
+    });
+
+    expect(requestJson).toHaveBeenCalledWith(
+      expect.stringContaining('/api/invoices?page=2&pageSize=10&status=pending&unit=A-101&search=mar&sortBy=dueDate&sortOrder=asc'),
+    );
   });
 
   it('falls back to mock, emits toast and marks source as mock', async () => {
