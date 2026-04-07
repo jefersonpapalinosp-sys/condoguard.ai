@@ -61,10 +61,12 @@ async def run_oracle_execute(sql: str, binds: dict[str, Any] | None = None) -> i
             await cursor.execute(sql, binds or {})
             await conn.commit()
             return int(cursor.rowcount or 0)
-
+        # return None
 
 async def close_oracle_pool() -> None:
     global _pool
     if _pool is not None:
         await _pool.close(force=True)
         _pool = None
+
+
