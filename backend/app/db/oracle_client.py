@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import inspect
 from typing import Any
 
 from app.core.config import settings
@@ -23,7 +24,7 @@ async def get_oracle_pool():
     if not settings.oracle_user or not settings.oracle_password or not settings.oracle_connect_string:
         raise RuntimeError("Credenciais Oracle incompletas no ambiente.")
 
-    _pool = await oracledb.create_pool_async(
+    pool_candidate = oracledb.create_pool_async(
         user=settings.oracle_user,
         password=settings.oracle_password,
         dsn=settings.oracle_connect_string,
@@ -31,6 +32,7 @@ async def get_oracle_pool():
         max=settings.oracle_pool_max,
         increment=1,
     )
+    _pool = await pool_candidate if inspect.isawaitable(pool_candidate) else pool_candidate
     return _pool
 
 
