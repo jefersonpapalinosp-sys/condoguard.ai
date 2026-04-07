@@ -77,3 +77,21 @@ class ContractDocumentCreateBody(BaseModel):
     sizeKb: float = Field(ge=0, le=102400)
     status: Literal["active", "archived", "pending_review"] = "active"
     url: str | None = Field(default=None, max_length=500)
+
+
+class EnelInvoiceInputBody(BaseModel):
+    externalReference: str | None = Field(default=None, max_length=120)
+    unit: str = Field(min_length=1, max_length=30)
+    resident: str | None = Field(default=None, max_length=180)
+    reference: str | None = Field(default=None, max_length=20)
+    dueDate: str = Field(min_length=8, max_length=30)
+    amount: float = Field(gt=0, le=999999999)
+    status: Literal["pending", "paid", "overdue"] = "pending"
+    documentHash: str | None = Field(default=None, max_length=128)
+    notes: str | None = Field(default=None, max_length=300)
+
+
+class EnelRunCreateBody(BaseModel):
+    source: Literal["manual_assisted", "upload_csv", "api_partner"] = "manual_assisted"
+    notes: str | None = Field(default=None, max_length=500)
+    items: list[EnelInvoiceInputBody] = Field(min_length=1, max_length=500)

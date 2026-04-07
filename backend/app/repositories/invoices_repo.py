@@ -9,6 +9,7 @@ from app.core.errors import create_oracle_unavailable_error
 from app.db.oracle_client import run_oracle_query
 from app.observability.metrics_store import record_api_fallback_metric
 from app.repositories.state_store import read_json_state, write_json_state
+from app.integrations.enel.repository import list_imported_invoices_snapshot
 from app.utils.seed_loader import read_seed_json
 
 STATUS_FILE = Path(__file__).resolve().parents[3] / "backend" / "data" / "invoices_status_state.json"
@@ -41,8 +42,33 @@ def _apply_status_state(items: list[dict[str, Any]], condominium_id: int, state:
     return data
 
 
+def _merge_integration_imports(base_items: list[dict[str, Any]], imported_items: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    if not imported_items:
+        return base_items
+
+    merged = {str(item.get("id")): dict(item) for item in base_items if item.get("id") is not None}
+    for imported in imported_items:
+        invoice_id = str(imported.get("id") or "")
+        if not invoice_id:
+            continue
+        if invoice_id in merged:
+            continue
+        merged[invoice_id] = {
+            "id": invoice_id,
+            "condominiumId": int(imported.get("condominiumId") or 0) or None,
+            "unit": str(imported.get("unit") or "-"),
+            "resident": str(imported.get("resident") or "-"),
+            "reference": str(imported.get("reference") or ""),
+            "dueDate": _to_iso_date(imported.get("dueDate")),
+            "amount": float(imported.get("amount") or 0),
+            "status": str(imported.get("status") or "pending").lower(),
+        }
+    return list(merged.values())
+
+
 async def get_invoices_data(condominium_id: int = 1) -> dict[str, Any]:
     status_state = await read_json_state(STATUS_FILE)
+    integration_items = await list_imported_invoices_snapshot(condominium_id)
 
     if settings.db_dialect == "oracle":
         try:
@@ -69,7 +95,8 @@ async def get_invoices_data(condominium_id: int = 1) -> dict[str, Any]:
                     }
                     for row in rows
                 ]
-                return {"items": _apply_status_state(base_items, condominium_id, status_state)}
+                merged = _merge_integration_imports(base_items, integration_items)
+                return {"items": _apply_status_state(merged, condominium_id, status_state)}
         except Exception as exc:
             if not settings.allow_oracle_seed_fallback:
                 raise create_oracle_unavailable_error(exc)
@@ -78,7 +105,8 @@ async def get_invoices_data(condominium_id: int = 1) -> dict[str, Any]:
     seed = read_seed_json("invoices.json")
     base_items = [{**item, "condominiumId": 1} for item in seed.get("items", [])]
     filtered = [i for i in base_items if i.get("condominiumId") == condominium_id]
-    return {"items": _apply_status_state(filtered, condominium_id, status_state)}
+    merged = _merge_integration_imports(filtered, integration_items)
+    return {"items": _apply_status_state(merged, condominium_id, status_state)}
 
 
 async def mark_invoice_as_paid(condominium_id: int, invoice_id: str, actor_sub: str | None = None) -> dict[str, Any] | None:
