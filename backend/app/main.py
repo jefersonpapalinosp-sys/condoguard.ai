@@ -10,6 +10,7 @@ from fastapi.responses import JSONResponse, Response
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from app.api.routes import router
+from app.api.contracts_module_routes import contracts_router
 from app.core.config import settings
 from app.core.errors import ApiRequestError
 from app.observability.metrics_store import (
@@ -19,6 +20,7 @@ from app.observability.metrics_store import (
 )
 from app.repositories.cadastros_repo import reset_cadastros_store
 from app.repositories.chat_telemetry_repo import reset_chat_telemetry_store
+from app.repositories.contracts_management_repo import reset_contracts_management_state
 from app.utils.logging import configure_logging, log_security_event
 
 
@@ -51,14 +53,14 @@ class CorsAllowlistMiddleware(BaseHTTPMiddleware):
                 response = Response(status_code=204)
                 response.headers["Access-Control-Allow-Origin"] = origin
                 response.headers["Vary"] = "Origin"
-                response.headers["Access-Control-Allow-Methods"] = "GET,POST,PATCH,OPTIONS"
+                response.headers["Access-Control-Allow-Methods"] = "GET,POST,PATCH,DELETE,OPTIONS"
                 response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization"
                 return response
 
             response = await call_next(request)
             response.headers["Access-Control-Allow-Origin"] = origin
             response.headers["Vary"] = "Origin"
-            response.headers["Access-Control-Allow-Methods"] = "GET,POST,PATCH,OPTIONS"
+            response.headers["Access-Control-Allow-Methods"] = "GET,POST,PATCH,DELETE,OPTIONS"
             response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization"
             return response
 
@@ -120,6 +122,7 @@ configure_logging()
 reset_observability_metrics()
 reset_chat_telemetry_store()
 reset_cadastros_store()
+reset_contracts_management_state()
 
 app = FastAPI(title="CondoGuard API (FastAPI)", version="1.0.0")
 app.add_middleware(SecurityHeadersMiddleware)
@@ -127,12 +130,14 @@ app.add_middleware(CorsAllowlistMiddleware)
 app.add_middleware(RateLimitMiddleware)
 app.add_middleware(ObservabilityMiddleware)
 app.include_router(router)
+app.include_router(contracts_router)
 
 
 def reset_runtime_state() -> None:
     reset_observability_metrics()
     reset_chat_telemetry_store()
     reset_cadastros_store()
+    reset_contracts_management_state()
 
     if app.middleware_stack is None:
         app.middleware_stack = app.build_middleware_stack()

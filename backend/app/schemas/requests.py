@@ -29,3 +29,51 @@ class CadastroCreateBody(BaseModel):
 
 class CadastroStatusBody(BaseModel):
     status: Literal["active", "pending", "inactive"]
+
+
+class ContractCreateBody(BaseModel):
+    contractNumber: str | None = Field(default=None, max_length=60)
+    name: str = Field(min_length=1, max_length=180)
+    supplier: str = Field(min_length=1, max_length=180)
+    category: str = Field(min_length=1, max_length=120)
+    description: str | None = Field(default=None, max_length=500)
+    serviceType: str = Field(min_length=1, max_length=180)
+    startDate: str = Field(min_length=10, max_length=10)
+    endDate: str = Field(min_length=10, max_length=10)
+    termMonths: int | None = Field(default=None, ge=1, le=240)
+    monthlyValue: float = Field(gt=0, le=999999999)
+    index: Literal["IPCA", "IGPM", "INPC", "FIXO"] = "IPCA"
+    adjustmentFrequencyMonths: int = Field(default=12, ge=1, le=24)
+    nextAdjustmentDate: str | None = Field(default=None, min_length=10, max_length=10)
+    internalOwner: str = Field(min_length=1, max_length=120)
+    status: Literal["active", "expiring", "expired", "renewal_pending", "closed", "draft"] = "active"
+    risk: Literal["low", "medium", "high"] = "low"
+    notes: str | None = Field(default=None, max_length=500)
+
+
+class ContractUpdateBody(BaseModel):
+    contractNumber: str | None = Field(default=None, max_length=60)
+    name: str | None = Field(default=None, min_length=1, max_length=180)
+    supplier: str | None = Field(default=None, min_length=1, max_length=180)
+    category: str | None = Field(default=None, min_length=1, max_length=120)
+    description: str | None = Field(default=None, max_length=500)
+    serviceType: str | None = Field(default=None, min_length=1, max_length=180)
+    startDate: str | None = Field(default=None, min_length=10, max_length=10)
+    endDate: str | None = Field(default=None, min_length=10, max_length=10)
+    termMonths: int | None = Field(default=None, ge=1, le=240)
+    monthlyValue: float | None = Field(default=None, gt=0, le=999999999)
+    index: Literal["IPCA", "IGPM", "INPC", "FIXO"] | None = None
+    adjustmentFrequencyMonths: int | None = Field(default=None, ge=1, le=24)
+    nextAdjustmentDate: str | None = Field(default=None, min_length=10, max_length=10)
+    internalOwner: str | None = Field(default=None, min_length=1, max_length=120)
+    status: Literal["active", "expiring", "expired", "renewal_pending", "closed", "draft"] | None = None
+    risk: Literal["low", "medium", "high"] | None = None
+    notes: str | None = Field(default=None, max_length=500)
+
+
+class ContractDocumentCreateBody(BaseModel):
+    name: str = Field(min_length=1, max_length=255)
+    type: str = Field(min_length=1, max_length=80)
+    sizeKb: float = Field(ge=0, le=102400)
+    status: Literal["active", "archived", "pending_review"] = "active"
+    url: str | None = Field(default=None, max_length=500)
