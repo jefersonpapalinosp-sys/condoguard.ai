@@ -1,5 +1,5 @@
-import Contracts from '../../../views/Contracts';
+import ContractsDashboardPage from './ContractsDashboardPage';
 
 export default function ContractsPage() {
-  return <Contracts />;
+  return <ContractsDashboardPage />;
 }

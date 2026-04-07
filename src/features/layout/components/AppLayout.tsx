@@ -27,12 +27,19 @@ const navItems: NavItem[] = [
 ];
 
 function toTitle(pathname: string) {
-  const current = pathname.split('/').filter(Boolean).at(-1) ?? 'dashboard';
+  const segments = pathname.split('/').filter(Boolean);
+  const current = segments.at(-1) ?? 'dashboard';
   if (current === 'dashboard') {
     return 'Condominio Mirante do Parque';
   }
 
-  return navItems.find((item) => item.id === current)?.label ?? 'CondoGuard.AI';
+  const direct = navItems.find((item) => item.id === current)?.label;
+  if (direct) {
+    return direct;
+  }
+
+  const root = segments[0];
+  return navItems.find((item) => item.id === root)?.label ?? 'CondoGuard.AI';
 }
 
 export function AppLayout() {

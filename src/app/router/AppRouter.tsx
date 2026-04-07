@@ -6,6 +6,14 @@ import DashboardPage from '../../features/dashboard/pages/DashboardPage';
 import AlertsPage from '../../features/alerts/pages/AlertsPage';
 import ConsumptionPage from '../../features/consumption/pages/ConsumptionPage';
 import ContractsPage from '../../features/contracts/pages/ContractsPage';
+import ContractsListPage from '../../features/contracts/pages/ContractsListPage';
+import ContractCreatePage from '../../features/contracts/pages/ContractCreatePage';
+import ContractDetailsPage from '../../features/contracts/pages/ContractDetailsPage';
+import ContractEditPage from '../../features/contracts/pages/ContractEditPage';
+import ContractsAuditPage from '../../features/contracts/pages/ContractsAuditPage';
+import ContractsExpiringPage from '../../features/contracts/pages/ContractsExpiringPage';
+import ContractsAdjustmentsPage from '../../features/contracts/pages/ContractsAdjustmentsPage';
+import ContractsDocumentsPage from '../../features/contracts/pages/ContractsDocumentsPage';
 import InvoicesPage from '../../features/invoices/pages/InvoicesPage';
 import ChatPage from '../../features/chat/pages/ChatPage';
 import ManagementPage from '../../features/management/pages/ManagementPage';
@@ -31,6 +39,14 @@ export function AppRouter() {
         <Route path="alerts" element={<AlertsPage />} />
         <Route path="consumption" element={<ConsumptionPage />} />
         <Route path="contracts" element={<ContractsPage />} />
+        <Route path="contracts/lista" element={<ContractsListPage />} />
+        <Route path="contracts/novo" element={<ContractCreatePage />} />
+        <Route path="contracts/auditoria" element={<ContractsAuditPage />} />
+        <Route path="contracts/vencimentos" element={<ContractsExpiringPage />} />
+        <Route path="contracts/reajustes" element={<ContractsAdjustmentsPage />} />
+        <Route path="contracts/documentos" element={<ContractsDocumentsPage />} />
+        <Route path="contracts/:id/editar" element={<ContractEditPage />} />
+        <Route path="contracts/:id" element={<ContractDetailsPage />} />
         <Route
           path="invoices"
           element={(
