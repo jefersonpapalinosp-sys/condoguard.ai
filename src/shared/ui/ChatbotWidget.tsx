@@ -18,6 +18,7 @@ export function ChatbotWidget({ hidden = false }: ChatbotWidgetProps) {
   const [text, setText] = useState('');
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [feedbackByMessage, setFeedbackByMessage] = useState<Record<string, 'up' | 'down'>>({});
+  const sessionId = useMemo(() => `widget-${Date.now().toString(36)}`, []);
 
   useEffect(() => {
     let active = true;
@@ -77,7 +78,7 @@ export function ChatbotWidget({ hidden = false }: ChatbotWidgetProps) {
     setSending(true);
 
     try {
-      const reply = await postChatMessage(message);
+      const reply = await postChatMessage(message, sessionId);
       setMessages((current) => [...current, reply]);
     } finally {
       setSending(false);

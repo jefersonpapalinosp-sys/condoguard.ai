@@ -63,6 +63,7 @@ export default function Chat() {
   const visibleEvents = useMemo(() => filteredEvents.slice(0, visibleEventCount), [filteredEvents, visibleEventCount]);
   const canLoadMoreEvents = filteredEvents.length > visibleEventCount;
   const canShowLessEvents = visibleEventCount > 8 && filteredEvents.length > 8;
+  const sessionId = useMemo(() => `chat-${Date.now().toString(36)}`, []);
 
   useEffect(() => {
     let active = true;
@@ -132,7 +133,7 @@ export default function Chat() {
     setSending(true);
 
     try {
-      const assistantMessage = await postChatMessage(prompt);
+      const assistantMessage = await postChatMessage(prompt, sessionId);
       setMessages((current) => [...current, assistantMessage]);
       if (canViewTelemetry) {
         const snapshot = await fetchChatTelemetry(15);

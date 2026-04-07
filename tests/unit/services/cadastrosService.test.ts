@@ -12,27 +12,16 @@ describe('cadastrosService.fetchCadastrosData', () => {
     vi.restoreAllMocks();
   });
 
-  it('builds query params with tipo/status/search/page/pageSize', async () => {
+  it('requests default cadastros endpoint', async () => {
     const { requestJson } = await import('../../../src/services/http');
     const { fetchCadastrosData } = await import('../../../src/services/cadastrosService');
 
     vi.mocked(requestJson).mockResolvedValue({ items: [] });
 
-    await fetchCadastrosData({
-      tipo: 'unidade',
-      status: 'active',
-      search: 'A-101',
-      page: 2,
-      pageSize: 15,
-    });
+    await fetchCadastrosData();
 
     const calledUrl = vi.mocked(requestJson).mock.calls[0][0];
-    expect(calledUrl).toContain('/api/cadastros?');
-    expect(calledUrl).toContain('tipo=unidade');
-    expect(calledUrl).toContain('status=active');
-    expect(calledUrl).toContain('search=A-101');
-    expect(calledUrl).toContain('page=2');
-    expect(calledUrl).toContain('pageSize=15');
+    expect(calledUrl).toBe('/api/cadastros?page=1&pageSize=200');
   });
 
   it('marks source unknown and throws when API fails', async () => {
