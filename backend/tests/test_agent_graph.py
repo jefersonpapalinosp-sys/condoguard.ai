@@ -63,6 +63,14 @@ class TestAgentGraph:
     def setup_method(self):
         _reset()
 
+    def test_router_detects_collaborative_mode_for_cross_domain_question(self):
+        from app.services.chat_agent_router import route_chat_message
+
+        route = route_chat_message("Quero um resumo das faturas vencidas e dos alertas criticos tambem.")
+        assert route["mode"] == "collaborative"
+        assert "financeiro" in route["multiDomains"]
+        assert "alertas" in route["multiDomains"]
+
     @pytest.mark.asyncio
     async def test_graph_returns_valid_contract(self):
         """Graph must return the full API contract shape."""
@@ -85,6 +93,20 @@ class TestAgentGraph:
         result = await ask_chat("quais faturas estao vencidas?", condominium_id=1)
         assert "agentName" in result
         assert result["agentName"] is not None
+
+    @pytest.mark.asyncio
+    async def test_graph_returns_collaboration_metadata_for_multi_domain_prompt(self):
+        from app.repositories.chat_repo import ask_chat
+
+        result = await ask_chat(
+            "Quero um resumo das faturas vencidas e dos alertas criticos tambem.",
+            condominium_id=1,
+        )
+
+        assert result["agentName"] == "Orquestrador Multiagente"
+        assert result["collaboration"] is not None
+        assert result["collaboration"]["enabled"] is True
+        assert len(result["collaboration"]["contributors"]) >= 2
 
     @pytest.mark.asyncio
     async def test_financial_domain_routes_to_financial_agent(self):

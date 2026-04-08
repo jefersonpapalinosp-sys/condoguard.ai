@@ -38,6 +38,15 @@ DOMAIN_KEYWORDS = {
     "cadastros": ["cadastro", "morador", "unidade", "fornecedor", "servico"],
 }
 
+MULTI_AGENT_CONJUNCTIONS = [
+    " e ",
+    "tambem",
+    "alem",
+    "junto",
+    "ao mesmo tempo",
+    "simultaneamente",
+]
+
 
 def _normalize(value: str) -> str:
     text = (value or "").lower().strip()
@@ -53,6 +62,19 @@ def _has_any(text: str, terms: list[str]) -> bool:
 def _extract_first(pattern: str, text: str) -> str | None:
     match = re.search(pattern, text)
     return match.group(0) if match else None
+
+
+def _sorted_domains(domain_scores: dict[str, int]) -> list[str]:
+    ranked = sorted(domain_scores.items(), key=lambda item: item[1], reverse=True)
+    return [domain for domain, score in ranked if score > 0]
+
+
+def _should_use_collaborative_mode(action: str, normalized: str, ranked_domains: list[str]) -> bool:
+    if action in ACTIONABLE_ACTIONS or len(ranked_domains) < 2:
+        return False
+    # Require both a multi-domain signal and at least two keyword hits
+    has_conjunction = any(marker in normalized for marker in MULTI_AGENT_CONJUNCTIONS)
+    return has_conjunction
 
 
 def route_chat_message(message: str) -> dict[str, Any]:
@@ -105,7 +127,22 @@ def route_chat_message(message: str) -> dict[str, Any]:
 
     domain_scores = {domain: sum(1 for term in terms if term in normalized) for domain, terms in DOMAIN_KEYWORDS.items()}
     detected_domain = max(domain_scores, key=domain_scores.get) if domain_scores else "geral"
-    domain = ACTION_TO_DOMAIN.get(action) or (detected_domain if domain_scores.get(detected_domain, 0) > 0 else "geral")
+    ranked_domains = _sorted_domains(domain_scores)
+    primary_domain = ACTION_TO_DOMAIN.get(action) or (detected_domain if domain_scores.get(detected_domain, 0) > 0 else "geral")
+
+    collaborative = _should_use_collaborative_mode(action, normalized, ranked_domains)
+    if collaborative:
+        multi_domains = ranked_domains[:3]
+        if primary_domain not in multi_domains and primary_domain in DOMAIN_KEYWORDS:
+            multi_domains = [primary_domain, *multi_domains]
+        # keep deterministic order and limit fan-out for latency control
+        deduped: list[str] = []
+        for domain in multi_domains:
+            if domain not in deduped:
+                deduped.append(domain)
+        multi_domains = deduped[:3]
+    else:
+        multi_domains = []
 
     required_entity = {
         "invoice_mark_paid": "invoiceId",
@@ -119,13 +156,18 @@ def route_chat_message(message: str) -> dict[str, Any]:
     elif action == "general_overview" and domain_scores.get(detected_domain, 0) == 0:
         confidence = "low"
     else:
-        confidence = "high" if domain_scores.get(detected_domain, 0) >= 3 else "medium"
+        top_score = domain_scores.get(detected_domain, 0)
+        if collaborative and len(multi_domains) >= 2:
+            confidence = "high"
+        else:
+            confidence = "high" if top_score >= 3 else "medium"
 
     return {
-        "domain": domain,
+        "domain": primary_domain,
         "action": action,
-        "mode": "transactional" if action in ACTIONABLE_ACTIONS else "analytical",
+        "mode": "transactional" if action in ACTIONABLE_ACTIONS else ("collaborative" if collaborative else "analytical"),
         "confidence": confidence,
         "requiresConfirmation": action in ACTIONABLE_ACTIONS,
         "entities": entities,
+        "multiDomains": multi_domains,
     }

@@ -6,10 +6,11 @@ Define RAG_ENABLED=false para testes de integração que não precisam de RAG re
 """
 from __future__ import annotations
 
-import os
-import tempfile
+import shutil
+import uuid
 import pytest
 from pathlib import Path
+from contextlib import contextmanager
 
 from app.ai.memory import clear_all_memories
 from app.ai.graph import reset_agent_graph
@@ -30,6 +31,23 @@ def _reset():
     clear_all_memories()
     reset_agent_graph()
     reset_vector_store()
+
+
+def _workspace_tmp_root() -> Path:
+    root = Path(__file__).parents[1] / "tmp" / "rag_pipeline"
+    root.mkdir(parents=True, exist_ok=True)
+    return root
+
+
+@contextmanager
+def _workspace_temp_dir():
+    tmpdir = _workspace_tmp_root() / f"rag-{uuid.uuid4().hex[:12]}"
+    tmpdir.mkdir(parents=True, exist_ok=True)
+    try:
+        yield str(tmpdir)
+    finally:
+        # Windows can keep sqlite handles for a short time; ignore cleanup errors in tests.
+        shutil.rmtree(tmpdir, ignore_errors=True)
 
 
 # ---------------------------------------------------------------------------
@@ -74,7 +92,7 @@ class TestDocumentLoader:
     def test_empty_dir_returns_no_chunks(self):
         from app.ai.rag.document_loader import load_knowledge_base
 
-        with tempfile.TemporaryDirectory() as tmpdir:
+        with _workspace_temp_dir() as tmpdir:
             chunks = load_knowledge_base(tmpdir)
             assert chunks == []
 
@@ -102,7 +120,7 @@ class TestVectorStore:
         if not kb_path.exists():
             pytest.skip("Diretorio da knowledge base nao encontrado")
 
-        with tempfile.TemporaryDirectory() as tmpdir:
+        with _workspace_temp_dir() as tmpdir:
             embeddings = _fake_embeddings()
             store = Chroma(
                 collection_name="test_kb",
@@ -125,7 +143,7 @@ class TestVectorStore:
         if not kb_path.exists():
             pytest.skip("Diretorio da knowledge base nao encontrado")
 
-        with tempfile.TemporaryDirectory() as tmpdir:
+        with _workspace_temp_dir() as tmpdir:
             embeddings = _fake_embeddings()
             store = Chroma(
                 collection_name="test_kb2",
@@ -201,7 +219,7 @@ class TestRetriever:
 
     def test_retrieve_returns_empty_when_store_empty(self):
         """An empty Chroma collection should report count == 0 (no crash)."""
-        with tempfile.TemporaryDirectory() as tmpdir:
+        with _workspace_temp_dir() as tmpdir:
             from langchain_community.vectorstores import Chroma
             empty_store = Chroma(
                 collection_name="empty_guard_test",

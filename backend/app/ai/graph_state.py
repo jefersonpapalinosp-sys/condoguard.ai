@@ -1,41 +1,36 @@
 """
-LangGraph AgentState — shared state that flows through all graph nodes.
+Shared state contract used by the chat LangGraph pipeline.
 """
 from __future__ import annotations
 
-from typing import Any, Optional
+from typing import Optional
 from typing_extensions import TypedDict
 
 from langchain_core.messages import BaseMessage
 
 
 class AgentState(TypedDict):
-    # ── Inputs ────────────────────────────────────────────────────────────────
+    # Inputs
     session_id: str
     condominium_id: int
     question: str
-    history: list[BaseMessage]           # populated from memory before graph call
+    history: list[BaseMessage]
 
-    # ── context_loader node ───────────────────────────────────────────────────
-    context: dict                         # {metrics, sources, generatedAt, …}
+    # Context and routing
+    context: dict
+    classification: dict
+    route: dict
+    guardrails: dict
+    rag_docs: list[dict]
 
-    # ── intent_router node ────────────────────────────────────────────────────
-    classification: dict                  # {intentId, confidence, catalogVersion}
-    route: dict                           # {domain, action, mode, entities, …}
-
-    # ── guardrails_node ───────────────────────────────────────────────────────
-    guardrails: dict                      # {blocked, reason, policyVersion, message}
-
-    # ── rag_retriever node ────────────────────────────────────────────────────
-    rag_docs: list[dict]                  # [{content, source, score}, …]
-
-    # ── agent nodes ───────────────────────────────────────────────────────────
+    # Agent outputs
     agent_response: str
-    agent_name: str                       # e.g. "Agente Financeiro"
+    agent_name: str
     ai_powered: bool
 
-    # ── action_executor node ─────────────────────────────────────────────────
-    action_result: Optional[dict]         # {type, status, entity, message} or None
+    # Optional transactional and collaborative metadata
+    action_result: Optional[dict]
+    collaboration: dict
 
-    # ── response_formatter node ───────────────────────────────────────────────
-    final_response: dict                  # the full API response dict
+    # Final payload returned by the API
+    final_response: dict

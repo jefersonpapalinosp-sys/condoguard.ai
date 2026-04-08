@@ -98,6 +98,8 @@ async def ask_chat(
         "agent_response": "",
         "agent_name": "",
         "ai_powered": False,
+        "action_result": None,
+        "collaboration": {},
         "final_response": {},
     }
 

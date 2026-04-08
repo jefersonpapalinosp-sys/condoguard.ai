@@ -22,6 +22,7 @@ async def response_formatter_node(state: AgentState) -> dict:
     classification = state.get("classification") or {}
     context = state.get("context") or {}
     rag_docs = state.get("rag_docs") or []
+    collaboration = state.get("collaboration") or {}
     ai_powered = state.get("ai_powered", False)
 
     if blocked:
@@ -30,6 +31,14 @@ async def response_formatter_node(state: AgentState) -> dict:
     else:
         text = state.get("agent_response") or ""
         agent_name = state.get("agent_name") or None
+
+    if ai_powered:
+        limitation_note = "Resposta gerada por IA com base no contexto operacional atual."
+    else:
+        limitation_note = "Resposta automatica baseada em regras; confirme casos criticos com o responsavel tecnico."
+
+    if collaboration.get("enabled"):
+        limitation_note = f"{limitation_note} Esta resposta foi consolidada por orquestracao multiagente."
 
     return {
         "final_response": {
@@ -42,11 +51,7 @@ async def response_formatter_node(state: AgentState) -> dict:
             "promptCatalogVersion": classification.get("catalogVersion", ""),
             "sources": context.get("sources", []),
             "aiPowered": ai_powered,
-            "limitations": (
-                "Resposta gerada por IA com base no contexto operacional atual."
-                if ai_powered
-                else "Resposta automatica baseada em regras; confirme casos criticos com o responsavel tecnico."
-            ),
+            "limitations": limitation_note,
             "guardrails": {
                 "blocked": blocked,
                 "reason": guardrails.get("reason"),
@@ -57,5 +62,7 @@ async def response_formatter_node(state: AgentState) -> dict:
             "ragSources": format_rag_sources(rag_docs),
             # Sprint 10: action tool result (None for non-transactional messages)
             "actionResult": state.get("action_result"),
+            # Sprint 11+: collaboration metadata for multi-agent orchestration
+            "collaboration": collaboration if collaboration.get("enabled") else None,
         }
     }

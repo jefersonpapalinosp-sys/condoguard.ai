@@ -23,6 +23,7 @@ from app.ai.nodes.intent_router import intent_router_node
 from app.ai.nodes.guardrails_node import guardrails_node
 from app.ai.nodes.rag_retriever import rag_retriever_node
 from app.ai.nodes.response_formatter import response_formatter_node
+from app.ai.nodes.collaboration_orchestrator import collaboration_orchestrator_node
 from app.ai.nodes.agents.financial_agent import financial_agent_node
 from app.ai.nodes.agents.alerts_agent import alerts_agent_node
 from app.ai.nodes.agents.consumption_agent import consumption_agent_node
@@ -44,13 +45,22 @@ _DOMAIN_TO_NODE: dict[str, str] = {
 
 
 def _route_after_guardrails(state: AgentState) -> str:
-    """Conditional edge: if blocked go straight to formatter, otherwise pick agent or executor."""
+    """After guardrails, choose the next stage of execution."""
     if state.get("guardrails", {}).get("blocked", False):
         return "response_formatter"
     route = state.get("route") or {}
-    # Transactional actions go to the executor, not a domain agent
+    # Transactional actions execute tools directly.
     if route.get("mode") == "transactional":
         return "action_executor"
+    # Analytical/collaborative requests should enrich context with RAG first.
+    return "rag_retriever"
+
+
+def _route_after_rag(state: AgentState) -> str:
+    """After RAG, decide whether to run one specialist or the multi-agent orchestrator."""
+    route = state.get("route") or {}
+    if route.get("mode") == "collaborative":
+        return "collaboration_orchestrator"
     raw_domain = route.get("domain", "geral")
     domain_key = resolve_domain(raw_domain)
     return _DOMAIN_TO_NODE.get(domain_key, "general_agent")
@@ -70,6 +80,7 @@ def build_agent_graph():
     g.add_node("general_agent", general_agent_node)
     g.add_node("action_executor", action_executor_node)
     g.add_node("rag_retriever", rag_retriever_node)
+    g.add_node("collaboration_orchestrator", collaboration_orchestrator_node)
     g.add_node("response_formatter", response_formatter_node)
 
     # Edges
@@ -83,6 +94,15 @@ def build_agent_graph():
         {
             "response_formatter": "response_formatter",
             "action_executor": "action_executor",
+            "rag_retriever": "rag_retriever",
+        },
+    )
+
+    g.add_conditional_edges(
+        "rag_retriever",
+        _route_after_rag,
+        {
+            "collaboration_orchestrator": "collaboration_orchestrator",
             "financial_agent": "financial_agent",
             "alerts_agent": "alerts_agent",
             "consumption_agent": "consumption_agent",
@@ -91,13 +111,20 @@ def build_agent_graph():
         },
     )
 
-    # Action executor bypasses rag_retriever and goes straight to formatter
+    # Transactional executor bypasses specialists and goes straight to formatter.
     g.add_edge("action_executor", "response_formatter")
 
-    # All agent nodes go through rag_retriever then formatter
-    for agent_node in ("financial_agent", "alerts_agent", "consumption_agent", "maintenance_agent", "general_agent"):
-        g.add_edge(agent_node, "rag_retriever")
-    g.add_edge("rag_retriever", "response_formatter")
+    # Specialists and collaborative orchestrator end in formatter.
+    for node_name in (
+        "financial_agent",
+        "alerts_agent",
+        "consumption_agent",
+        "maintenance_agent",
+        "general_agent",
+        "collaboration_orchestrator",
+    ):
+        g.add_edge(node_name, "response_formatter")
+
     g.add_edge("response_formatter", END)
 
     return g.compile()
