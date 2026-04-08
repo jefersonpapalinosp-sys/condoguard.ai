@@ -4,6 +4,7 @@ from collections import defaultdict, deque
 from datetime import datetime, timezone
 from time import perf_counter
 from typing import Any
+from uuid import uuid4
 
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse, Response
@@ -31,11 +32,42 @@ from app.ai.graph import reset_agent_graph
 from app.ai.rag.vector_store import reset_vector_store
 from app.utils.logging import configure_logging, log_security_event
 
+TRACE_ID_HEADER = "X-Trace-Id"
 
-def _api_error_response(status_code: int, code: str, message: str, details: dict[str, Any] | None = None) -> JSONResponse:
+
+def _sanitize_trace_id(raw_value: str | None) -> str:
+    candidate = str(raw_value or "").strip()
+    if candidate and len(candidate) <= 128 and all(char.isalnum() or char in "-_." for char in candidate):
+        return candidate
+    return uuid4().hex
+
+
+def get_request_trace_id(request: Request | None) -> str | None:
+    trace_id = getattr(getattr(request, "state", None), "trace_id", None)
+    return trace_id if isinstance(trace_id, str) and trace_id else None
+
+
+def _error_payload(code: str, message: str, details: dict[str, Any] | None = None, request: Request | None = None) -> dict[str, Any]:
+    return {"error": {"code": code, "message": message, "details": details, "traceId": get_request_trace_id(request)}}
+
+
+def _api_error_response(
+    status_code: int,
+    code: str,
+    message: str,
+    details: dict[str, Any] | None = None,
+    request: Request | None = None,
+) -> JSONResponse:
     record_api_error_code_metric(code)
-    payload = {"error": {"code": code, "message": message, "details": details}}
-    return JSONResponse(status_code=status_code, content=payload)
+    return JSONResponse(status_code=status_code, content=_error_payload(code, message, details, request=request))
+
+
+class TraceIdMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        request.state.trace_id = _sanitize_trace_id(request.headers.get(TRACE_ID_HEADER))
+        response = await call_next(request)
+        response.headers[TRACE_ID_HEADER] = request.state.trace_id
+        return response
 
 
 class SecurityHeadersMiddleware(BaseHTTPMiddleware):
@@ -57,7 +89,7 @@ class CorsAllowlistMiddleware(BaseHTTPMiddleware):
         if origin:
             if origin not in settings.allowed_origins:
                 log_security_event("cors_denied", request, {"origin": origin})
-                return _api_error_response(403, "CORS_DENIED", "Origem nao permitida por CORS.", {"origin": origin})
+                return _api_error_response(403, "CORS_DENIED", "Origem nao permitida por CORS.", {"origin": origin}, request=request)
 
             if request.method.upper() == "OPTIONS":
                 # 204 must not include a response body; otherwise uvicorn may raise
@@ -109,11 +141,11 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         if path == "/api/auth/login" and request.method.upper() == "POST":
             if not self._accept(self.login_requests, ip, settings.login_rate_limit_max, settings.rate_limit_window_ms):
                 log_security_event("rate_limit_exceeded", request, {"scope": "login"})
-                return _api_error_response(429, "RATE_LIMITED", "Muitas tentativas de login. Aguarde e tente novamente.")
+                return _api_error_response(429, "RATE_LIMITED", "Muitas tentativas de login. Aguarde e tente novamente.", request=request)
 
         if not self._accept(self.requests, ip, settings.rate_limit_max, settings.rate_limit_window_ms):
             log_security_event("rate_limit_exceeded", request, {"scope": "api"})
-            return _api_error_response(429, "RATE_LIMITED", "Muitas requisicoes. Tente novamente em instantes.")
+            return _api_error_response(429, "RATE_LIMITED", "Muitas requisicoes. Tente novamente em instantes.", request=request)
 
         return await call_next(request)
 
@@ -143,11 +175,30 @@ reset_sabesp_integration_state()
 app = FastAPI(title="CondoGuard API (FastAPI)", version="1.0.0")
 
 
+def _log_oidc_startup_readiness() -> None:
+    import logging  # noqa: PLC0415
+
+    _log = logging.getLogger(__name__)
+    readiness = {
+        "env": settings.effective_env,
+        "authProvider": settings.auth_provider,
+        "oidcConfigured": settings.oidc_configured,
+        "oidcReady": settings.oidc_ready,
+        "missingConfig": settings.oidc_missing_fields,
+        "issues": settings.oidc_readiness_issues,
+    }
+    if settings.effective_env != "dev" and readiness["issues"]:
+        _log.warning("OIDC readiness pendente no startup: %s", readiness)
+        return
+    _log.info("OIDC readiness no startup: %s", readiness)
+
+
 @app.on_event("startup")
 async def _startup_ingest_knowledge_base():
     """Index the knowledge base into Chroma on server startup (idempotent)."""
     import logging  # noqa: PLC0415
     _log = logging.getLogger(__name__)
+    _log_oidc_startup_readiness()
     try:
         from app.ai.rag.vector_store import ingest_knowledge_base  # noqa: PLC0415
         n = await ingest_knowledge_base()
@@ -159,6 +210,7 @@ app.add_middleware(SecurityHeadersMiddleware)
 app.add_middleware(CorsAllowlistMiddleware)
 app.add_middleware(RateLimitMiddleware)
 app.add_middleware(ObservabilityMiddleware)
+app.add_middleware(TraceIdMiddleware)
 app.include_router(router)
 app.include_router(contracts_router)
 app.include_router(enel_router)
@@ -190,7 +242,7 @@ def reset_runtime_state() -> None:
 
 @app.exception_handler(ApiRequestError)
 async def api_request_error_handler(request: Request, exc: ApiRequestError):
-    payload = {"error": {"code": exc.code, "message": exc.message, "details": exc.details}}
+    payload = _error_payload(exc.code, exc.message, exc.details, request=request)
     log_security_event("api_error_response", request, {"status": exc.status_code, "code": exc.code})
     record_api_error_code_metric(exc.code)
     return JSONResponse(status_code=exc.status_code, content=payload)
@@ -198,7 +250,7 @@ async def api_request_error_handler(request: Request, exc: ApiRequestError):
 
 @app.exception_handler(Exception)
 async def unhandled_error_handler(request: Request, exc: Exception):
-    payload = {"error": {"code": "INTERNAL_ERROR", "message": "Erro interno no servidor.", "details": None}}
+    payload = _error_payload("INTERNAL_ERROR", "Erro interno no servidor.", None, request=request)
     log_security_event("api_error_response", request, {"status": 500, "code": "INTERNAL_ERROR"})
     record_api_error_code_metric("INTERNAL_ERROR")
     return JSONResponse(status_code=500, content=payload)

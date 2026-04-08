@@ -2,14 +2,15 @@ from __future__ import annotations
 
 from typing import Any
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, Request
 
 from app.api.helpers import parse_enum, parse_positive_int
 from app.core.errors import ApiRequestError
 from app.core.security import require_roles, require_tenant_scope
 from app.integrations.sabesp.orchestrator import run_sabesp_assisted_import
-from app.integrations.sabesp.repository import get_sabesp_run_detail, list_sabesp_runs
+from app.integrations.sabesp.repository import get_sabesp_run_detail, list_sabesp_runs, sabesp_run_exists_in_other_tenant
 from app.schemas.requests import SabespRunCreateBody
+from app.utils.logging import log_security_event
 
 sabesp_router = APIRouter(prefix="/api/integrations/sabesp")
 
@@ -44,6 +45,7 @@ async def list_sabesp_runs_endpoint(
 @sabesp_router.get("/runs/{run_id}")
 async def get_sabesp_run_detail_endpoint(
     run_id: str,
+    request: Request,
     auth: dict[str, Any] = Depends(require_tenant_scope),
     _role: dict[str, Any] = Depends(require_roles(["admin", "sindico"])),
 ):
@@ -53,5 +55,11 @@ async def get_sabesp_run_detail_endpoint(
 
     run = await get_sabesp_run_detail(auth["condominiumId"], safe_id)
     if not run:
+        if await sabesp_run_exists_in_other_tenant(auth["condominiumId"], safe_id):
+            log_security_event(
+                "integration_cross_tenant_run_access_denied",
+                request,
+                {"provider": "sabesp", "targetRunId": safe_id, "resourceType": "integration_run"},
+            )
         raise ApiRequestError(404, "NOT_FOUND", "Execucao de integracao nao encontrada.")
     return {"run": run}

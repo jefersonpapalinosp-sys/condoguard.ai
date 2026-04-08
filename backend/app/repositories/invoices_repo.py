@@ -7,6 +7,7 @@ from typing import Any
 
 from app.core.config import settings
 from app.core.errors import create_oracle_unavailable_error
+from app.core.tenancy import ensure_condominium_id
 from app.db.oracle_client import run_oracle_execute, run_oracle_query
 from app.observability.metrics_store import record_api_fallback_metric
 from app.repositories.state_store import read_json_state, write_json_state
@@ -84,7 +85,8 @@ def _merge_integration_imports(base_items: list[dict[str, Any]], imported_items:
     return list(merged.values())
 
 
-async def get_invoices_data(condominium_id: int = 1) -> dict[str, Any]:
+async def get_invoices_data(condominium_id: int) -> dict[str, Any]:
+    condominium_id = ensure_condominium_id(condominium_id)
     status_state = await read_json_state(STATUS_FILE)
     updates_state = await read_json_state(UPDATES_FILE)
     integration_items = await list_imported_invoices_snapshot(condominium_id)
@@ -132,6 +134,7 @@ async def get_invoices_data(condominium_id: int = 1) -> dict[str, Any]:
 
 
 async def create_invoice(condominium_id: int, payload: dict[str, Any]) -> dict[str, Any]:
+    condominium_id = ensure_condominium_id(condominium_id)
     invoice_id = f"inv-manual-{int(datetime.now(timezone.utc).timestamp() * 1000)}-{randint(0, 9999):04d}"
     item: dict[str, Any] = {
         "id": invoice_id,
@@ -190,6 +193,7 @@ async def create_invoice(condominium_id: int, payload: dict[str, Any]) -> dict[s
 
 
 async def update_invoice(condominium_id: int, invoice_id: str, payload: dict[str, Any]) -> dict[str, Any] | None:
+    condominium_id = ensure_condominium_id(condominium_id)
     current = await get_invoices_data(condominium_id)
     existing = next((i for i in current["items"] if str(i["id"]) == str(invoice_id)), None)
     if not existing:
@@ -239,6 +243,7 @@ async def update_invoice(condominium_id: int, invoice_id: str, payload: dict[str
 
 
 async def mark_invoice_as_paid(condominium_id: int, invoice_id: str, actor_sub: str | None = None) -> dict[str, Any] | None:
+    condominium_id = ensure_condominium_id(condominium_id)
     payload = await get_invoices_data(condominium_id)
     exists = any(str(item["id"]) == str(invoice_id) for item in payload["items"])
     if not exists:

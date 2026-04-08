@@ -5,6 +5,7 @@ import logging
 from datetime import datetime, timezone
 
 from app.core.config import settings
+from app.core.tenancy import ensure_condominium_id
 from app.repositories.alerts_repo import get_alerts_data
 from app.repositories.invoices_repo import get_invoices_data
 from app.repositories.management_repo import get_management_units_data
@@ -30,7 +31,8 @@ async def _safe(coro, fallback: dict, label: str) -> dict:
         return fallback
 
 
-async def build_chat_context(condominium_id: int = 1) -> dict:
+async def build_chat_context(condominium_id: int) -> dict:
+    condominium_id = ensure_condominium_id(condominium_id)
     invoices, alerts, management = await asyncio.gather(
         _safe(get_invoices_data(condominium_id), _EMPTY_INVOICES, "invoices"),
         _safe(get_alerts_data(condominium_id), _EMPTY_ALERTS, "alerts"),

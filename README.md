@@ -14,7 +14,7 @@ Plataforma de inteligencia predial em React + Vite.
    `npm install`
 2. Instale dependencias do backend Python:
    `py -m pip install -r backend/requirements.txt`
-3. Configure variaveis em `.env.local`
+3. Configure variaveis em `.env`
 4. Rode frontend:
    `npm run dev`
 5. Rode API local (FastAPI):
@@ -39,6 +39,8 @@ Credenciais locais de desenvolvimento (P0 auth):
 - `npm run api:start:mock`: API FastAPI mock sem reload (ideal para CI/E2E)
 - `npm run api:start:oracle`: API FastAPI Oracle sem reload (ideal para CI)
 - `npm run db:migrate:flyway`: executa migracoes Flyway no Oracle
+- `npm run db:data-quality:gate`: executa o gate estrito do relatorio versionado de qualidade
+- `npm run db:data-quality:gate:warn`: executa o gate em modo diagnostico
 - `npm run db:smoke:sprint3`: smoke cross-tenant (Sprint 3) em Oracle
 - `npm run db:smoke:sprint3:rbac`: smoke de matriz RBAC (Sprint 3) e gera relatorio markdown
 - `npm run security:smoke:sprint3:oidc`: smoke de fechamento S3-01 com token real OIDC e relatorio markdown
@@ -74,11 +76,12 @@ Credenciais locais de desenvolvimento (P0 auth):
 
 Arquivos implementados:
 
-- Modelo: `database/sql/001_core_schema.sql`
-- Marts: `database/sql/002_marts_views.sql`
-- Testes de qualidade: `database/sql/003_data_quality_tests.sql`
+- Migracoes versionadas: `database/flyway/sql/V001__core_schema.sql` ate `V010__enel_integration_tables.sql`
+- Runbook operacional: `docs/flyway_homolog_runbook.md`
+- Checklist Oracle: `docs/oracle_deploy_checklist.md`
 - Pipeline de analise/saneamento: `scripts/data/analyze_and_project.py`
 - Relatorio gerado: `database/reports/data_quality_report.json`
+- Gate de qualidade: `scripts/db/data-quality-gate.mjs`
 
 Executar analise com a planilha:
 
@@ -94,13 +97,20 @@ Saidas:
 - `backend/data/chat_bootstrap.json`
 - `backend/data/alerts.json`
 
+Validar a baseline versionada:
+
+```bash
+npm run db:data-quality:gate:warn
+npm run db:data-quality:gate
+```
 
 ## Oracle (Sprint 1 adiantado)
 
-- Scripts Oracle: database/sql/oracle/001_core_schema_oracle.sql, database/sql/oracle/002_marts_views_oracle.sql, database/sql/oracle/003_data_quality_tests_oracle.sql.
+- Trilha oficial atual: `database/flyway/sql`.
+- Scripts em `database/sql/oracle` ficam como referencia historica/controlada, nao como fluxo operacional principal.
 - Guia rapido: docs/oracle_setup.md.
 - Checklist de deploy: docs/oracle_deploy_checklist.md.
-- Config local: `.env.local` (carregado automaticamente pela API).
+- Config local: `.env`.
 - Plano completo das proximas sprints: docs/product_backlog_sprints.md.
 - Board de execucao da Sprint 1: docs/sprint1_execution_board.md.
 - Checklist de fechamento da Sprint 1: docs/sprint1_closing_checklist.md.
@@ -145,7 +155,7 @@ Health detalhado (Sprint 2):
 - `npm run test:e2e`: Playwright E2E
 - `npm run test:e2e:install`: instala browsers do Playwright
 - `npm run test:py`: testes do backend FastAPI (`backend/tests`)
-- `npm run env:validate`: valida perfil de ambiente (`.env.local`) para gate de go-live
+- `npm run env:validate`: valida perfil de ambiente (`.env`, com fallback interno para `.env.local` se existir) para gate de go-live
 - `npm run release:s7:hml-smoke`: smoke dos fluxos criticos para gate da Sprint 7 (`S7-01`)
 - `npm run release:s7:rollback-drill`: simulacao assistida de rollback com relatorio (`S7-03`)
 

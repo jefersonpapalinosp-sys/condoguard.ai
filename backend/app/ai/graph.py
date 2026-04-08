@@ -28,6 +28,7 @@ from app.ai.nodes.agents.alerts_agent import alerts_agent_node
 from app.ai.nodes.agents.consumption_agent import consumption_agent_node
 from app.ai.nodes.agents.maintenance_agent import maintenance_agent_node
 from app.ai.nodes.agents.general_agent import general_agent_node
+from app.ai.nodes.action_executor_node import action_executor_node
 from app.ai.prompts import resolve_domain
 
 _log = logging.getLogger(__name__)
@@ -43,10 +44,14 @@ _DOMAIN_TO_NODE: dict[str, str] = {
 
 
 def _route_after_guardrails(state: AgentState) -> str:
-    """Conditional edge: if blocked go straight to formatter, otherwise pick agent."""
+    """Conditional edge: if blocked go straight to formatter, otherwise pick agent or executor."""
     if state.get("guardrails", {}).get("blocked", False):
         return "response_formatter"
-    raw_domain = (state.get("route") or {}).get("domain", "geral")
+    route = state.get("route") or {}
+    # Transactional actions go to the executor, not a domain agent
+    if route.get("mode") == "transactional":
+        return "action_executor"
+    raw_domain = route.get("domain", "geral")
     domain_key = resolve_domain(raw_domain)
     return _DOMAIN_TO_NODE.get(domain_key, "general_agent")
 
@@ -63,6 +68,7 @@ def build_agent_graph():
     g.add_node("consumption_agent", consumption_agent_node)
     g.add_node("maintenance_agent", maintenance_agent_node)
     g.add_node("general_agent", general_agent_node)
+    g.add_node("action_executor", action_executor_node)
     g.add_node("rag_retriever", rag_retriever_node)
     g.add_node("response_formatter", response_formatter_node)
 
@@ -76,6 +82,7 @@ def build_agent_graph():
         _route_after_guardrails,
         {
             "response_formatter": "response_formatter",
+            "action_executor": "action_executor",
             "financial_agent": "financial_agent",
             "alerts_agent": "alerts_agent",
             "consumption_agent": "consumption_agent",
@@ -83,6 +90,9 @@ def build_agent_graph():
             "general_agent": "general_agent",
         },
     )
+
+    # Action executor bypasses rag_retriever and goes straight to formatter
+    g.add_edge("action_executor", "response_formatter")
 
     # All agent nodes go through rag_retriever then formatter
     for agent_node in ("financial_agent", "alerts_agent", "consumption_agent", "maintenance_agent", "general_agent"):

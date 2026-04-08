@@ -9,7 +9,7 @@ import {
   deleteContractDocument,
   fetchContractDocuments,
   fetchContractsList,
-  uploadContractDocument,
+  uploadContractDocumentWithFile,
 } from '../services/contractsManagementService';
 import type { ContractDocument, ContractRecord } from '../types/contracts';
 
@@ -100,12 +100,7 @@ export default function ContractsDocumentsPage() {
     try {
       setSubmitting(true);
       setRefreshing(true);
-      await uploadContractDocument(selectedContractId, {
-        name: file.name,
-        type: docType,
-        sizeKb: Number((file.size / 1024).toFixed(2)),
-        status: 'active',
-      });
+      await uploadContractDocumentWithFile(selectedContractId, file, docType);
       const refreshed = await fetchContractDocuments(selectedContractId);
       setDocuments(refreshed.items);
       setError(null);

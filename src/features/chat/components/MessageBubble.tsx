@@ -1,6 +1,38 @@
 import { useState } from 'react';
-import type { EnrichedChatMessage } from '../types/chat';
+import type { ActionResult, EnrichedChatMessage } from '../types/chat';
 import { AGENT_STYLES, CONFIDENCE_STYLES } from '../types/chat';
+
+const ACTION_LABELS: Record<string, string> = {
+  invoice_mark_paid: 'Fatura paga',
+  alert_mark_read: 'Alerta lido',
+  contract_renew: 'Contrato renovado',
+  contract_close: 'Contrato encerrado',
+};
+
+function ActionCard({ result }: { result: ActionResult }) {
+  const isSuccess = result.status === 'success';
+  const isMissing = result.status === 'missing_entity';
+  const cardClass = isSuccess
+    ? 'border-green-200 bg-green-50 text-green-900'
+    : isMissing
+      ? 'border-amber-200 bg-amber-50 text-amber-900'
+      : 'border-red-200 bg-red-50 text-red-900';
+  const icon = isSuccess ? '✅' : isMissing ? '⚠️' : '❌';
+  const label = ACTION_LABELS[result.type] ?? result.type;
+
+  return (
+    <div className={`mt-2 rounded-xl border px-3 py-2.5 ${cardClass}`}>
+      <div className="flex items-center gap-2 mb-1">
+        <span className="text-base">{icon}</span>
+        <span className="text-xs font-bold uppercase tracking-wider">{label}</span>
+        {result.entity && (
+          <span className="ml-auto font-mono text-[10px] opacity-70">{result.entity}</span>
+        )}
+      </div>
+      <p className="text-xs leading-relaxed">{result.message}</p>
+    </div>
+  );
+}
 
 type Props = {
   message: EnrichedChatMessage;
@@ -56,6 +88,11 @@ export function MessageBubble({ message, feedbackGiven, onFeedback, canViewDetai
 
         {/* Message text */}
         <p className="text-sm leading-relaxed">{message.text}</p>
+
+        {/* Action result card */}
+        {message.actionResult && (
+          <ActionCard result={message.actionResult} />
+        )}
 
         {/* RAG source chips */}
         {message.ragSources && message.ragSources.length > 0 && (

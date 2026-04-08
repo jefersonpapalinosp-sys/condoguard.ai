@@ -34,5 +34,8 @@ class AgentState(TypedDict):
     agent_name: str                       # e.g. "Agente Financeiro"
     ai_powered: bool
 
+    # ── action_executor node ─────────────────────────────────────────────────
+    action_result: Optional[dict]         # {type, status, entity, message} or None
+
     # ── response_formatter node ───────────────────────────────────────────────
     final_response: dict                  # the full API response dict

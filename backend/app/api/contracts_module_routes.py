@@ -1,6 +1,9 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, Query
+from pathlib import Path
+
+from fastapi import APIRouter, Depends, File, Form, Query, UploadFile
+from fastapi.responses import FileResponse
 
 from app.core.errors import ApiRequestError
 from app.core.security import AUTH_ROLES, require_roles, require_tenant_scope
@@ -110,6 +113,55 @@ async def contracts_document_attach(
     if not created:
         raise ApiRequestError(404, "NOT_FOUND", "Contrato nao encontrado.")
     return {"item": created}
+
+
+@contracts_router.post("/documentos/{contract_id}/upload", status_code=201)
+async def contracts_document_upload(
+    contract_id: str,
+    file: UploadFile = File(...),
+    type: str = Form(default="geral"),
+    auth: dict = Depends(require_tenant_scope),
+    _role: dict = Depends(require_roles(["admin", "sindico"])),
+):
+    """Upload a real file and attach it to a contract. File is stored under backend/data/uploads/."""
+    contents = await file.read()
+    size_kb = round(len(contents) / 1024, 2)
+    created = await attach_contract_document_data(
+        auth["condominiumId"],
+        contract_id,
+        {
+            "name": file.filename or "documento",
+            "type": type,
+            "sizeKb": size_kb,
+            "status": "active",
+        },
+        auth.get("sub"),
+        file_bytes=contents,
+        original_filename=file.filename or "documento",
+    )
+    if not created:
+        raise ApiRequestError(404, "NOT_FOUND", "Contrato nao encontrado.")
+    return {"item": created}
+
+
+@contracts_router.get("/documentos/{doc_id}/file")
+async def contracts_document_download(
+    doc_id: str,
+    auth: dict = Depends(require_tenant_scope),
+    _role: dict = Depends(require_roles(AUTH_ROLES)),
+):
+    """Serve a previously uploaded document file."""
+    uploads_root = Path(__file__).resolve().parents[3] / "backend" / "data" / "uploads"
+    # Find the file: it's stored as {doc_id}_{original_filename}
+    matches = list(uploads_root.rglob(f"{doc_id}_*"))
+    if not matches:
+        raise ApiRequestError(404, "NOT_FOUND", "Arquivo nao encontrado.")
+    file_path = matches[0]
+    return FileResponse(
+        path=str(file_path),
+        filename=file_path.name.split("_", 1)[-1] if "_" in file_path.name else file_path.name,
+        media_type="application/octet-stream",
+    )
 
 
 @contracts_router.delete("/documentos/{document_id}")

@@ -6,6 +6,7 @@ Formato base de evento (`[security]`):
 
 - `ts`
 - `event`
+- `traceId`
 - `method`
 - `path`
 - `ip`
@@ -39,6 +40,7 @@ Formato base de evento (`[security]`):
 - `alert_mark_read`
 - `chat_feedback_submitted`
 - `audit_log_viewed`
+- `integration_cross_tenant_run_access_denied`
 
 ## Eventos para observabilidade operacional
 
@@ -53,5 +55,6 @@ Formato base de evento (`[security]`):
 ## Uso recomendado
 
 1. Buscar picos de `api_error_response` por `code`.
-2. Monitorar `fallbacks.total` e `fallbacks.modules`.
-3. Acionar investigacao quando `GET /api/observability/alerts` retornar `hasAlerts=true`.
+2. Correlacionar falhas com `traceId` entre resposta, log estruturado e auditoria.
+3. Monitorar `fallbacks.total` e `fallbacks.modules`.
+4. Acionar investigacao quando `GET /api/observability/alerts` retornar `hasAlerts=true`.

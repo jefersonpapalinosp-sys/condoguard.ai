@@ -42,6 +42,17 @@ jobs:
       - name: Typecheck
         run: npm run lint
 
+      - name: Data quality baseline (warn-only)
+        run: npm run db:data-quality:gate:warn | tee data-quality-baseline.txt
+
+      - name: Upload data quality baseline (always)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: data-quality-baseline
+          path: data-quality-baseline.txt
+          if-no-files-found: ignore
+
       - name: Backend FastAPI tests
         env:
           PYTHON_BIN: python

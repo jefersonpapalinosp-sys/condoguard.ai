@@ -7,6 +7,7 @@ from typing import Any
 from uuid import uuid4
 
 from app.core.config import settings
+from app.core.tenancy import ensure_condominium_id
 from app.db.oracle_client import run_oracle_execute, run_oracle_query
 from app.observability.metrics_store import record_api_fallback_metric
 from app.repositories.state_store import read_json_state, write_json_state
@@ -23,6 +24,7 @@ def _default_tenant_state() -> dict[str, Any]:
 
 
 def _safe_tenant_state(state: dict[str, Any], condominium_id: int) -> dict[str, Any]:
+    condominium_id = ensure_condominium_id(condominium_id)
     key = str(condominium_id)
     tenant = state.get(key)
     if not isinstance(tenant, dict):
@@ -105,7 +107,11 @@ async def _try_import_consumption_oracle(condominium_id: int, item: dict[str, An
               consumo_m3,
               valor_total,
               status,
-              origem_dado
+              origem_dado,
+              external_reference,
+              business_key,
+              external_hash,
+              observacoes
             ) values (
               :condominiumId,
               :unidadeId,
@@ -115,7 +121,11 @@ async def _try_import_consumption_oracle(condominium_id: int, item: dict[str, An
               :consumptionM3,
               :amount,
               :status,
-              'integration_sabesp'
+              'integration_sabesp',
+              :externalReference,
+              :businessKey,
+              :externalHash,
+              :notes
             )
             """,
             {
@@ -127,23 +137,37 @@ async def _try_import_consumption_oracle(condominium_id: int, item: dict[str, An
                 "consumptionM3": float(item.get("consumptionM3") or 0),
                 "amount": float(item.get("amount") or 0),
                 "status": item.get("status"),
+                "externalReference": item.get("externalReference"),
+                "businessKey": item.get("businessKey"),
+                "externalHash": item.get("documentHash"),
+                "notes": item.get("notes"),
             },
+        )
+        record_id = await _find_consumption_oracle_record_id(
+            condominium_id,
+            str(item.get("businessKey") or ""),
+            str(item.get("documentHash") or ""),
         )
 
         return {
             "mode": "oracle",
             "result": "imported",
             "message": "Importado em Oracle com origem integration_sabesp.",
-            "recordId": None,
+            "recordId": record_id,
         }
     except Exception as exc:
         message = str(exc or "oracle_error")
         if "ORA-00001" in message:
+            record_id = await _find_consumption_oracle_record_id(
+                condominium_id,
+                str(item.get("businessKey") or ""),
+                str(item.get("documentHash") or ""),
+            )
             return {
                 "mode": "oracle",
                 "result": "skipped",
                 "message": "Duplicado por chave de negocio no Oracle.",
-                "recordId": None,
+                "recordId": record_id,
             }
         record_api_fallback_metric("integrations_sabesp", "oracle_fallback_snapshot")
         return {
@@ -174,6 +198,34 @@ def _build_snapshot_consumption(condominium_id: int, item: dict[str, Any]) -> di
     }
 
 
+async def _find_consumption_oracle_record_id(
+    condominium_id: int,
+    business_key: str,
+    external_hash: str,
+) -> str | None:
+    rows = await run_oracle_query(
+        """
+        select consumo_agua_id
+        from app.consumo_agua_mensal
+        where condominio_id = :condominiumId
+          and (
+            (:businessKey is not null and business_key = :businessKey)
+            or (:externalHash is not null and external_hash = :externalHash)
+          )
+        fetch first 1 rows only
+        """,
+        {
+            "condominiumId": condominium_id,
+            "businessKey": business_key or None,
+            "externalHash": external_hash or None,
+        },
+    )
+    if not rows:
+        return None
+    record_id = rows[0].get("CONSUMO_AGUA_ID")
+    return str(record_id) if record_id is not None else None
+
+
 async def execute_sabesp_assisted_run(
     condominium_id: int,
     actor_sub: str | None,
@@ -181,6 +233,7 @@ async def execute_sabesp_assisted_run(
     notes: str | None,
     entries: list[dict[str, Any]],
 ) -> dict[str, Any]:
+    condominium_id = ensure_condominium_id(condominium_id)
     state = await read_json_state(SABESP_STATE_FILE)
     tenant = _safe_tenant_state(state, condominium_id)
 
@@ -324,6 +377,7 @@ async def execute_sabesp_assisted_run(
 
 
 async def list_sabesp_runs(condominium_id: int, page: int = 1, page_size: int = 20, status: str | None = None) -> dict[str, Any]:
+    condominium_id = ensure_condominium_id(condominium_id)
     state = await read_json_state(SABESP_STATE_FILE)
     tenant = _safe_tenant_state(state, condominium_id)
     runs = tenant.get("runs", [])
@@ -373,6 +427,7 @@ async def list_sabesp_runs(condominium_id: int, page: int = 1, page_size: int = 
 
 
 async def get_sabesp_run_detail(condominium_id: int, run_id: str) -> dict[str, Any] | None:
+    condominium_id = ensure_condominium_id(condominium_id)
     state = await read_json_state(SABESP_STATE_FILE)
     tenant = _safe_tenant_state(state, condominium_id)
     runs = tenant.get("runs", [])
@@ -382,13 +437,132 @@ async def get_sabesp_run_detail(condominium_id: int, run_id: str) -> dict[str, A
     return None
 
 
-async def list_imported_consumption_snapshot(condominium_id: int) -> list[dict[str, Any]]:
+async def sabesp_run_exists_in_other_tenant(condominium_id: int, run_id: str) -> bool:
+    condominium_id = ensure_condominium_id(condominium_id)
+    state = await read_json_state(SABESP_STATE_FILE)
+    target_run_id = str(run_id or "").strip()
+    if not target_run_id:
+        return False
+
+    for tenant_key, tenant_state in state.items():
+        if str(tenant_key) == str(condominium_id) or not isinstance(tenant_state, dict):
+            continue
+
+        runs = tenant_state.get("runs")
+        if not isinstance(runs, list):
+            continue
+
+        for run in runs:
+            if isinstance(run, dict) and str(run.get("runId")) == target_run_id:
+                return True
+
+    return False
+
+
+def _map_oracle_consumption_to_snapshot(row: dict[str, Any]) -> dict[str, Any]:
+    block = str(row.get("BLOCO") or "").strip().upper()
+    number = str(row.get("NUMERO_UNIDADE") or "").strip()
+    unit = f"{block}-{number}" if block and number else number or "-"
+    record_id = str(row.get("CONSUMO_AGUA_ID") or uuid4().hex[:12])
+    return {
+        "id": f"sabesp-oracle-{record_id}",
+        "condominiumId": int(row.get("CONDOMINIO_ID") or 0),
+        "unit": unit,
+        "resident": str(row.get("RESIDENT_NAME") or "-").strip() or "-",
+        "reference": str(row.get("REFERENCIA") or "").strip(),
+        "readingDate": str(row.get("READING_DATE") or "").strip(),
+        "dueDate": str(row.get("DUE_DATE") or "").strip(),
+        "consumptionM3": float(row.get("CONSUMO_M3") or 0),
+        "amount": float(row.get("VALOR_TOTAL") or 0),
+        "status": str(row.get("STATUS") or "pending"),
+        "source": str(row.get("ORIGEM_DADO") or "integration_sabesp"),
+        "externalReference": row.get("EXTERNAL_REFERENCE"),
+        "businessKey": row.get("BUSINESS_KEY"),
+        "externalHash": row.get("EXTERNAL_HASH"),
+        "createdAt": str(row.get("CREATED_AT_ISO") or _now_iso()),
+    }
+
+
+async def _list_imported_consumption_oracle(condominium_id: int) -> list[dict[str, Any]]:
+    rows = await run_oracle_query(
+        """
+        select
+          c.consumo_agua_id,
+          c.condominio_id,
+          u.bloco,
+          u.numero_unidade,
+          c.referencia,
+          to_char(c.data_leitura, 'YYYY-MM-DD') as reading_date,
+          to_char(c.vencimento, 'YYYY-MM-DD') as due_date,
+          c.consumo_m3,
+          c.valor_total,
+          c.status,
+          c.origem_dado,
+          c.external_reference,
+          c.business_key,
+          c.external_hash,
+          to_char(c.created_at, 'YYYY-MM-DD"T"HH24:MI:SS') || 'Z' as created_at_iso,
+          (
+            select m.nome
+            from app.moradores m
+            where m.condominio_id = c.condominio_id
+              and m.unidade_id = c.unidade_id
+            fetch first 1 rows only
+          ) as resident_name
+        from app.consumo_agua_mensal c
+        join app.unidades u on u.unidade_id = c.unidade_id
+        where c.condominio_id = :condominiumId
+          and c.origem_dado = 'integration_sabesp'
+        order by c.created_at desc
+        fetch first 24 rows only
+        """,
+        {"condominiumId": condominium_id},
+    )
+    return [_map_oracle_consumption_to_snapshot(row) for row in rows or []]
+
+
+async def _list_imported_consumption_state(condominium_id: int) -> list[dict[str, Any]]:
     state = await read_json_state(SABESP_STATE_FILE)
     tenant = _safe_tenant_state(state, condominium_id)
     consumptions = tenant.get("importedConsumptions", [])
     if not isinstance(consumptions, list):
         return []
     return [dict(item) for item in consumptions if isinstance(item, dict)]
+
+
+async def list_imported_consumption_snapshot(condominium_id: int) -> list[dict[str, Any]]:
+    condominium_id = ensure_condominium_id(condominium_id)
+    state_items = await _list_imported_consumption_state(condominium_id)
+
+    if settings.db_dialect != "oracle":
+        return state_items
+
+    try:
+        oracle_items = await _list_imported_consumption_oracle(condominium_id)
+    except Exception:
+        if not settings.allow_oracle_seed_fallback:
+            raise
+        record_api_fallback_metric("integrations_sabesp", "oracle_snapshot_listing_fallback")
+        return state_items
+
+    if not oracle_items:
+        return state_items
+
+    merged: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    for item in oracle_items + state_items:
+        dedupe_key = (
+            str(item.get("businessKey") or "").strip()
+            or str(item.get("externalHash") or "").strip()
+            or str(item.get("id") or "").strip()
+        )
+        if dedupe_key and dedupe_key in seen:
+            continue
+        if dedupe_key:
+            seen.add(dedupe_key)
+        merged.append(dict(item))
+
+    return merged[:50]
 
 
 def reset_sabesp_integration_state() -> None:

@@ -7,6 +7,7 @@ from typing import Any
 from uuid import uuid4
 
 from app.core.config import settings
+from app.core.tenancy import ensure_condominium_id
 from app.db.oracle_client import run_oracle_execute, run_oracle_query
 from app.observability.metrics_store import record_api_fallback_metric
 from app.repositories.state_store import read_json_state, write_json_state
@@ -23,6 +24,7 @@ def _default_tenant_state() -> dict[str, Any]:
 
 
 def _safe_tenant_state(state: dict[str, Any], condominium_id: int) -> dict[str, Any]:
+    condominium_id = ensure_condominium_id(condominium_id)
     key = str(condominium_id)
     tenant = state.get(key)
     if not isinstance(tenant, dict):
@@ -220,6 +222,7 @@ async def execute_enel_assisted_run(
     notes: str | None,
     entries: list[dict[str, Any]],
 ) -> dict[str, Any]:
+    condominium_id = ensure_condominium_id(condominium_id)
     state = await read_json_state(ENEL_STATE_FILE)
     tenant = _safe_tenant_state(state, condominium_id)
 
@@ -363,6 +366,7 @@ async def execute_enel_assisted_run(
 
 
 async def list_enel_runs(condominium_id: int, page: int = 1, page_size: int = 20, status: str | None = None) -> dict[str, Any]:
+    condominium_id = ensure_condominium_id(condominium_id)
     state = await read_json_state(ENEL_STATE_FILE)
     tenant = _safe_tenant_state(state, condominium_id)
     runs = tenant.get("runs", [])
@@ -412,6 +416,7 @@ async def list_enel_runs(condominium_id: int, page: int = 1, page_size: int = 20
 
 
 async def get_enel_run_detail(condominium_id: int, run_id: str) -> dict[str, Any] | None:
+    condominium_id = ensure_condominium_id(condominium_id)
     state = await read_json_state(ENEL_STATE_FILE)
     tenant = _safe_tenant_state(state, condominium_id)
     runs = tenant.get("runs", [])
@@ -421,7 +426,30 @@ async def get_enel_run_detail(condominium_id: int, run_id: str) -> dict[str, Any
     return None
 
 
+async def enel_run_exists_in_other_tenant(condominium_id: int, run_id: str) -> bool:
+    condominium_id = ensure_condominium_id(condominium_id)
+    state = await read_json_state(ENEL_STATE_FILE)
+    target_run_id = str(run_id or "").strip()
+    if not target_run_id:
+        return False
+
+    for tenant_key, tenant_state in state.items():
+        if str(tenant_key) == str(condominium_id) or not isinstance(tenant_state, dict):
+            continue
+
+        runs = tenant_state.get("runs")
+        if not isinstance(runs, list):
+            continue
+
+        for run in runs:
+            if isinstance(run, dict) and str(run.get("runId")) == target_run_id:
+                return True
+
+    return False
+
+
 async def list_imported_invoices_snapshot(condominium_id: int) -> list[dict[str, Any]]:
+    condominium_id = ensure_condominium_id(condominium_id)
     state = await read_json_state(ENEL_STATE_FILE)
     tenant = _safe_tenant_state(state, condominium_id)
     invoices = tenant.get("importedInvoices", [])
@@ -435,4 +463,3 @@ def reset_enel_integration_state() -> None:
         ENEL_STATE_FILE.unlink()
     except FileNotFoundError:
         return
-

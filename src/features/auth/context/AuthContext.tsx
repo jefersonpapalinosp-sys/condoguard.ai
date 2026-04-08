@@ -116,8 +116,9 @@ export function AuthProvider({
       userName: resolveUserName(saved.token, saved.userName),
     };
   });
+  const [sessionEndedReason, setSessionEndedReason] = useState<'expired' | null>(null);
 
-  const sessionExpired = Boolean(session && session.expiresAt <= Date.now());
+  const sessionExpired = Boolean((session && session.expiresAt <= Date.now()) || sessionEndedReason === 'expired');
   const tokenValid = Boolean(session && session.token.trim().length >= 16);
   const isAuthenticated = Boolean(session && !sessionExpired && tokenValid);
 
@@ -128,6 +129,7 @@ export function AuthProvider({
       if (session.expiresAt <= Date.now()) {
         clearAccessToken();
         setSession(null);
+        setSessionEndedReason('expired');
       }
     }, EXPIRY_CHECK_INTERVAL_MS);
     return () => clearInterval(interval);
@@ -137,11 +139,13 @@ export function AuthProvider({
     if (initialSession?.token) {
       const userName = resolveUserName(initialSession.token, initialSession.userName);
       persistSession(initialSession.token, initialSession.expiresAt, initialSession.role, userName);
+      setSessionEndedReason(null);
     }
 
-    return subscribeUnauthorized(() => {
+    return subscribeUnauthorized((detail) => {
       clearAccessToken();
       setSession(null);
+      setSessionEndedReason(detail.reason === 'expired' || detail.reason === 'invalid' ? 'expired' : null);
     });
   }, [initialSession?.token, initialSession?.expiresAt, initialSession?.role, initialSession?.userName]);
 
@@ -151,7 +155,8 @@ export function AuthProvider({
       role: session?.role ?? null,
       userName: session?.userName ?? DEFAULT_USER_NAME,
       sessionExpired,
-      login: (options) =>
+      login: (options) => {
+        setSessionEndedReason(null);
         setSession(() => {
           const token = options?.token ?? `dev-session-${Date.now()}-condoguard`;
           const expiresAt = options?.expiresAt ?? Date.now() + 3600_000;
@@ -159,10 +164,12 @@ export function AuthProvider({
           const userName = resolveUserName(token, options?.userName);
           persistSession(token, expiresAt, role, userName);
           return { token, role, expiresAt, userName };
-        }),
+        });
+      },
       logout: () => {
         clearAccessToken();
         setSession(null);
+        setSessionEndedReason(null);
       },
     }),
     [isAuthenticated, session?.role, session?.userName, sessionExpired],

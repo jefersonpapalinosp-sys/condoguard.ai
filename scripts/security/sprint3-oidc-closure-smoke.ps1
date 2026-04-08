@@ -74,6 +74,13 @@ if ($health.Status -ne 200) {
 
 $healthBody = $health.Body
 $checks = @()
+$oidcReadiness = $healthBody.oidcReadiness
+$oidcIssues = @()
+$oidcMissing = @()
+if ($oidcReadiness) {
+  if ($oidcReadiness.issues) { $oidcIssues = @($oidcReadiness.issues) }
+  if ($oidcReadiness.missingConfig) { $oidcMissing = @($oidcReadiness.missingConfig) }
+}
 
 function New-CheckResult {
   param(
@@ -126,6 +133,7 @@ $lines += ""
 $lines += "Generated at: $generatedAt"
 $lines += "API: $ApiBaseUrl"
 $lines += "Health: dialect=$($healthBody.dialect), dbStatus=$($healthBody.dbStatus), authProvider=$($healthBody.authProvider), authPasswordLoginEnabled=$($healthBody.authPasswordLoginEnabled), oidcConfigured=$($healthBody.oidcConfigured)"
+$lines += "OIDC readiness: ready=$($oidcReadiness.ready), missing=$([string]::Join(', ', $oidcMissing)), issues=$([string]::Join(' | ', $oidcIssues))"
 $lines += ""
 $lines += "| Check | ExpectedStatus | ActualStatus | ExpectedCode | ActualCode | Result |"
 $lines += "|---|---:|---:|---|---|---|"
@@ -147,7 +155,8 @@ Write-Host "Report generated at $outputAbs"
 Write-Host "Summary: total=$($checks.Count), failed=$failed"
 
 if ($healthBody.authProvider -ne "oidc_jwks" -or -not $healthBody.oidcConfigured -or $healthBody.authPasswordLoginEnabled) {
-  throw "Pre-condicao de fechamento S3-01 nao atendida no health (authProvider/oidcConfigured/authPasswordLoginEnabled)."
+  $details = if ($oidcIssues.Count -gt 0) { [string]::Join(' | ', $oidcIssues) } else { "authProvider/oidcConfigured/authPasswordLoginEnabled" }
+  throw "Pre-condicao de fechamento S3-01 nao atendida no health. Pendencias: $details"
 }
 
 if ($failed -gt 0) {

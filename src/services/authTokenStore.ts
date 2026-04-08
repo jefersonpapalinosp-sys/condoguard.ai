@@ -9,6 +9,16 @@ export type StoredSession = {
   userName?: string;
 };
 
+function safeReadStoredSession(): StoredSession | null {
+  try {
+    const raw = sessionStorage.getItem(SESSION_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw) as StoredSession;
+  } catch {
+    return null;
+  }
+}
+
 export function getAccessToken() {
   return accessToken;
 }
@@ -35,18 +45,27 @@ export function persistSession(token: string, expiresAt: number, role: string, u
   }
 }
 
-export function restoreSession(): StoredSession | null {
-  try {
-    const raw = sessionStorage.getItem(SESSION_KEY);
-    if (!raw) return null;
-    const data = JSON.parse(raw) as StoredSession;
-    if (!data.token || !data.expiresAt || data.expiresAt <= Date.now()) {
-      sessionStorage.removeItem(SESSION_KEY);
-      return null;
-    }
-    setAccessToken(data.token);
-    return data;
-  } catch {
+export function readStoredSession(): StoredSession | null {
+  const data = safeReadStoredSession();
+  if (!data?.token || !data?.expiresAt) {
     return null;
   }
+  return data;
+}
+
+export function isStoredSessionExpired(session: StoredSession | null = readStoredSession()) {
+  return Boolean(session?.expiresAt && session.expiresAt <= Date.now());
+}
+
+export function restoreSession(): StoredSession | null {
+  const data = readStoredSession();
+  if (!data) {
+    return null;
+  }
+  if (isStoredSessionExpired(data)) {
+    clearAccessToken();
+    return null;
+  }
+  setAccessToken(data.token);
+  return data;
 }

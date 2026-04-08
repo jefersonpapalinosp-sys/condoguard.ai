@@ -4,6 +4,14 @@
     "peakLoad": "12.4 kWh as 14:45",
     "projectedCost": "R$ 4.820,00"
   },
+  "timeSeries": [
+    { "month": "Nov", "energia": 7800, "agua": 980, "gas": 380 },
+    { "month": "Dez", "energia": 8100, "agua": 1020, "gas": 410 },
+    { "month": "Jan", "energia": 8400, "agua": 1080, "gas": 395 },
+    { "month": "Fev", "energia": 8900, "agua": 1150, "gas": 420 },
+    { "month": "Mar", "energia": 8600, "agua": 1100, "gas": 405 },
+    { "month": "Abr", "energia": 9200, "agua": 1220, "gas": 445 }
+  ],
   "anomalies": [
     {
       "id": "c1",

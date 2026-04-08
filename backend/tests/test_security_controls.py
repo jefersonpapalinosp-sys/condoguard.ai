@@ -44,6 +44,19 @@ def test_security_headers_present_on_health():
     assert response.headers.get("referrer-policy") == "strict-origin-when-cross-origin"
 
 
+def test_trace_id_is_exposed_on_success_and_error_responses():
+    client = TestClient(app, raise_server_exceptions=False)
+
+    health = client.get("/api/health", headers={"X-Trace-Id": "test-trace-health"})
+    assert health.status_code == 200
+    assert health.headers.get("x-trace-id") == "test-trace-health"
+
+    protected = client.get("/api/invoices")
+    assert protected.status_code == 401
+    assert protected.headers.get("x-trace-id")
+    assert protected.json()["error"]["traceId"] == protected.headers.get("x-trace-id")
+
+
 def test_auth_login_disabled_by_external_provider_flag():
     client = TestClient(app)
     previous = settings.auth_password_login_enabled

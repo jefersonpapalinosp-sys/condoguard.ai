@@ -36,6 +36,21 @@ const healthToneMeta: Record<HealthTone, { label: string; className: string; hin
   },
 };
 
+const traceInvestigationSteps = [
+  {
+    title: 'Capture o trace da resposta',
+    description: 'Use o header X-Trace-Id ou o campo traceId retornado nos erros para identificar a requisicao exata.',
+  },
+  {
+    title: 'Cruze com auditoria e logs',
+    description: 'Consulte os logs estruturados e, quando aplicavel, o endpoint /api/security/audit filtrando o tenant autenticado.',
+  },
+  {
+    title: 'Valide o tipo de falha',
+    description: 'Correlacione o trace com codigos como INVALID_TOKEN, FORBIDDEN e eventos auditaveis de bloqueio cross-tenant.',
+  },
+];
+
 function formatMilliseconds(value: number) {
   const safeValue = Number.isFinite(value) ? value : 0;
   const precision = safeValue >= 100 ? 0 : safeValue >= 10 ? 1 : 2;
@@ -277,6 +292,56 @@ export default function Observability() {
           Atualizando metricas de observabilidade...
         </p>
       ) : null}
+
+      <section className="grid grid-cols-1 gap-4 xl:grid-cols-[1.35fr,0.95fr]">
+        <article className="rounded-2xl border border-outline-variant/30 bg-surface-container-low p-5">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-on-surface-variant">Troubleshooting</p>
+              <h3 className="mt-2 font-headline text-xl font-extrabold">Correlacao por trace ID</h3>
+            </div>
+            <span className="rounded-full bg-primary-fixed/35 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-on-primary-fixed-variant">
+              Contrato ativo
+            </span>
+          </div>
+
+          <p className="mt-3 text-sm leading-6 text-on-surface-variant">
+            Cada erro relevante da API retorna um <span className="font-semibold text-on-surface">traceId</span> no payload e espelha o mesmo valor no
+            header <span className="font-semibold text-on-surface">X-Trace-Id</span>. Isso permite acompanhar a mesma chamada entre cliente, backend e
+            trilha de auditoria.
+          </p>
+
+          <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-3">
+            {traceInvestigationSteps.map((step, index) => (
+              <article key={step.title} className="rounded-2xl border border-outline-variant/25 bg-surface-container-highest px-4 py-4">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-on-surface-variant">Passo {index + 1}</p>
+                <h4 className="mt-2 text-sm font-bold text-on-surface">{step.title}</h4>
+                <p className="mt-2 text-sm leading-6 text-on-surface-variant">{step.description}</p>
+              </article>
+            ))}
+          </div>
+        </article>
+
+        <article className="rounded-2xl border border-outline-variant/30 bg-surface-container-low p-5">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-on-surface-variant">Sinais operacionais</p>
+          <h3 className="mt-2 font-headline text-xl font-extrabold">Checklist rapido</h3>
+
+          <div className="mt-4 space-y-3">
+            <div className="rounded-2xl border border-outline-variant/20 bg-surface-container-highest px-4 py-3">
+              <p className="text-xs font-semibold uppercase tracking-widest text-on-surface-variant">Erro protegido</p>
+              <p className="mt-1 text-sm text-on-surface">Confirme se a resposta trouxe <span className="font-semibold">traceId</span> e header <span className="font-semibold">X-Trace-Id</span>.</p>
+            </div>
+            <div className="rounded-2xl border border-outline-variant/20 bg-surface-container-highest px-4 py-3">
+              <p className="text-xs font-semibold uppercase tracking-widest text-on-surface-variant">Tenant isolation</p>
+              <p className="mt-1 text-sm text-on-surface">Tentativas cross-tenant devem manter <span className="font-semibold">404</span> para o cliente e evento auditavel interno.</p>
+            </div>
+            <div className="rounded-2xl border border-outline-variant/20 bg-surface-container-highest px-4 py-3">
+              <p className="text-xs font-semibold uppercase tracking-widest text-on-surface-variant">Runbook</p>
+              <p className="mt-1 text-sm text-on-surface">Use o smoke da Sprint 11 para validar autenticacao, RBAC, tenancy e correlacao ponta a ponta.</p>
+            </div>
+          </div>
+        </article>
+      </section>
 
       <section className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-6">
         <article className="hover-lift rounded-2xl bg-primary-container p-4 text-white">

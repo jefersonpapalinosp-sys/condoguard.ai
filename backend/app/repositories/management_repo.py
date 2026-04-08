@@ -5,6 +5,7 @@ from typing import Any
 
 from app.core.config import settings
 from app.core.errors import create_oracle_unavailable_error
+from app.core.tenancy import ensure_condominium_id
 from app.db.oracle_client import run_oracle_execute, run_oracle_query
 from app.observability.metrics_store import record_api_fallback_metric
 from app.utils.seed_loader import read_seed_json
@@ -22,7 +23,8 @@ def _tenant_units_store(condominium_id: int) -> list[dict[str, Any]]:
     return _units_store[condominium_id]
 
 
-async def get_management_units_data(condominium_id: int = 1) -> dict:
+async def get_management_units_data(condominium_id: int) -> dict:
+    condominium_id = ensure_condominium_id(condominium_id)
     if settings.db_dialect == "oracle":
         try:
             rows = await run_oracle_query(
@@ -58,6 +60,7 @@ async def get_management_units_data(condominium_id: int = 1) -> dict:
 
 
 async def update_unit_status(condominium_id: int, unit_id: str, status: str) -> dict[str, Any] | None:
+    condominium_id = ensure_condominium_id(condominium_id)
     safe_status = str(status or "").strip().lower()
     if safe_status not in UNIT_STATUSES:
         safe_status = "vacant"

@@ -25,6 +25,7 @@ Aceite esperado:
 - `dialect=oracle`
 - `dbStatus=oracle_pool_ok`
 - `APP_ENV` coerente com o ambiente alvo
+- quando OIDC for exigido, `oidcReadiness.ready=true`
 
 ## 2) Gate S7-01 (homolog espelhando producao)
 

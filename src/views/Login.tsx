@@ -1,4 +1,4 @@
-import { FormEvent, useState } from 'react';
+import { FormEvent, useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../features/auth/context/AuthContext';
 import { loginWithPassword } from '../services/authService';
@@ -25,11 +25,20 @@ export default function Login() {
   const location = useLocation();
   const { login } = useAuth();
   const [error, setError] = useState<string | null>(null);
+  const [traceId, setTraceId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const routeState = location.state as { from?: string; reason?: string } | null;
+
+  useEffect(() => {
+    if (routeState?.reason === 'session_expired') {
+      setError('Sessao expirada. Faca login novamente.');
+    }
+  }, [routeState?.reason]);
 
   const onSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setError(null);
+    setTraceId(null);
     setLoading(true);
 
     const form = new FormData(event.currentTarget);
@@ -46,7 +55,12 @@ export default function Login() {
       navigate(nextPath, { replace: true });
     } catch (rawError) {
       if (rawError instanceof ApiError) {
-        if (rawError.status === 401) {
+        setTraceId(rawError.traceId ?? null);
+        if (rawError.code === 'AUTH_EXTERNAL_PROVIDER_REQUIRED') {
+          setError('Login por senha desabilitado. Use o provedor corporativo configurado.');
+        } else if (rawError.code === 'SESSION_EXPIRED') {
+          setError('Sessao expirada. Faca login novamente.');
+        } else if (rawError.status === 401) {
           setError('Credenciais invalidas.');
         } else if (rawError.status === 429) {
           setError('Muitas tentativas de login. Aguarde e tente novamente.');
@@ -183,7 +197,12 @@ export default function Login() {
               {loading ? 'Entrando...' : 'Entrar'}
               <span className="material-symbols-outlined text-lg">arrow_forward</span>
             </button>
-            {error ? <p className="mt-1 text-sm text-error">{error}</p> : null}
+            {error ? (
+              <div className="mt-1 space-y-1">
+                <p className="text-sm text-error">{error}</p>
+                {traceId ? <p className="text-[11px] uppercase tracking-[0.16em] text-on-surface-variant">Trace ID: {traceId}</p> : null}
+              </div>
+            ) : null}
           </form>
         </div>
       </section>

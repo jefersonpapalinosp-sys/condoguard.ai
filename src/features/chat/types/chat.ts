@@ -12,11 +12,20 @@ export type AgentName =
   | 'Agente de Gestao'
   | 'CondoGuard Copiloto';
 
-// Extends the base ChatMessage with new Sprint 2/3/4 fields (all optional for backwards compat)
+export type ActionResult = {
+  type: string;
+  status: 'success' | 'not_found' | 'missing_entity' | 'error' | 'unsupported';
+  entity: string | null;
+  message: string;
+  data?: Record<string, unknown>;
+};
+
+// Extends the base ChatMessage with new Sprint 2/3/4/10 fields (all optional for backwards compat)
 export type EnrichedChatMessage = ChatMessage & {
   agentName?: AgentName | string | null;
   ragSources?: string[];
   aiPowered?: boolean;
+  actionResult?: ActionResult | null;
 };
 
 export type AgentDomain = 'financial' | 'alerts' | 'consumption' | 'maintenance' | 'general';

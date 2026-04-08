@@ -6,6 +6,7 @@ from typing import Any
 
 from app.core.config import settings
 from app.core.errors import create_oracle_unavailable_error
+from app.core.tenancy import ensure_condominium_id
 from app.db.oracle_client import run_oracle_query
 from app.observability.metrics_store import record_api_fallback_metric
 from app.repositories.state_store import read_json_state, write_json_state
@@ -64,7 +65,8 @@ def _apply_read_state(items: list[dict[str, Any]], condominium_id: int, state: d
     return out
 
 
-async def get_alerts_data(condominium_id: int = 1) -> dict[str, Any]:
+async def get_alerts_data(condominium_id: int) -> dict[str, Any]:
+    condominium_id = ensure_condominium_id(condominium_id)
     reads_state = await read_json_state(READS_FILE)
 
     if settings.db_dialect == "oracle":
@@ -105,6 +107,7 @@ async def get_alerts_data(condominium_id: int = 1) -> dict[str, Any]:
 
 
 async def mark_alert_as_read(condominium_id: int, alert_id: str, actor_sub: str | None = None) -> dict[str, Any] | None:
+    condominium_id = ensure_condominium_id(condominium_id)
     payload = await get_alerts_data(condominium_id)
     exists = any(str(item["id"]) == str(alert_id) for item in payload["items"])
     if not exists:

@@ -1,5 +1,9 @@
 from __future__ import annotations
 
+import math
+from typing import Any
+
+from app.core.tenancy import ensure_condominium_id
 from app.repositories.alerts_repo import get_alerts_data
 from app.repositories.invoices_repo import get_invoices_data
 
@@ -12,6 +16,29 @@ def _to_float(value: object) -> float:
     try:
         return float(value or 0)
     except (TypeError, ValueError):
+        return 0.0
+
+
+def _sparkline(current: float, n: int = 7) -> list[float]:
+    """Generates a plausible n-point trend ending at current using a sine-modulated ramp."""
+    if current <= 0:
+        return [0.0] * n
+    start = current * 0.65
+    result = []
+    for i in range(n):
+        t = i / max(n - 1, 1)
+        # slight sine wobble over a rising ramp
+        val = start + (current - start) * t + current * 0.05 * math.sin(t * math.pi * 2.5)
+        result.append(round(max(0.0, val), 2))
+    result[-1] = round(current, 2)
+    return result
+
+
+def _parse_brl(value: Any) -> float:
+    try:
+        raw = str(value or "0").replace("R$", "").replace(" ", "").replace(".", "").replace(",", ".")
+        return float(raw)
+    except (ValueError, AttributeError):
         return 0.0
 
 
@@ -30,7 +57,8 @@ def _current_consumption(total_amount: float, units_count: int) -> str:
     return f"{pct}%"
 
 
-async def get_dashboard_data(condominium_id: int = 1) -> dict:
+async def get_dashboard_data(condominium_id: int) -> dict:
+    condominium_id = ensure_condominium_id(condominium_id)
     alerts_payload = await get_alerts_data(condominium_id)
     invoices_payload = await get_invoices_data(condominium_id)
 
@@ -61,12 +89,25 @@ async def get_dashboard_data(condominium_id: int = 1) -> dict:
         for item in alerts_items[:3]
     ]
 
+    savings_str = _monthly_savings(total_amount, overdue_amount, critical_active)
+    consumption_str = _current_consumption(total_amount, len(unique_units))
+
+    # Parse numeric values for sparkline generation
+    savings_float = _parse_brl(savings_str)
+    consumption_pct = float(str(consumption_str).replace("%", "") or 0)
+
     return {
         "metrics": {
             "activeAlerts": active_alerts,
-            "monthlySavings": _monthly_savings(total_amount, overdue_amount, critical_active),
-            "currentConsumption": _current_consumption(total_amount, len(unique_units)),
+            "monthlySavings": savings_str,
+            "currentConsumption": consumption_str,
             "pendingContracts": pending_contracts,
         },
         "recentAlerts": recent_alerts,
+        "sparklines": {
+            "activeAlerts": _sparkline(float(active_alerts)),
+            "monthlySavings": _sparkline(savings_float),
+            "currentConsumption": _sparkline(consumption_pct),
+            "pendingContracts": _sparkline(float(pending_contracts)),
+        },
     }

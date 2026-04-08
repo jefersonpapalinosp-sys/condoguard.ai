@@ -43,12 +43,40 @@ describe('http.requestJson', () => {
   });
 
   it('emits unauthorized event on 401 response', async () => {
-    vi.spyOn(globalThis, 'fetch').mockResolvedValue({ ok: false, status: 401 } as Response);
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue({
+      ok: false,
+      status: 401,
+      headers: new Headers({ 'x-trace-id': 'trace-401' }),
+      json: async () => ({ error: { code: 'INVALID_TOKEN', message: 'Token invalido.', traceId: 'trace-401' } }),
+    } as unknown as Response);
     const { requestJson } = await import('../../../src/services/http');
     const { notifyUnauthorized } = await import('../../../src/services/authEvents');
 
     await expect(requestJson('/api/protected')).rejects.toMatchObject({ status: 401 });
-    expect(notifyUnauthorized).toHaveBeenCalledTimes(1);
+    expect(notifyUnauthorized).toHaveBeenCalledWith(
+      expect.objectContaining({
+        status: 401,
+        code: 'INVALID_TOKEN',
+        traceId: 'trace-401',
+      }),
+    );
+  });
+
+  it('surfaces trace id and code on API errors', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue({
+      ok: false,
+      status: 403,
+      headers: new Headers({ 'x-trace-id': 'trace-403' }),
+      json: async () => ({ error: { code: 'FORBIDDEN', message: 'Sem permissao.', traceId: 'trace-403' } }),
+    } as unknown as Response);
+    const { requestJson } = await import('../../../src/services/http');
+
+    await expect(requestJson('/api/forbidden')).rejects.toMatchObject({
+      status: 403,
+      code: 'FORBIDDEN',
+      traceId: 'trace-403',
+      message: 'Sem permissao.',
+    });
   });
 
   it('throws a timeout error when request hangs', async () => {

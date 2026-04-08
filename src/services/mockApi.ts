@@ -13,9 +13,17 @@ export type DashboardAlert = {
   level: 'critical' | 'warning' | 'info';
 };
 
+export type DashboardSparklines = {
+  activeAlerts: number[];
+  monthlySavings: number[];
+  currentConsumption: number[];
+  pendingContracts: number[];
+};
+
 export type DashboardData = {
   metrics: DashboardMetrics;
   recentAlerts: DashboardAlert[];
+  sparklines?: DashboardSparklines;
 };
 
 export type AlertsData = {
@@ -33,6 +41,13 @@ export type AlertsData = {
   }>;
 };
 
+export type ConsumptionTimePoint = {
+  month: string;
+  energia: number;
+  agua: number;
+  gas: number;
+};
+
 export type ConsumptionData = {
   kpis: {
     monitoredUnits: number;
@@ -46,6 +61,7 @@ export type ConsumptionData = {
     severity: 'critical' | 'warning' | 'info';
     description: string;
   }>;
+  timeSeries?: ConsumptionTimePoint[];
 };
 
 export type ContractItem = {
@@ -154,6 +170,12 @@ export async function getDashboardData(): Promise<DashboardData> {
       currentConsumption: '85%',
       pendingContracts: 1,
     },
+    sparklines: {
+      activeAlerts: [5, 4, 7, 6, 4, 3, 2],
+      monthlySavings: [800, 950, 1050, 1100, 1200, 1180, 1250],
+      currentConsumption: [72, 75, 78, 82, 80, 84, 85],
+      pendingContracts: [3, 2, 3, 4, 3, 2, 1],
+    },
     recentAlerts: [
       {
         id: '1',
@@ -216,6 +238,14 @@ export async function getConsumptionData(): Promise<ConsumptionData> {
       peakLoad: '12.4 kWh as 14:45',
       projectedCost: 'R$ 4.820,00',
     },
+    timeSeries: [
+      { month: 'Nov', energia: 7800, agua: 980, gas: 380 },
+      { month: 'Dez', energia: 8100, agua: 1020, gas: 410 },
+      { month: 'Jan', energia: 8400, agua: 1080, gas: 395 },
+      { month: 'Fev', energia: 8900, agua: 1150, gas: 420 },
+      { month: 'Mar', energia: 8600, agua: 1100, gas: 405 },
+      { month: 'Abr', energia: 9200, agua: 1220, gas: 445 },
+    ],
     anomalies: [
       {
         id: 'c1',

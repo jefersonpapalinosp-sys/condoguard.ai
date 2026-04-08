@@ -89,3 +89,5 @@ def test_dashboard_consumption_contracts_reports_endpoints():
     assert settings.status_code == 200
     settings_body = settings.json()
     assert 'platform' in settings_body and 'security' in settings_body and 'observability' in settings_body
+    assert 'oidcMissingConfig' in settings_body['platform']
+    assert 'oidcIssues' in settings_body['platform']

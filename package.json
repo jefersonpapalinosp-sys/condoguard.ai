@@ -13,6 +13,8 @@
     "api:start:mock": "node scripts/run-fastapi.mjs mock",
     "api:start:oracle": "node scripts/run-fastapi.mjs oracle",
     "db:migrate:flyway": "powershell -ExecutionPolicy Bypass -File scripts/db/flyway-migrate.ps1",
+    "db:data-quality:gate": "node scripts/db/data-quality-gate.mjs",
+    "db:data-quality:gate:warn": "node scripts/db/data-quality-gate.mjs --warn-only",
     "db:migrate:contracts:local": "py -3.12 scripts/db/apply_contracts_migrations.py",
     "db:migrate:cadastros:local": "py -3.12 scripts/db/apply_cadastros_migration.py",
     "db:smoke:sprint3": "powershell -ExecutionPolicy Bypass -File scripts/db/sprint3-cross-tenant-smoke.ps1",
@@ -38,7 +40,8 @@
     "test:e2e:install": "playwright install",
     "test:all": "npm run test:frontend && npm run test:py && npm run test:e2e",
     "test:py": "node scripts/run-python-module.mjs pytest -q backend/tests",
-    "env:validate": "node scripts/release/validate-env-profile.mjs --env-file .env.local",
+    "env:validate": "node scripts/release/validate-env-profile.mjs --config-file .env.local",
+    "env:validate:s11:oidc": "node scripts/release/validate-env-profile.mjs --require-oidc",
     "release:s7:hml-smoke": "powershell -ExecutionPolicy Bypass -File scripts/release/sprint7-hml-go-live-smoke.ps1",
     "release:s7:rollback-drill": "powershell -ExecutionPolicy Bypass -File scripts/release/sprint7-rollback-drill.ps1"
   },
@@ -52,6 +55,7 @@
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-router-dom": "^7.9.4",
+    "recharts": "^3.8.1",
     "vite": "^6.2.0"
   },
   "devDependencies": {

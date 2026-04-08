@@ -12,3 +12,7 @@ def test_health():
     body = resp.json()
     assert body['ok'] is True
     assert body['service'] == 'condoguard-api'
+    assert 'oidcReadiness' in body
+    assert 'ready' in body['oidcReadiness']
+    assert 'missingConfig' in body['oidcReadiness']
+    assert 'issues' in body['oidcReadiness']

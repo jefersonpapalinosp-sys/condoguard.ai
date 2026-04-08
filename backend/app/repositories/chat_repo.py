@@ -11,6 +11,7 @@ import logging
 
 from app.core.config import settings
 from app.core.errors import create_oracle_unavailable_error
+from app.core.tenancy import ensure_condominium_id
 from app.db.oracle_client import run_oracle_query
 from app.observability.metrics_store import record_api_fallback_metric
 from app.repositories.chat_intents_repo import get_chat_intent_catalog, list_intent_suggestions
@@ -21,7 +22,8 @@ from app.ai.graph import get_agent_graph
 _log = logging.getLogger(__name__)
 
 
-async def get_chat_bootstrap(condominium_id: int = 1) -> dict:
+async def get_chat_bootstrap(condominium_id: int) -> dict:
+    condominium_id = ensure_condominium_id(condominium_id)
     catalog = get_chat_intent_catalog()
     ai_note = " Gemini AI ativo." if settings.gemini_api_key else ""
 
@@ -76,9 +78,10 @@ async def get_chat_bootstrap(condominium_id: int = 1) -> dict:
 
 async def ask_chat(
     message: str,
-    condominium_id: int = 1,
+    condominium_id: int,
     session_id: str | None = None,
 ) -> dict:
+    condominium_id = ensure_condominium_id(condominium_id)
     memory = get_memory(session_id)
     history = memory.messages
 

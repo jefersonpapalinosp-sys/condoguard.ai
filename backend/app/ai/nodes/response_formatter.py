@@ -55,5 +55,7 @@ async def response_formatter_node(state: AgentState) -> dict:
             # New optional fields (Sprint 2+) — not breaking for existing clients
             "agentName": agent_name,
             "ragSources": format_rag_sources(rag_docs),
+            # Sprint 10: action tool result (None for non-transactional messages)
+            "actionResult": state.get("action_result"),
         }
     }

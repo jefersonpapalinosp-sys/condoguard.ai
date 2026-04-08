@@ -15,14 +15,21 @@
 
 ## 3) DDL e views
 
-- [ ] Executar `database/sql/oracle/001_core_schema_oracle.sql`.
-- [ ] Executar `database/sql/oracle/002_marts_views_oracle.sql`.
-- [ ] Validar objetos criados e indices ativos.
+- [ ] Executar `npm run db:migrate:flyway` com `ORACLE_*` apontando para o ambiente alvo.
+- [ ] Confirmar `flyway_schema_history` com `V001 -> V011`.
+- [ ] Validar objetos criados, constraints e indices ativos.
+- [ ] Validar views `MART` consumidas pela API:
+  - `mart.vw_management_units`
+  - `mart.vw_financial_invoices`
+  - `mart.vw_alerts_operational`
+  - `mart.vw_contracts`
 
 ## 4) Qualidade de dados
 
-- [ ] Executar `database/sql/oracle/003_data_quality_tests_oracle.sql`.
-- [ ] Corrigir qualquer linha retornada antes do go-live.
+- [ ] Garantir relatorio versionado em `database/reports/data_quality_report.json`.
+- [ ] Executar `npm run db:data-quality:gate`.
+- [ ] Se necessario, usar `npm run db:data-quality:gate:warn` apenas para diagnostico.
+- [ ] Corrigir qualquer inconsistencia bloqueante antes do go-live.
 - [ ] Revisar duplicidades/orfaos com o time de dados.
 
 ## 5) API backend
@@ -43,3 +50,4 @@
 - [ ] Smoke test endpoints: `/api/invoices`, `/api/management/units`, `/api/alerts`, `/api/chat/bootstrap`.
 - [ ] Frontend validado com badge `Fonte: API real`.
 - [ ] Plano de rollback definido (retorno para `DB_DIALECT=mock`).
+- [ ] Evidencia de Flyway + data quality anexada ao pacote de liberacao.

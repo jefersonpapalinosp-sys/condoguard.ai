@@ -4,12 +4,16 @@ import process from 'node:process';
 import dotenv from 'dotenv';
 
 function parseArgs(argv) {
-  const args = { envFile: '.env.local' };
+  const args = { envFile: '.env.local', requireOidc: false };
   for (let i = 0; i < argv.length; i += 1) {
     const token = argv[i];
-    if (token === '--env-file' && argv[i + 1]) {
+    if (token === '--config-file' && argv[i + 1]) {
       args.envFile = argv[i + 1];
       i += 1;
+      continue;
+    }
+    if (token === '--require-oidc') {
+      args.requireOidc = true;
     }
   }
   return args;
@@ -27,6 +31,49 @@ function fail(errors, message) {
   errors.push(message);
 }
 
+function parseOidcAlgs() {
+  return getEnv('OIDC_ALLOWED_ALGS', 'RS256')
+    .split(',')
+    .map((item) => item.trim().toUpperCase())
+    .filter(Boolean);
+}
+
+function validateOidc(errors, envName, requireOidc) {
+  const provider = getEnv('AUTH_PROVIDER', 'local_jwt').toLowerCase();
+  const usingOidc = requireOidc || provider === 'oidc_jwks';
+
+  if (requireOidc && provider !== 'oidc_jwks') {
+    const suffix = envName === 'prod' ? '.' : ' quando --require-oidc.';
+    fail(errors, `Em ${envName}, AUTH_PROVIDER deve ser oidc_jwks${suffix}`);
+  }
+
+  if (!usingOidc) {
+    return;
+  }
+
+  if (asBool('AUTH_PASSWORD_LOGIN_ENABLED', true)) {
+    fail(errors, `Em ${envName}, AUTH_PASSWORD_LOGIN_ENABLED deve ser false quando OIDC real estiver ativo.`);
+  }
+  if (asBool('ENABLE_DEMO_AUTH', false)) {
+    fail(errors, `Em ${envName}, ENABLE_DEMO_AUTH deve ser false quando OIDC real estiver ativo.`);
+  }
+  if (!getEnv('OIDC_ISSUER') || !getEnv('OIDC_AUDIENCE') || !getEnv('OIDC_JWKS_URL')) {
+    fail(errors, `Em ${envName}, OIDC_ISSUER/OIDC_AUDIENCE/OIDC_JWKS_URL devem estar preenchidos.`);
+  }
+  if (!getEnv('OIDC_ROLE_CLAIM') || !getEnv('OIDC_TENANT_CLAIM')) {
+    fail(errors, `Em ${envName}, OIDC_ROLE_CLAIM e OIDC_TENANT_CLAIM devem estar preenchidos.`);
+  }
+
+  const algs = parseOidcAlgs();
+  if (algs.length === 0) {
+    fail(errors, `Em ${envName}, OIDC_ALLOWED_ALGS deve conter ao menos um algoritmo.`);
+    return;
+  }
+  if (algs.some((alg) => !/^RS(256|384|512)$/.test(alg))) {
+    fail(errors, `Em ${envName}, OIDC_ALLOWED_ALGS deve usar apenas RS256, RS384 ou RS512.`);
+  }
+}
+
 function validateCommon(errors) {
   const cors = getEnv('CORS_ALLOWED_ORIGINS');
   if (!cors || cors.includes('*')) {
@@ -41,13 +88,14 @@ function validateDev(errors) {
   }
 }
 
-function validateHml(errors) {
+function validateHml(errors, requireOidc) {
   if (getEnv('DB_DIALECT').toLowerCase() !== 'oracle') {
     fail(errors, 'Em hml, DB_DIALECT deve ser oracle.');
   }
   if (asBool('ALLOW_ORACLE_SEED_FALLBACK', true)) {
     fail(errors, 'Em hml, ALLOW_ORACLE_SEED_FALLBACK deve ser false.');
   }
+  validateOidc(errors, 'hml', requireOidc);
 }
 
 function validateProd(errors) {
@@ -60,20 +108,28 @@ function validateProd(errors) {
   if (asBool('ALLOW_ORACLE_SEED_FALLBACK', true)) {
     fail(errors, 'Em prod, ALLOW_ORACLE_SEED_FALLBACK deve ser false.');
   }
-  if (getEnv('AUTH_PROVIDER').toLowerCase() !== 'oidc_jwks') {
-    fail(errors, 'Em prod, AUTH_PROVIDER deve ser oidc_jwks.');
+  validateOidc(errors, 'prod', true);
+}
+
+function resolveEnvFile(envFile) {
+  const candidates = [envFile];
+  if (envFile === '.env.local') {
+    candidates.push('.env');
   }
-  if (asBool('AUTH_PASSWORD_LOGIN_ENABLED', true)) {
-    fail(errors, 'Em prod, AUTH_PASSWORD_LOGIN_ENABLED deve ser false.');
+
+  for (const candidate of candidates) {
+    const absolute = path.resolve(process.cwd(), candidate);
+    if (fs.existsSync(absolute)) {
+      return { absoluteEnvFile: absolute, resolvedEnvFile: candidate };
+    }
   }
-  if (!getEnv('OIDC_ISSUER') || !getEnv('OIDC_AUDIENCE') || !getEnv('OIDC_JWKS_URL')) {
-    fail(errors, 'Em prod, OIDC_ISSUER/OIDC_AUDIENCE/OIDC_JWKS_URL devem estar preenchidos.');
-  }
+
+  return { absoluteEnvFile: path.resolve(process.cwd(), envFile), resolvedEnvFile: envFile };
 }
 
 function main() {
-  const { envFile } = parseArgs(process.argv.slice(2));
-  const absoluteEnvFile = path.resolve(process.cwd(), envFile);
+  const { envFile, requireOidc } = parseArgs(process.argv.slice(2));
+  const { absoluteEnvFile, resolvedEnvFile } = resolveEnvFile(envFile);
 
   if (!fs.existsSync(absoluteEnvFile)) {
     console.error(`[env:validate] arquivo nao encontrado: ${absoluteEnvFile}`);
@@ -86,8 +142,11 @@ function main() {
 
   validateCommon(errors);
   if (appEnv === 'dev') validateDev(errors);
-  if (appEnv === 'hml') validateHml(errors);
+  if (appEnv === 'hml') validateHml(errors, requireOidc);
   if (appEnv === 'prod') validateProd(errors);
+  if (appEnv === 'dev' && requireOidc) {
+    validateOidc(errors, 'dev', true);
+  }
   if (!['dev', 'hml', 'prod'].includes(appEnv)) {
     fail(errors, `APP_ENV invalido (${appEnv}). Use dev, hml ou prod.`);
   }
@@ -104,7 +163,11 @@ function main() {
     process.exit(1);
   }
 
-  console.log(`[env:validate] perfil ${appEnv} OK (${absoluteEnvFile})`);
+  const suffix = requireOidc ? ' | modo=require-oidc' : '';
+  console.log(`[env:validate] perfil ${appEnv} OK (${absoluteEnvFile})${suffix}`);
+  if (resolvedEnvFile !== envFile) {
+    console.log(`[env:validate] usando fallback de arquivo: ${resolvedEnvFile}`);
+  }
 }
 
 main();

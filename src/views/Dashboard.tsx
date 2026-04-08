@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { useLocation } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
+import { LineChart, Line, ResponsiveContainer } from 'recharts';
 import { fetchDashboardData } from '../services/dashboardService';
-import type { DashboardData } from '../services/mockApi';
+import type { DashboardData, DashboardSparklines } from '../services/mockApi';
 import { DataSourceBadge } from '../shared/ui/DataSourceBadge';
 import { LoadingState } from '../shared/ui/states/LoadingState';
 import { ErrorState } from '../shared/ui/states/ErrorState';
@@ -25,6 +25,27 @@ const levelLabel: Record<'critical' | 'warning' | 'info', string> = {
   warning: 'Atencao',
   info: 'Informativo',
 };
+
+type SparklineKey = keyof DashboardSparklines;
+
+function Sparkline({ values, color = '#4AE176' }: { values: number[]; color?: string }) {
+  if (!values || values.length < 2) return null;
+  const data = values.map((v) => ({ v }));
+  return (
+    <ResponsiveContainer width="100%" height={40}>
+      <LineChart data={data} margin={{ top: 2, right: 0, left: 0, bottom: 2 }}>
+        <Line
+          type="monotone"
+          dataKey="v"
+          stroke={color}
+          strokeWidth={1.5}
+          dot={false}
+          isAnimationActive={false}
+        />
+      </LineChart>
+    </ResponsiveContainer>
+  );
+}
 
 export default function Dashboard() {
   const location = useLocation();
@@ -80,13 +101,23 @@ export default function Dashboard() {
     { to: '/chat', label: 'Abrir copiloto', icon: 'forum' },
   ];
 
-  const metricCards = [
+  const metricCards: Array<{
+    id: string;
+    label: string;
+    value: string | number;
+    icon: string;
+    hint: string;
+    sparklineKey: SparklineKey;
+    sparkColor: string;
+  }> = [
     {
       id: 'active-alerts',
       label: 'Alertas ativos',
       value: data.metrics.activeAlerts,
       icon: 'notifications_active',
       hint: 'Requer atencao imediata',
+      sparklineKey: 'activeAlerts',
+      sparkColor: '#f87171',
     },
     {
       id: 'savings',
@@ -94,6 +125,8 @@ export default function Dashboard() {
       value: data.metrics.monthlySavings,
       icon: 'savings',
       hint: 'Comparativo com media historica',
+      sparklineKey: 'monthlySavings',
+      sparkColor: '#4AE176',
     },
     {
       id: 'consumption',
@@ -101,6 +134,8 @@ export default function Dashboard() {
       value: data.metrics.currentConsumption,
       icon: 'bolt',
       hint: 'Atualizado em tempo real',
+      sparklineKey: 'currentConsumption',
+      sparkColor: '#38bdf8',
     },
     {
       id: 'contracts',
@@ -108,6 +143,8 @@ export default function Dashboard() {
       value: data.metrics.pendingContracts,
       icon: 'description',
       hint: 'Acompanhamento administrativo',
+      sparklineKey: 'pendingContracts',
+      sparkColor: '#fb923c',
     },
   ];
 
@@ -150,20 +187,28 @@ export default function Dashboard() {
       ) : null}
 
       <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {metricCards.map((card) => (
-          <article key={card.id} className="rounded-2xl border border-outline-variant/35 bg-surface-container-highest p-5">
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <p className="text-[11px] uppercase tracking-[0.16em] text-on-surface-variant">{card.label}</p>
-                <h4 className="mt-2 text-2xl font-headline font-extrabold tracking-tight md:text-3xl">{card.value}</h4>
+        {metricCards.map((card) => {
+          const sparkValues = data.sparklines?.[card.sparklineKey];
+          return (
+            <article key={card.id} className="rounded-2xl border border-outline-variant/35 bg-surface-container-highest p-5">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-[11px] uppercase tracking-[0.16em] text-on-surface-variant">{card.label}</p>
+                  <h4 className="mt-2 text-2xl font-headline font-extrabold tracking-tight md:text-3xl">{card.value}</h4>
+                </div>
+                <span className="material-symbols-outlined rounded-xl bg-surface-container-low px-2 py-2 text-on-surface-variant shrink-0">
+                  {card.icon}
+                </span>
               </div>
-              <span className="material-symbols-outlined rounded-xl bg-surface-container-low px-2 py-2 text-on-surface-variant">
-                {card.icon}
-              </span>
-            </div>
-            <p className="mt-3 text-xs text-on-surface-variant">{card.hint}</p>
-          </article>
-        ))}
+              {sparkValues && (
+                <div className="mt-3 -mx-1">
+                  <Sparkline values={sparkValues} color={card.sparkColor} />
+                </div>
+              )}
+              <p className="mt-1 text-xs text-on-surface-variant">{card.hint}</p>
+            </article>
+          );
+        })}
       </section>
 
       <section className="rounded-2xl border border-outline-variant/30 bg-surface-container-low p-4 md:p-6">

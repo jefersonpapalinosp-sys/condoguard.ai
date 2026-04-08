@@ -29,6 +29,7 @@ def log_security_event(event: str, request: Request | None, details: dict[str, A
     payload: dict[str, Any] = {
         "ts": now_iso(),
         "event": event,
+        "traceId": getattr(request.state, "trace_id", None) if request else None,
         "method": request.method if request else None,
         "path": request.url.path if request else None,
         "ip": request.client.host if request and request.client else None,

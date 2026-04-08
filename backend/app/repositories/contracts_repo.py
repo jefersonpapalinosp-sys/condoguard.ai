@@ -4,6 +4,7 @@ from datetime import date, datetime
 
 from app.core.config import settings
 from app.core.errors import create_oracle_unavailable_error
+from app.core.tenancy import ensure_condominium_id
 from app.db.oracle_client import run_oracle_query
 from app.observability.metrics_store import record_api_fallback_metric
 from app.utils.seed_loader import read_seed_json
@@ -132,7 +133,8 @@ def _build_contract_items_from_rows(rows: list[dict] | None) -> list[dict]:
     return items
 
 
-async def get_contracts_data(condominium_id: int = 1) -> dict:
+async def get_contracts_data(condominium_id: int) -> dict:
+    condominium_id = ensure_condominium_id(condominium_id)
     if settings.db_dialect == "oracle":
         try:
             contracts_items: list[dict] = []

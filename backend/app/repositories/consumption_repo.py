@@ -5,6 +5,7 @@ from typing import Any
 
 from app.core.config import settings
 from app.core.errors import create_oracle_unavailable_error
+from app.core.tenancy import ensure_condominium_id
 from app.db.oracle_client import run_oracle_query
 from app.integrations.sabesp.repository import list_imported_consumption_snapshot
 from app.observability.metrics_store import record_api_fallback_metric
@@ -121,8 +122,15 @@ def _merge_sabesp_anomalies(payload: dict[str, Any], imported_items: list[dict[s
     return {"kpis": kpis, "anomalies": merged_anomalies[:12]}
 
 
-async def get_consumption_data(condominium_id: int = 1) -> dict:
-    imported_items = await list_imported_consumption_snapshot(condominium_id)
+async def get_consumption_data(condominium_id: int) -> dict:
+    condominium_id = ensure_condominium_id(condominium_id)
+    try:
+        imported_items = await list_imported_consumption_snapshot(condominium_id)
+    except Exception:
+        # Sabesp is additive context for the UI; if this side channel fails we still
+        # keep the main consumption view available and observable.
+        record_api_fallback_metric("consumption", "sabesp_import_listing_fallback")
+        imported_items = []
 
     if settings.db_dialect == "oracle":
         try:
@@ -171,6 +179,7 @@ async def get_consumption_data(condominium_id: int = 1) -> dict:
                     }
                 )
 
+            seed = read_seed_json("consumption.json")
             base_payload = {
                 "kpis": {
                     "monitoredUnits": monitored_units,
@@ -178,6 +187,7 @@ async def get_consumption_data(condominium_id: int = 1) -> dict:
                     "projectedCost": _format_currency_br(total_amount),
                 },
                 "anomalies": anomalies,
+                "timeSeries": seed.get("timeSeries", []),
             }
             return _merge_sabesp_anomalies(base_payload, imported_items)
         except Exception as exc:
@@ -189,5 +199,6 @@ async def get_consumption_data(condominium_id: int = 1) -> dict:
     base_payload = {
         "kpis": seed.get("kpis", {}),
         "anomalies": seed.get("anomalies", []),
+        "timeSeries": seed.get("timeSeries", []),
     }
     return _merge_sabesp_anomalies(base_payload, imported_items)

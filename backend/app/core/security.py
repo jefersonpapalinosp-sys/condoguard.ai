@@ -9,6 +9,7 @@ from jose import JWTError, jwt
 
 from app.core.config import settings
 from app.core.errors import ApiRequestError
+from app.core.tenancy import ensure_condominium_id
 from app.utils.logging import log_security_event
 
 AUTH_ROLES = ["admin", "sindico", "morador"]
@@ -53,7 +54,7 @@ async def verify_access_token(token: str) -> dict[str, Any]:
             header = jwt.get_unverified_header(token)
             kid = header.get("kid")
             alg = header.get("alg", "RS256")
-            if not kid or alg not in {"RS256", "RS384", "RS512"}:
+            if not kid or alg not in set(settings.oidc_allowed_algorithms):
                 raise ApiRequestError(401, "INVALID_TOKEN", "Token invalido.")
 
             jwks = await _get_jwks(settings.oidc_jwks_url)
@@ -65,7 +66,7 @@ async def verify_access_token(token: str) -> dict[str, Any]:
             payload = jwt.decode(
                 token,
                 jwk,
-                algorithms=[alg],
+                algorithms=settings.oidc_allowed_algorithms,
                 audience=settings.oidc_audience,
                 issuer=settings.oidc_issuer,
             )
@@ -117,8 +118,10 @@ def require_roles(allowed_roles: list[str]):
 
 
 async def require_tenant_scope(request: Request, auth: dict[str, Any] = Depends(require_auth)) -> dict[str, Any]:
-    condominium_id = auth.get("condominiumId")
-    if not isinstance(condominium_id, int) or condominium_id <= 0:
+    try:
+        auth["condominiumId"] = ensure_condominium_id(auth.get("condominiumId"))
+    except ApiRequestError:
+        condominium_id = auth.get("condominiumId")
         log_security_event("auth_invalid_tenant_scope", request, {"condominiumId": condominium_id})
-        raise ApiRequestError(401, "INVALID_TENANT_SCOPE", "Escopo de condominio invalido no token.")
+        raise
     return auth

@@ -96,6 +96,13 @@ if ($health.Status -ne 200) {
 }
 
 $healthBody = $health.Body
+$oidcReadiness = $healthBody.oidcReadiness
+$oidcIssues = @()
+$oidcMissing = @()
+if ($oidcReadiness) {
+  if ($oidcReadiness.issues) { $oidcIssues = @($oidcReadiness.issues) }
+  if ($oidcReadiness.missingConfig) { $oidcMissing = @($oidcReadiness.missingConfig) }
+}
 if ($healthBody.dialect -ne "oracle") {
   throw "Gate S7-01 falhou: dialect esperado 'oracle', recebido '$($healthBody.dialect)'."
 }
@@ -110,13 +117,16 @@ $token = $AccessToken
 
 if ($RequireOidc) {
   if ($healthBody.authProvider -ne "oidc_jwks") {
-    throw "Gate S7-01 falhou: authProvider deve ser 'oidc_jwks' quando -RequireOidc."
+    $details = if ($oidcIssues.Count -gt 0) { [string]::Join(' | ', $oidcIssues) } else { "authProvider deve ser oidc_jwks." }
+    throw "Gate S7-01 falhou: $details"
   }
   if (-not $healthBody.oidcConfigured) {
-    throw "Gate S7-01 falhou: oidcConfigured deve ser true quando -RequireOidc."
+    $details = if ($oidcIssues.Count -gt 0) { [string]::Join(' | ', $oidcIssues) } else { "oidcConfigured deve ser true quando -RequireOidc." }
+    throw "Gate S7-01 falhou: $details"
   }
   if ($healthBody.authPasswordLoginEnabled) {
-    throw "Gate S7-01 falhou: authPasswordLoginEnabled deve ser false quando -RequireOidc."
+    $details = if ($oidcIssues.Count -gt 0) { [string]::Join(' | ', $oidcIssues) } else { "authPasswordLoginEnabled deve ser false quando -RequireOidc." }
+    throw "Gate S7-01 falhou: $details"
   }
   if (-not $token) {
     throw "Informe -AccessToken para validar fluxos protegidos no modo OIDC."
@@ -160,6 +170,7 @@ $lines += "Generated at: $generatedAt"
 $lines += "API: $ApiBaseUrl"
 $lines += "Gate mode: $(if ($RequireOidc) { "oidc_required" } else { "local_or_oidc" })"
 $lines += "Health: env=$($healthBody.env), dialect=$($healthBody.dialect), dbStatus=$($healthBody.dbStatus), authProvider=$($healthBody.authProvider), authPasswordLoginEnabled=$($healthBody.authPasswordLoginEnabled), oidcConfigured=$($healthBody.oidcConfigured)"
+$lines += "OIDC readiness: ready=$($oidcReadiness.ready), missing=$([string]::Join(', ', $oidcMissing)), issues=$([string]::Join(' | ', $oidcIssues))"
 $lines += ""
 $lines += "| Check | ExpectedStatus | ActualStatus | ExpectedCode | ActualCode | Result |"
 $lines += "|---|---:|---:|---|---|---|"

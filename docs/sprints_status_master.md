@@ -234,6 +234,105 @@ Artefatos da sprint:
 - `docs/sprint10_cadastros_por_tipo_technical_analysis.md`
 - `docs/sprint10_execution_board.md`
 
+## Sprint 11 - Identidade real, tenancy e contrato arquitetural
+
+Status geral: Em andamento
+
+Objetivo:
+- Fechar identidade real, sessao, isolamento por condominio e rastreabilidade ponta a ponta.
+
+Escopo planejado:
+- OIDC/JWKS real em homolog.
+- Sessao frontend/backend com expiracao previsivel.
+- Revisao de `condominio_id` em rotas, repositories e integracoes.
+- `trace_id` em request, resposta e logs.
+- Smoke de seguranca e tenancy como gate.
+
+Feito:
+- Base de sessao frontend reforcada com expiracao previsivel, limpeza de sessao e tratamento mais rico de `401`/`403`.
+- `trace_id` ponta a ponta implementado no backend e exposto em respostas de erro/logs estruturados.
+- Validacao centralizada de `condominiumId` criada e aplicada em repositories, servicos e integracoes ENEL/SABESP.
+- Cobertura de tenant isolation ampliada nas integracoes com testes de segregacao por `runId` e listagem.
+- Auditoria explicita de tentativa cross-tenant adicionada para detalhe de `runId` ENEL/SABESP, mantendo `404` para o cliente.
+- Tela de Observabilidade passou a orientar troubleshooting por `traceId` e contrato `X-Trace-Id`.
+- Script e runbook do smoke da Sprint 11 publicados para autenticacao, RBAC, tenancy e correlacao operacional.
+- Gate de readiness para OIDC em homolog publicado com `OIDC_ALLOWED_ALGS` validado no backend e no script `env:validate:s11:oidc`.
+- API e tela de Configuracoes passaram a expor `oidcMissingConfig` e `oidcIssues` para acelerar o fechamento de homolog.
+- Startup da API e smoke reports de OIDC/go-live passaram a registrar `oidcReadiness` com pendencias explicitas.
+- `.env` local foi normalizado para um perfil dev coerente e passou a ser o unico arquivo de ambiente mantido no projeto.
+- Suites locais validadas:
+  - `pytest backend/tests/test_api_parity_fastapi.py backend/tests/test_enel_integration_endpoints.py backend/tests/test_sabesp_integration_endpoints.py backend/tests/test_security_controls.py backend/tests/test_auth_and_invoices.py`: PASS
+  - `pytest backend/tests/test_dashboard_repo_metrics.py backend/tests/test_consumption_repo_oracle.py backend/tests/test_contracts_repo_oracle_priority.py backend/tests/test_cadastros_repo_oracle.py`: PASS
+  - `pytest backend/tests/test_enel_integration_endpoints.py backend/tests/test_sabesp_integration_endpoints.py`: PASS
+
+Pendente:
+- Disponibilizacao das configuracoes reais do provedor de identidade.
+- Validacao final dos fluxos administrativos com tenant real em homolog.
+
+Melhorias sugeridas:
+- Centralizar checklist unico de evidencias de seguranca para reaproveitar no gate de go-live.
+
+Artefatos da sprint:
+- `docs/sprint11_execution_board.md`
+- `docs/sprint11_issue_breakdown.md`
+- `docs/sprint11_cronograma_responsaveis.md`
+- `docs/sprint11_closing_checklist.md`
+- `docs/sprint11_security_tenancy_smoke_runbook.md`
+- `docs/sprint11_security_tenancy_smoke_report.md`
+
+## Sprint 12 - Dados, Flyway, MART e qualidade
+
+Status geral: Em andamento
+
+Objetivo:
+- oficializar a camada de dados como contrato do produto via Flyway, `MART` e gate de qualidade.
+
+Escopo planejado:
+- consolidar Flyway como trilha oficial de bootstrap;
+- documentar as views `MART` consumidas pelo backend;
+- publicar gate automatizado de data quality;
+- alinhar runbook, checklist Oracle e data dictionary.
+
+Feito:
+- board, quebra tecnica, cronograma e issues da Sprint 12 publicados.
+- runbook de Flyway atualizado para refletir `V001 -> V011`.
+- data dictionary ampliado com inventario Flyway, entidades `APP` e contrato `MART`.
+- checklist Oracle atualizado para priorizar `npm run db:migrate:flyway` e `npm run db:data-quality:gate`.
+- auditoria publicada confirmando que a dependencia viva esta em `database/flyway/sql`, nao em `database/sql/oracle`.
+- gap analysis das entidades core publicado com recomendacao de migracoes candidatas para Sprint 13.
+- migration `V011__sabesp_consumption_tables.sql` publicada para fechar o gap estrutural da persistencia SABESP em Oracle.
+- repository SABESP ajustado para gravar chaves de negocio/hash no Oracle e reler consumo importado pela rota de consumo.
+- script `scripts/db/data-quality-gate.mjs` publicado com comandos:
+  - `npm run db:data-quality:gate`
+  - `npm run db:data-quality:gate:warn`
+- cobertura unitaria inicial adicionada para o sumarizador do gate.
+- baseline atual do relatorio `database/reports/data_quality_report.json` passou a ser tratada como gate formal de qualidade.
+- workflow `CI Quality Gate` passou a publicar a baseline em modo `warn-only` como passo transicional.
+- checklist unico de fechamento da Sprint 12 publicado.
+
+Pendente:
+- decidir quando arquivar ou isolar definitivamente `database/sql` e `database/sql/oracle` como legado historico.
+- promover o gate de data quality de `warn-only` para modo bloqueante no CI e no checklist final da sprint.
+- limpar as inconsistencias hoje presentes no relatorio JSON versionado.
+
+Melhorias sugeridas:
+- gerar um relatorio consolidado de readiness de dados unindo migracao, `MART` e qualidade em um unico artefato.
+
+Artefatos da sprint:
+- `docs/sprint12_execution_board.md`
+- `docs/sprint12_issue_breakdown.md`
+- `docs/sprint12_cronograma_responsaveis.md`
+- `docs/sprint12_flyway_legacy_audit.md`
+- `docs/sprint12_data_quality_baseline.md`
+- `docs/sprint12_core_entities_gap_analysis.md`
+- `docs/sprint12_closing_checklist.md`
+- `database/flyway/sql/V011__sabesp_consumption_tables.sql`
+- `docs/github_issues/s12-01_flyway_consolidacao.md`
+- `docs/github_issues/s12-02_entidades_core.md`
+- `docs/github_issues/s12-03_mart_contrato_leitura.md`
+- `docs/github_issues/s12-04_data_quality_gate.md`
+- `docs/github_issues/s12-05_documentacao_operacional.md`
+
 ## Riscos transversais atuais
 
 1. Divergencia de status entre documentos de sprint (necessita fonte unica de verdade).

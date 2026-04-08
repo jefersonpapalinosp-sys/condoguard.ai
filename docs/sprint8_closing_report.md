@@ -12,7 +12,7 @@ Environment baseline: local Oracle smoke em `http://localhost:4000`
 | S8-02 Dashboard sem hardcode | PASS | KPIs dinamicos + teste `test_dashboard_repo_metrics.py` |
 | S8-03 Management sem dependencia sintetica | PASS | tratamento `ORACLE_UNAVAILABLE` + teste `test_management_indicators_when_cadastros_unavailable` |
 | S8-04 Settings funcional minima | PASS | endpoint `/api/settings` + pagina frontend integrada |
-| S8-05 Politica de fallback por ambiente | PASS | `fallbackPolicy.ts`, `.env.example`, cobertura de servicos |
+| S8-05 Politica de fallback por ambiente | PASS | `fallbackPolicy.ts`, `.env`, cobertura de servicos |
 | S8-06 Regressao/smoke/evidencias | PASS | lint + suites + smoke HTTP Oracle |
 
 ## Validation commands

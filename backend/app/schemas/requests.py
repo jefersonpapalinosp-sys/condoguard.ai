@@ -91,6 +91,12 @@ class ContractDocumentCreateBody(BaseModel):
     url: str | None = Field(default=None, max_length=500)
 
 
+class ThresholdUpdateBody(BaseModel):
+    latencyP95WarnMs: int | None = Field(default=None, ge=100, le=60000)
+    errorRateWarnPct: int | None = Field(default=None, ge=1, le=100)
+    fallbackWarnCount: int | None = Field(default=None, ge=0, le=1000)
+
+
 class InvoiceCreateBody(BaseModel):
     unit: str = Field(min_length=1, max_length=30)
     resident: str | None = Field(default=None, max_length=180)

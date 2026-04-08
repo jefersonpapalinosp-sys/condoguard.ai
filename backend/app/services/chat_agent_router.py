@@ -68,9 +68,19 @@ def route_chat_message(message: str) -> dict[str, Any]:
         entities["unit"] = entities["unit"].upper()
 
     action = "general_overview"
-    if _has_any(normalized, ["pagar fatura", "quitar fatura", "baixar fatura", "marcar fatura como paga", "marcar fatura paga"]):
+    # Transactional actions — also handle cases where entity ID sits between keywords
+    _inv_paid = (
+        _has_any(normalized, ["pagar fatura", "quitar fatura", "baixar fatura", "marcar fatura como paga", "marcar fatura paga"])
+        or ("fatura" in normalized and _has_any(normalized, ["como paga", "quitar", "baixar", "marcar paga"]))
+        or bool(re.search(r"marcar.{0,30}fatura.{0,30}pag", normalized))
+    )
+    _alert_read = (
+        _has_any(normalized, ["marcar alerta lido", "marcar alerta como lido", "resolver alerta", "fechar alerta"])
+        or bool(re.search(r"marcar.{0,30}alerta.{0,30}lido", normalized))
+    )
+    if _inv_paid:
         action = "invoice_mark_paid"
-    elif _has_any(normalized, ["marcar alerta lido", "marcar alerta como lido", "resolver alerta", "fechar alerta"]):
+    elif _alert_read:
         action = "alert_mark_read"
     elif _has_any(normalized, ["renovar contrato", "renovar o contrato", "renovacao do contrato", "renovacao contrato"]):
         action = "contract_renew"

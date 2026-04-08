@@ -38,9 +38,9 @@ from app.repositories.management_repo import get_management_units_data, update_u
 from app.repositories.dashboard_repo import get_dashboard_data
 from app.repositories.consumption_repo import get_consumption_data
 from app.repositories.contracts_repo import get_contracts_data
-from app.repositories.reports_repo import get_reports_data
-from app.repositories.settings_repo import get_settings_data
-from app.schemas.requests import CadastroCreateBody, CadastroStatusBody, CadastroUpdateBody, ChatFeedbackBody, ChatMessageBody, InvoiceCreateBody, InvoiceUpdateBody, LoginBody, UnitStatusBody
+from app.repositories.reports_repo import get_reports_data, reports_to_csv
+from app.repositories.settings_repo import get_settings_data, update_thresholds
+from app.schemas.requests import CadastroCreateBody, CadastroStatusBody, CadastroUpdateBody, ChatFeedbackBody, ChatMessageBody, InvoiceCreateBody, InvoiceUpdateBody, LoginBody, ThresholdUpdateBody, UnitStatusBody
 from app.services.chat_context_service import build_chat_context
 from app.services.observability_alerts import dispatch_observability_alerts
 from app.audit.security_audit import query_security_audit_events
@@ -146,6 +146,11 @@ async def health() -> dict[str, Any]:
         "authProvider": settings.auth_provider,
         "authPasswordLoginEnabled": bool(settings.auth_password_login_enabled),
         "oidcConfigured": bool(settings.oidc_configured),
+        "oidcReadiness": {
+            "ready": settings.oidc_ready,
+            "missingConfig": settings.oidc_missing_fields,
+            "issues": settings.oidc_readiness_issues,
+        },
         "dbStatus": db_status,
         "poolStatus": pool_status,
         "latencyMs": latency_ms,
@@ -169,14 +174,50 @@ async def contracts(auth: dict = Depends(require_tenant_scope), _role: dict = De
     return await get_contracts_data(auth["condominiumId"])
 
 
+@router.get("/reports/export.csv")
+async def export_reports_csv(
+    auth: dict = Depends(require_tenant_scope),
+    _role: dict = Depends(require_roles(AUTH_ROLES)),
+    type: str | None = Query(default=None),
+    from_date: str | None = Query(default=None, alias="from"),
+    to_date: str | None = Query(default=None, alias="to"),
+):
+    report_type = parse_enum(type, ["financeiro", "operacional", "contratos"], "type") or "financeiro"
+    report = await get_reports_data(auth["condominiumId"], report_type, from_date, to_date)
+    csv_data = reports_to_csv(report)
+    filename = f"relatorio-{report_type}-{int(datetime.now().timestamp())}.csv"
+    return PlainTextResponse(csv_data, media_type="text/csv", headers={"Content-Disposition": f'attachment; filename="{filename}"'})
+
+
 @router.get("/reports")
-async def reports(auth: dict = Depends(require_tenant_scope), _role: dict = Depends(require_roles(AUTH_ROLES))):
-    return await get_reports_data(auth["condominiumId"])
+async def reports(
+    auth: dict = Depends(require_tenant_scope),
+    _role: dict = Depends(require_roles(AUTH_ROLES)),
+    type: str | None = Query(default=None),
+    from_date: str | None = Query(default=None, alias="from"),
+    to_date: str | None = Query(default=None, alias="to"),
+):
+    report_type = parse_enum(type, ["financeiro", "operacional", "contratos"], "type") or "financeiro"
+    return await get_reports_data(auth["condominiumId"], report_type, from_date, to_date)
 
 
 @router.get("/settings")
 async def settings_snapshot(auth: dict = Depends(require_tenant_scope), _role: dict = Depends(require_roles(AUTH_ROLES))):
     return get_settings_data(auth["condominiumId"])
+
+
+@router.patch("/settings/thresholds")
+async def patch_settings_thresholds(
+    body: ThresholdUpdateBody,
+    request: Request,
+    auth: dict = Depends(require_tenant_scope),
+    _role: dict = Depends(require_roles(["admin"])),
+):
+    if not any([body.latencyP95WarnMs, body.errorRateWarnPct, body.fallbackWarnCount]):
+        raise ApiRequestError(400, "INVALID_BODY", "Ao menos um threshold deve ser informado.")
+    updated = update_thresholds(auth["condominiumId"], body.model_dump(exclude_none=True))
+    log_security_event("settings_thresholds_updated", request, {"thresholds": updated})
+    return {"thresholds": updated}
 
 
 @router.post("/auth/login")

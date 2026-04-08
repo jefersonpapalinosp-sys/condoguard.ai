@@ -29,6 +29,8 @@ class Settings(BaseSettings):
     @model_validator(mode="after")
     def _validate_secrets(self) -> "Settings":
         env = (self.app_env or self.node_env or "dev").lower()
+        if self.auth_provider not in {"local_jwt", "oidc_jwks"}:
+            raise ValueError("AUTH_PROVIDER invalido. Use local_jwt ou oidc_jwks.")
         if env != "dev" and self.jwt_secret in _UNSAFE_SECRETS:
             raise ValueError(
                 "JWT_SECRET nao pode usar o valor padrao em ambientes nao-dev. "
@@ -39,6 +41,28 @@ class Settings(BaseSettings):
                 "ENABLE_DEMO_AUTH nao pode ser True em ambientes nao-dev. "
                 "Defina ENABLE_DEMO_AUTH=false no ambiente de producao/homologacao."
             )
+        if self.auth_provider == "oidc_jwks":
+            missing = []
+            if not self.oidc_issuer.strip():
+                missing.append("OIDC_ISSUER")
+            if not self.oidc_audience.strip():
+                missing.append("OIDC_AUDIENCE")
+            if not self.oidc_jwks_url.strip():
+                missing.append("OIDC_JWKS_URL")
+            if not self.oidc_role_claim.strip():
+                missing.append("OIDC_ROLE_CLAIM")
+            if not self.oidc_tenant_claim.strip():
+                missing.append("OIDC_TENANT_CLAIM")
+            if not self.oidc_allowed_algorithms:
+                missing.append("OIDC_ALLOWED_ALGS")
+            if missing:
+                joined = ", ".join(missing)
+                raise ValueError(f"AUTH_PROVIDER=oidc_jwks exige configuracao valida de: {joined}.")
+            if env != "dev" and self.auth_password_login_enabled:
+                raise ValueError(
+                    "AUTH_PASSWORD_LOGIN_ENABLED nao pode ser True em ambientes nao-dev quando AUTH_PROVIDER=oidc_jwks. "
+                    "Defina AUTH_PASSWORD_LOGIN_ENABLED=false para homolog/producao."
+                )
         return self
     jwt_expires_seconds: int = Field(default=3600, alias="JWT_EXPIRES_SECONDS")
     jwt_expires_in: str = Field(default="1h", alias="JWT_EXPIRES_IN")
@@ -58,6 +82,7 @@ class Settings(BaseSettings):
     oidc_jwks_url: str = Field(default="", alias="OIDC_JWKS_URL")
     oidc_role_claim: str = Field(default="roles", alias="OIDC_ROLE_CLAIM")
     oidc_tenant_claim: str = Field(default="condominium_id", alias="OIDC_TENANT_CLAIM")
+    oidc_allowed_algs: str = Field(default="RS256", alias="OIDC_ALLOWED_ALGS")
 
     gemini_api_key: str = Field(default="", alias="GEMINI_API_KEY")
     gemini_model: str = Field(default="gemini-2.0-flash", alias="GEMINI_MODEL")
@@ -93,7 +118,53 @@ class Settings(BaseSettings):
 
     @property
     def oidc_configured(self) -> bool:
-        return bool(self.oidc_issuer and self.oidc_audience and self.oidc_jwks_url)
+        return bool(
+            self.oidc_issuer
+            and self.oidc_audience
+            and self.oidc_jwks_url
+            and self.oidc_role_claim.strip()
+            and self.oidc_tenant_claim.strip()
+            and self.oidc_allowed_algorithms
+        )
+
+    @property
+    def oidc_allowed_algorithms(self) -> list[str]:
+        raw_items = [item.strip().upper() for item in str(self.oidc_allowed_algs or "").split(",") if item.strip()]
+        valid = [item for item in raw_items if re.fullmatch(r"RS(256|384|512)", item)]
+        return list(dict.fromkeys(valid))
+
+    @property
+    def oidc_missing_fields(self) -> list[str]:
+        missing: list[str] = []
+        if not self.oidc_issuer.strip():
+            missing.append("OIDC_ISSUER")
+        if not self.oidc_audience.strip():
+            missing.append("OIDC_AUDIENCE")
+        if not self.oidc_jwks_url.strip():
+            missing.append("OIDC_JWKS_URL")
+        if not self.oidc_role_claim.strip():
+            missing.append("OIDC_ROLE_CLAIM")
+        if not self.oidc_tenant_claim.strip():
+            missing.append("OIDC_TENANT_CLAIM")
+        if not self.oidc_allowed_algorithms:
+            missing.append("OIDC_ALLOWED_ALGS")
+        return missing
+
+    @property
+    def oidc_readiness_issues(self) -> list[str]:
+        issues: list[str] = []
+        if self.auth_provider != "oidc_jwks":
+            issues.append("AUTH_PROVIDER deve ser oidc_jwks.")
+        if self.auth_password_login_enabled:
+            issues.append("AUTH_PASSWORD_LOGIN_ENABLED deve ser false para OIDC real.")
+        if self.enable_demo_auth:
+            issues.append("ENABLE_DEMO_AUTH deve ser false para OIDC real.")
+        issues.extend(f"{field} precisa ser configurado." for field in self.oidc_missing_fields)
+        return issues
+
+    @property
+    def oidc_ready(self) -> bool:
+        return self.auth_provider == "oidc_jwks" and not self.auth_password_login_enabled and not self.enable_demo_auth and not self.oidc_missing_fields
 
     @property
     def audit_log_abspath(self) -> Path:

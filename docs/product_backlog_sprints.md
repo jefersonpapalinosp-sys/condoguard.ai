@@ -12,6 +12,20 @@ Cadencia sugerida: sprints de 2 semanas
 - Sprint 5: 18 a 29 de maio de 2026
 - Sprint 6: 1 a 12 de junho de 2026
 - Sprint 7: 15 a 26 de junho de 2026
+- Sprint 8: 29 de junho a 10 de julho de 2026
+- Sprint 9: 13 a 24 de julho de 2026
+- Sprint 10: 27 de julho a 7 de agosto de 2026
+- Sprint 11: 10 a 21 de agosto de 2026
+- Sprint 12: 24 de agosto a 4 de setembro de 2026
+- Sprint 13: 7 a 18 de setembro de 2026
+- Sprint 14: 21 de setembro a 2 de outubro de 2026
+- Sprint 15: 5 a 16 de outubro de 2026
+- Sprint 16: 19 a 30 de outubro de 2026
+- Sprint 17: 2 a 13 de novembro de 2026
+- Sprint 18: 16 a 27 de novembro de 2026
+
+Expansao arquitetural apos a Sprint 10:
+- consultar `docs/planejamento_fases_sprints_11_18.md` para a visao por fases e novas sprints do sistema completo.
 
 ## Sprint 1 - Fundacao (concluida)
 
@@ -223,6 +237,46 @@ Criterio de aceite: unit + integration cobrindo navegacao entre abas e fluxos de
 6. `S10-06` Smoke e evidencias finais  
 Prioridade: P0 | Estimativa: 3 pts  
 Criterio de aceite: lint/test/test:py PASS e relatorio final de sprint publicado.
+
+## Sprint 11 - Identidade real, tenancy e contrato arquitetural
+
+Objetivo: fechar os gates de seguranca e isolamento que sustentam a operacao multi-condominio e os proximos releases.
+
+1. `S11-01` OIDC/JWKS real em homolog  
+Prioridade: P0 | Estimativa: 5 pts  
+Criterio de aceite: autenticacao validada com token real, `issuer`, `audience` e `JWKS` corretos.
+2. `S11-02` Sessao unificada frontend/backend  
+Prioridade: P0 | Estimativa: 3 pts  
+Criterio de aceite: expiracao, logout e tratamento de `401`/`403` previsiveis em toda a navegacao protegida.
+3. `S11-03` Tenant scope end-to-end por `condominio_id`  
+Prioridade: P0 | Estimativa: 5 pts  
+Criterio de aceite: endpoints, repositories e integracoes negam acesso cross-tenant e registram auditoria adequada.
+4. `S11-04` `trace_id` ponta a ponta  
+Prioridade: P1 | Estimativa: 3 pts  
+Criterio de aceite: request, resposta e logs estruturados expõem `trace_id` consistente para troubleshooting.
+5. `S11-05` Smoke de seguranca e tenancy  
+Prioridade: P0 | Estimativa: 3 pts  
+Criterio de aceite: suite de smoke documentada com PASS para autenticacao, RBAC, tenant isolation e rastreabilidade.
+
+## Sprint 12 - Dados, Flyway, MART e qualidade
+
+Objetivo: oficializar a camada de dados como contrato do produto, usando Flyway, `MART` e data quality como base operacional da plataforma.
+
+1. `S12-01` Consolidar migracoes em Flyway  
+Prioridade: P0 | Estimativa: 5 pts  
+Criterio de aceite: ambiente novo pode ser bootstrapado por `V001 -> V011` com runbook atualizado.
+2. `S12-02` Revisar entidades core para contratos, faturas, integracoes e auditoria  
+Prioridade: P1 | Estimativa: 3 pts  
+Criterio de aceite: entidades criticas e gaps estruturais mapeados para o backend e para a proxima sprint.
+3. `S12-03` Formalizar camada `MART` para modulos criticos  
+Prioridade: P0 | Estimativa: 5 pts  
+Criterio de aceite: views consumidas pela API documentadas como contrato de leitura.
+4. `S12-04` Implementar gate automatizado de data quality  
+Prioridade: P0 | Estimativa: 3 pts  
+Criterio de aceite: comando oficial retorna `PASS/FAIL` a partir do relatorio JSON versionado.
+5. `S12-05` Atualizar runbook, checklist Oracle e data dictionary  
+Prioridade: P0 | Estimativa: 3 pts  
+Criterio de aceite: documentacao operacional alinhada ao estado real da base.
 
 ## Definicao de pronto (DoD) para todas as sprints
 

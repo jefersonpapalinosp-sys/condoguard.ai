@@ -79,3 +79,38 @@ def test_get_consumption_data_uses_fallback_when_lob_read_fails(monkeypatch):
     assert payload["anomalies"][0]["title"] == "anomalia operacional"
     assert payload["anomalies"][0]["description"] == "Anomalia detectada automaticamente"
     assert payload["anomalies"][0]["severity"] == "warning"
+
+
+def test_get_consumption_data_keeps_main_payload_when_sabesp_enrichment_fails(monkeypatch):
+    monkeypatch.setattr(consumption_repo.settings, "db_dialect", "oracle", raising=False)
+    monkeypatch.setattr(consumption_repo.settings, "allow_oracle_seed_fallback", False, raising=False)
+
+    async def fake_run_oracle_query(query: str, params: dict):
+        q = " ".join(query.lower().split())
+        assert params["condominiumId"] == 1
+        if "from mart.vw_management_units" in q:
+            return [{"TOTAL": 3}]
+        if "from mart.vw_financial_invoices" in q:
+            return [{"TOTAL_AMOUNT": 660.0}]
+        if "from mart.vw_alerts_operational" in q:
+            return []
+        return []
+
+    async def fake_list_imported_consumption_snapshot(_condominium_id: int):
+        raise RuntimeError("sabesp enrichment unavailable")
+
+    metrics: list[tuple[str, str]] = []
+
+    def fake_record_api_fallback_metric(service: str, reason: str):
+        metrics.append((service, reason))
+
+    monkeypatch.setattr(consumption_repo, "run_oracle_query", fake_run_oracle_query)
+    monkeypatch.setattr(consumption_repo, "list_imported_consumption_snapshot", fake_list_imported_consumption_snapshot)
+    monkeypatch.setattr(consumption_repo, "record_api_fallback_metric", fake_record_api_fallback_metric)
+
+    payload = asyncio.run(consumption_repo.get_consumption_data(1))
+
+    assert payload["kpis"]["monitoredUnits"] == 3
+    assert payload["kpis"]["projectedCost"] == "R$ 660,00"
+    assert payload["anomalies"] == []
+    assert metrics == [("consumption", "sabesp_import_listing_fallback")]

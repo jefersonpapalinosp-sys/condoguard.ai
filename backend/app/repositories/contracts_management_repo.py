@@ -722,7 +722,14 @@ async def list_contract_documents_data(condominium_id: int, contract_id: str | N
     return {"items": documents}
 
 
-async def attach_contract_document_data(condominium_id: int, contract_id: str, payload: dict[str, Any], actor_sub: str | None = None) -> dict[str, Any] | None:
+async def attach_contract_document_data(
+    condominium_id: int,
+    contract_id: str,
+    payload: dict[str, Any],
+    actor_sub: str | None = None,
+    file_bytes: bytes | None = None,
+    original_filename: str | None = None,
+) -> dict[str, Any] | None:
     details = await get_contract_detail_data(condominium_id, contract_id)
     if not details:
         return None
@@ -737,14 +744,27 @@ async def attach_contract_document_data(condominium_id: int, contract_id: str, p
     status = str(payload.get("status") or "active").strip().lower()
     if status not in DOC_STATUSES:
         status = "active"
+    doc_id = f"doc-{uuid4().hex[:10]}"
+
+    # Persist file bytes to disk when provided
+    file_url = str(payload.get("url") or "")
+    if file_bytes is not None:
+        from pathlib import Path  # noqa: PLC0415
+        uploads_dir = Path(__file__).resolve().parents[3] / "backend" / "data" / "uploads"
+        uploads_dir.mkdir(parents=True, exist_ok=True)
+        safe_name = (original_filename or "documento").replace("/", "_").replace("..", "")
+        file_path = uploads_dir / f"{doc_id}_{safe_name}"
+        file_path.write_bytes(file_bytes)
+        file_url = f"/api/contracts/documentos/{doc_id}/file"
+
     document = {
-        "id": f"doc-{uuid4().hex[:10]}",
+        "id": doc_id,
         "name": str(payload.get("name") or "Documento"),
         "type": str(payload.get("type") or "geral"),
         "sizeKb": float(payload.get("sizeKb") or 0),
         "uploadedAt": _now_iso(),
         "status": status,
-        "url": str(payload.get("url") or ""),
+        "url": file_url,
         "uploadedBy": actor_sub or "system",
     }
     docs.insert(0, document)

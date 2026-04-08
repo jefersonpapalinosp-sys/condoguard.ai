@@ -6,6 +6,7 @@ from typing import Any
 
 from app.core.config import settings
 from app.core.errors import create_oracle_unavailable_error
+from app.core.tenancy import ensure_condominium_id
 from app.db.oracle_client import run_oracle_execute, run_oracle_query
 from app.observability.metrics_store import record_api_fallback_metric
 from app.utils.seed_loader import read_seed_json
@@ -99,7 +100,8 @@ def _tenant_store(condominium_id: int) -> list[dict[str, Any]]:
     return _store[condominium_id]
 
 
-async def list_cadastros(condominium_id: int = 1) -> dict[str, Any]:
+async def list_cadastros(condominium_id: int) -> dict[str, Any]:
+    condominium_id = ensure_condominium_id(condominium_id)
     if settings.db_dialect == "oracle":
         try:
             return {"items": await _list_cadastros_oracle(condominium_id)}
@@ -113,6 +115,7 @@ async def list_cadastros(condominium_id: int = 1) -> dict[str, Any]:
 
 
 async def create_cadastro(condominium_id: int, payload: dict[str, Any]) -> dict[str, Any]:
+    condominium_id = ensure_condominium_id(condominium_id)
     normalized_payload = _normalize(
         {
             "condominiumId": condominium_id,
@@ -171,6 +174,7 @@ async def create_cadastro(condominium_id: int, payload: dict[str, Any]) -> dict[
 
 
 async def update_cadastro_status(condominium_id: int, cadastro_id: str, status: str) -> dict[str, Any] | None:
+    condominium_id = ensure_condominium_id(condominium_id)
     safe_status = str(status or "").strip().lower()
     if safe_status not in CADASTRO_STATUSES:
         safe_status = "pending"
@@ -206,6 +210,7 @@ async def update_cadastro_status(condominium_id: int, cadastro_id: str, status: 
 
 
 async def update_cadastro(condominium_id: int, cadastro_id: str, payload: dict[str, Any]) -> dict[str, Any] | None:
+    condominium_id = ensure_condominium_id(condominium_id)
     if settings.db_dialect == "oracle":
         try:
             affected = await run_oracle_execute(

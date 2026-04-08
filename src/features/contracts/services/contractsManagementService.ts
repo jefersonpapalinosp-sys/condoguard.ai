@@ -1,6 +1,8 @@
 import { notifyApiFallback, setModuleDataSource } from '../../../services/apiStatus';
 import { isMockFallbackEnabled } from '../../../services/fallbackPolicy';
-import { requestJson } from '../../../services/http';
+import { ApiError, requestJson } from '../../../services/http';
+import { getAccessToken } from '../../../services/authTokenStore';
+import { notifyUnauthorized } from '../../../services/authEvents';
 import type {
   ContractDetailResponse,
   ContractDocument,
@@ -574,6 +576,35 @@ export async function fetchContractDocuments(contractId?: string): Promise<Contr
       items: contractId ? fallbackDocuments.filter((item) => item.contractId === contractId) : fallbackDocuments,
     };
   }
+}
+
+export async function uploadContractDocumentWithFile(contractId: string, file: File, type: string): Promise<ContractDocument> {
+  const base = import.meta.env.VITE_API_BASE_URL?.trim();
+  if (!base) throw new ApiError('VITE_API_BASE_URL nao configurada.');
+
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('type', type);
+
+  const url = new URL(`/api/contracts/documentos/${encodeURIComponent(contractId)}/upload`, base).toString();
+  const token = getAccessToken();
+
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+    body: formData,
+  });
+
+  if (!response.ok) {
+    if (response.status === 401) { notifyUnauthorized(); throw new ApiError('HTTP 401', 401); }
+    if (response.status === 403) throw new ApiError('Acesso negado.', 403);
+    if (response.status === 404) throw new ApiError('Contrato nao encontrado.', 404);
+    throw new ApiError(`Falha no upload (${response.status}).`, response.status);
+  }
+
+  const data = await response.json() as { item: ContractDocument };
+  markApiSource();
+  return data.item;
 }
 
 export async function uploadContractDocument(contractId: string, payload: ContractDocumentCreatePayload): Promise<ContractDocument> {
