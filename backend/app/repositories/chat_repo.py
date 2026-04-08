@@ -25,7 +25,7 @@ _log = logging.getLogger(__name__)
 async def get_chat_bootstrap(condominium_id: int) -> dict:
     condominium_id = ensure_condominium_id(condominium_id)
     catalog = get_chat_intent_catalog()
-    ai_note = " Gemini AI ativo." if settings.gemini_api_key else ""
+    ai_badge = "Gemini AI" if settings.gemini_api_key else "Modo regras"
 
     if settings.db_dialect == "oracle":
         try:
@@ -52,9 +52,9 @@ async def get_chat_bootstrap(condominium_id: int) -> dict:
             overdue_count = int((overdue_rows or [{}])[0].get("TOTAL") or 0)
             critical_count = int((alerts_rows or [{}])[0].get("TOTAL") or 0)
             welcome = (
-                f"Ola! Sou o CondoGuard Copiloto.{ai_note} "
-                f"Contexto atual: {overdue_count} faturas vencidas e {critical_count} alertas criticos. "
-                "Como posso ajudar?"
+                f"Ola! Sou o **CondoGuard Copiloto** ({ai_badge}). "
+                f"Situacao atual: **{overdue_count} faturas vencidas** e **{critical_count} alertas criticos**. "
+                "Pergunte sobre faturas, alertas, consumo, contratos ou gestao de unidades."
             )
             return {
                 "welcomeMessage": welcome,
@@ -67,7 +67,11 @@ async def get_chat_bootstrap(condominium_id: int) -> dict:
             record_api_fallback_metric("chat", "oracle_fallback_seed")
 
     seed = read_seed_json("chat_bootstrap.json")
-    welcome = seed.get("welcomeMessage", "Ola! Sou o CondoGuard Copiloto.") + ai_note
+    welcome = (
+        f"Ola! Sou o **CondoGuard Copiloto** ({ai_badge}). "
+        "Posso ajudar com faturas, alertas operacionais, consumo de recursos e gestao de unidades. "
+        "Como posso ajudar hoje?"
+    )
     return {
         **seed,
         "welcomeMessage": welcome,

@@ -11,7 +11,7 @@ _UNSAFE_SECRETS = {"dev-only-change-me", "change-me", "secret", "changeme", ""}
 
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_file=(".env.local", ".env"), env_file_encoding="utf-8", extra="ignore")
+    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
     app_env: str = Field(default="dev", alias="APP_ENV")
     node_env: str = Field(default="dev", alias="NODE_ENV")
@@ -85,7 +85,7 @@ class Settings(BaseSettings):
     oidc_allowed_algs: str = Field(default="RS256", alias="OIDC_ALLOWED_ALGS")
 
     gemini_api_key: str = Field(default="", alias="GEMINI_API_KEY")
-    gemini_model: str = Field(default="gemini-2.0-flash", alias="GEMINI_MODEL")
+    gemini_model: str = Field(default="gemini-2.0-flash-lite", alias="GEMINI_MODEL")
 
     langchain_tracing_v2: bool = Field(default=False, alias="LANGCHAIN_TRACING_V2")
     langchain_api_key: str = Field(default="", alias="LANGCHAIN_API_KEY")

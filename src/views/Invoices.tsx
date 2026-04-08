@@ -2,6 +2,8 @@ import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { createInvoiceData, exportInvoicesCsv, fetchInvoicesData, markInvoiceAsPaid, updateInvoiceData, type InvoiceCreatePayload } from '../services/invoicesService';
 import type { InvoiceItem, InvoiceStatus } from '../services/mockApi';
 import { DataSourceBadge } from '../shared/ui/DataSourceBadge';
+import { PaginationBar } from '../shared/ui/PaginationBar';
+import { StatusBadge, invoiceStatusVariant } from '../shared/ui/StatusBadge';
 import { EmptyState } from '../shared/ui/states/EmptyState';
 import { ErrorState } from '../shared/ui/states/ErrorState';
 import { LoadingState } from '../shared/ui/states/LoadingState';
@@ -409,9 +411,7 @@ export default function Invoices() {
                 <h3 className="mt-1 text-base font-headline font-bold">{invoice.resident}</h3>
                 <p className="mt-1 text-xs text-on-surface-variant">Referencia: {invoice.reference}</p>
               </div>
-              <span className={`rounded-full px-2 py-1 text-[10px] font-bold ${statusClass[invoice.status]}`}>
-                {statusLabelMobile[invoice.status]}
-              </span>
+              <StatusBadge label={statusLabelMobile[invoice.status]} variant={invoiceStatusVariant(invoice.status)} />
             </div>
 
             <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
@@ -464,7 +464,7 @@ export default function Invoices() {
                 <td className="py-4">{invoice.dueDate}</td>
                 <td className="py-4">{currency.format(invoice.amount)}</td>
                 <td className="py-4">
-                  <span className={`rounded px-2 py-1 text-xs font-bold ${statusClass[invoice.status]}`}>{statusLabel[invoice.status]}</span>
+                  <StatusBadge label={statusLabel[invoice.status]} variant={invoiceStatusVariant(invoice.status)} />
                 </td>
                 <td className="py-4">
                   <div className="flex items-center gap-2">
@@ -494,29 +494,15 @@ export default function Invoices() {
         </table>
       </section>
 
-      <section className="rounded-2xl border border-outline-variant/30 bg-surface-container-low px-4 py-3">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <p className="text-xs font-semibold text-on-surface-variant">
-            Pagina {meta.page} de {meta.totalPages} | Total: {meta.total}
-          </p>
-          <div className="flex gap-2">
-            <button
-              onClick={() => setPage((current) => Math.max(1, current - 1))}
-              disabled={!meta.hasPrevious}
-              className="rounded-lg bg-surface-container-highest px-3 py-2 text-xs font-bold disabled:opacity-50"
-            >
-              Anterior
-            </button>
-            <button
-              onClick={() => setPage((current) => current + 1)}
-              disabled={!meta.hasNext}
-              className="rounded-lg bg-primary px-3 py-2 text-xs font-bold text-on-primary disabled:opacity-50"
-            >
-              Proxima
-            </button>
-          </div>
-        </div>
-      </section>
+      <PaginationBar
+        page={meta.page}
+        totalPages={meta.totalPages}
+        total={meta.total}
+        hasPrevious={meta.hasPrevious}
+        hasNext={meta.hasNext}
+        onPrevious={() => setPage((current) => Math.max(1, current - 1))}
+        onNext={() => setPage((current) => current + 1)}
+      />
     </div>
     </>
   );

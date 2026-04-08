@@ -1,6 +1,7 @@
-import { useEffect, useId, useMemo, useState } from 'react';
-import { NavLink, Outlet, useLocation } from 'react-router-dom';
+import { Fragment, useEffect, useId, useMemo, useRef, useState } from 'react';
+import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '../../auth/context/AuthContext';
+import { fetchAlertsSummary, type AlertsSummary } from '../../../services/alertsSummaryService';
 import type { AuthRole } from '../../auth/context/AuthContext';
 import { ApiFallbackToast } from '../../../shared/ui/ApiFallbackToast';
 import { ChatbotWidget } from '../../../shared/ui/ChatbotWidget';
@@ -28,6 +29,40 @@ const navItems: NavItem[] = [
   { id: 'reports', label: 'Relatorios', icon: 'assessment' },
 ];
 
+const SEGMENT_LABELS: Record<string, string> = {
+  contracts: 'Contratos',
+  integrations: 'Integracoes',
+  lista: 'Lista',
+  novo: 'Novo Contrato',
+  auditoria: 'Auditoria',
+  vencimentos: 'Vencimentos',
+  reajustes: 'Reajustes',
+  documentos: 'Documentos',
+  editar: 'Editar',
+  enel: 'Enel',
+  sabesp: 'Sabesp',
+};
+
+function toBreadcrumbs(pathname: string): Array<{ label: string; to?: string }> {
+  const segments = pathname.split('/').filter(Boolean);
+  if (segments.length <= 1) return [];
+  // Skip if the full multi-segment path is a known top-level nav item (e.g. integrations/enel)
+  const fullPath = segments.join('/');
+  if (navItems.some((item) => item.id === fullPath)) return [];
+
+  const crumbs: Array<{ label: string; to?: string }> = [];
+  let built = '';
+  for (let i = 0; i < segments.length; i++) {
+    const seg = segments[i];
+    built = built ? `${built}/${seg}` : seg;
+    const isLast = i === segments.length - 1;
+    const isId = /^\d+$/.test(seg) || /^[0-9a-f]{8}-[0-9a-f]{4}/.test(seg) || (seg.length >= 8 && /^[0-9a-f-]+$/.test(seg));
+    const label = SEGMENT_LABELS[seg] ?? (isId ? 'Detalhes' : seg);
+    crumbs.push({ label, to: isLast ? undefined : `/${built}` });
+  }
+  return crumbs;
+}
+
 function toTitle(pathname: string) {
   const segments = pathname.split('/').filter(Boolean);
   const current = segments.at(-1) ?? 'dashboard';
@@ -49,10 +84,16 @@ function toTitle(pathname: string) {
   return navItems.find((item) => item.id === fullPath)?.label ?? 'CondoGuard.AI';
 }
 
+const ALERT_POLL_MS = 30_000;
+
 export function AppLayout() {
   const location = useLocation();
+  const breadcrumbs = toBreadcrumbs(location.pathname);
   const { logout, role, userName } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [notifOpen, setNotifOpen] = useState(false);
+  const [alertSummary, setAlertSummary] = useState<AlertsSummary | null>(null);
+  const notifRef = useRef<HTMLDivElement>(null);
   const mobileMenuId = useId();
   const visibleNavItems = navItems.filter((item) => !item.allowedRoles || (role && item.allowedRoles.includes(role)));
   const avatarIcon = useMemo(() => {
@@ -99,6 +140,47 @@ export function AppLayout() {
     };
   }, [mobileMenuOpen]);
 
+  useEffect(() => {
+    let cancelled = false;
+
+    async function load() {
+      try {
+        const summary = await fetchAlertsSummary();
+        if (!cancelled) setAlertSummary(summary);
+      } catch {
+        // degrade gracefully — badge stays hidden
+      }
+    }
+
+    void load();
+    const interval = setInterval(() => void load(), ALERT_POLL_MS);
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!notifOpen) return undefined;
+
+    function onPointerDown(event: PointerEvent) {
+      if (notifRef.current && !notifRef.current.contains(event.target as Node)) {
+        setNotifOpen(false);
+      }
+    }
+
+    function onEsc(event: KeyboardEvent) {
+      if (event.key === 'Escape') setNotifOpen(false);
+    }
+
+    document.addEventListener('pointerdown', onPointerDown);
+    window.addEventListener('keydown', onEsc);
+    return () => {
+      document.removeEventListener('pointerdown', onPointerDown);
+      window.removeEventListener('keydown', onEsc);
+    };
+  }, [notifOpen]);
+
   return (
     <>
       <div className="relative flex min-h-[100dvh] overflow-hidden bg-surface text-on-surface font-body">
@@ -131,23 +213,34 @@ export function AppLayout() {
           </div>
 
           <nav className="flex-1 space-y-1 overflow-y-auto px-3">
-            {visibleNavItems.map((item) => (
-              <NavLink
-                key={item.id}
-                to={`/${item.id}`}
-                onClick={() => setMobileMenuOpen(false)}
-                className={({ isActive }) =>
-                  `group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 transition-colors ${
-                    isActive
-                      ? 'bg-primary-container text-white shadow-sm'
-                      : 'text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface'
-                  }`
-                }
-              >
-                <span className="material-symbols-outlined text-[20px]">{item.icon}</span>
-                <span>{item.label}</span>
-              </NavLink>
-            ))}
+            {visibleNavItems.map((item) => {
+              const isAlerts = item.id === 'alerts';
+              const alertBadge = isAlerts && alertSummary && alertSummary.activeCount > 0
+                ? alertSummary.activeCount
+                : null;
+              return (
+                <NavLink
+                  key={item.id}
+                  to={`/${item.id}`}
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={({ isActive }) =>
+                    `group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 transition-colors ${
+                      isActive
+                        ? 'bg-primary-container text-white shadow-sm'
+                        : 'text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface'
+                    }`
+                  }
+                >
+                  <span className="material-symbols-outlined text-[20px]">{item.icon}</span>
+                  <span className="flex-1">{item.label}</span>
+                  {alertBadge !== null && (
+                    <span className="min-w-[1.25rem] rounded-full bg-error px-1.5 py-0.5 text-center text-[10px] font-bold text-white leading-none">
+                      {alertBadge > 99 ? '99+' : alertBadge}
+                    </span>
+                  )}
+                </NavLink>
+              );
+            })}
           </nav>
 
           <div className="mt-auto space-y-3 border-t border-outline-variant/30 px-4 pb-2 pt-4">
@@ -183,13 +276,73 @@ export function AppLayout() {
             </div>
 
             <div className="flex items-center gap-1.5 sm:gap-2.5">
-              <button
-                aria-label="Notificacoes"
-                className="relative rounded-full p-2 text-on-surface-variant transition-colors hover:bg-surface-container-low"
-              >
-                <span className="material-symbols-outlined">notifications</span>
-                <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-error ring-2 ring-surface-container-lowest" />
-              </button>
+              <div className="relative" ref={notifRef}>
+                <button
+                  aria-label="Notificacoes"
+                  aria-expanded={notifOpen}
+                  onClick={() => setNotifOpen((prev) => !prev)}
+                  className={`relative rounded-full p-2 text-on-surface-variant transition-colors hover:bg-surface-container-low ${notifOpen ? 'bg-surface-container-low' : ''}`}
+                >
+                  <span className="material-symbols-outlined">
+                    {notifOpen ? 'notifications_active' : 'notifications'}
+                  </span>
+                  {alertSummary && alertSummary.critical > 0 && (
+                    <span className="absolute right-1.5 top-1.5 flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-error px-0.5 text-[9px] font-bold text-white ring-2 ring-surface-container-lowest">
+                      {alertSummary.critical > 9 ? '9+' : alertSummary.critical}
+                    </span>
+                  )}
+                  {alertSummary && alertSummary.critical === 0 && alertSummary.warning > 0 && (
+                    <span className="absolute right-1.5 top-1.5 h-2.5 w-2.5 rounded-full bg-secondary ring-2 ring-surface-container-lowest" />
+                  )}
+                  {(!alertSummary || (alertSummary.critical === 0 && alertSummary.warning === 0)) && alertSummary === null && (
+                    <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-error ring-2 ring-surface-container-lowest" />
+                  )}
+                </button>
+
+                {notifOpen && (
+                  <div className="absolute right-0 top-full z-50 mt-1 w-80 rounded-2xl border border-outline-variant/30 bg-surface-container-lowest shadow-2xl">
+                    <div className="flex items-center justify-between border-b border-outline-variant/20 px-4 py-3">
+                      <p className="text-xs font-bold uppercase tracking-wider text-on-surface">
+                        Alertas ativos
+                        {alertSummary && (
+                          <span className="ml-2 rounded-full bg-error px-1.5 py-0.5 text-[9px] text-white">
+                            {alertSummary.activeCount}
+                          </span>
+                        )}
+                      </p>
+                      <Link
+                        to="/alerts"
+                        onClick={() => setNotifOpen(false)}
+                        className="text-[10px] font-semibold text-primary hover:underline uppercase tracking-wider"
+                      >
+                        Ver todos
+                      </Link>
+                    </div>
+
+                    {!alertSummary || alertSummary.top.length === 0 ? (
+                      <p className="px-4 py-4 text-xs text-on-surface-variant">
+                        Nenhum alerta ativo no momento.
+                      </p>
+                    ) : (
+                      <ul className="divide-y divide-outline-variant/15">
+                        {alertSummary.top.map((alert) => (
+                          <li key={alert.id} className="px-4 py-3">
+                            <div className="flex items-start gap-2">
+                              <span className={`mt-0.5 h-2 w-2 shrink-0 rounded-full ${
+                                alert.severity === 'critical' ? 'bg-error' : alert.severity === 'warning' ? 'bg-secondary' : 'bg-on-tertiary-container'
+                              }`} />
+                              <div className="min-w-0">
+                                <p className="truncate text-xs font-semibold text-on-surface">{alert.title}</p>
+                                <p className="text-[10px] text-on-surface-variant">{alert.time}</p>
+                              </div>
+                            </div>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                )}
+              </div>
               <div className="hidden h-8 w-px bg-outline-variant/40 md:block" />
               <div className="flex items-center gap-2 sm:gap-3">
                 <div
@@ -205,6 +358,31 @@ export function AppLayout() {
               </div>
             </div>
           </header>
+
+          {breadcrumbs.length > 0 && (
+            <nav
+              aria-label="Caminho de navegacao"
+              className="flex items-center gap-1 border-b border-outline-variant/20 bg-surface-container-lowest/60 px-4 py-2 text-xs md:px-6"
+            >
+              {breadcrumbs.map((crumb, i) => (
+                <Fragment key={i}>
+                  {i > 0 && (
+                    <span className="text-outline-variant select-none">›</span>
+                  )}
+                  {crumb.to ? (
+                    <Link
+                      to={crumb.to}
+                      className="text-primary hover:underline font-medium"
+                    >
+                      {crumb.label}
+                    </Link>
+                  ) : (
+                    <span className="font-semibold text-on-surface">{crumb.label}</span>
+                  )}
+                </Fragment>
+              ))}
+            </nav>
+          )}
 
           <div className="flex-1 overflow-y-auto bg-transparent pb-8">
             <Outlet />

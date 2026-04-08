@@ -4,7 +4,7 @@ import process from 'node:process';
 import dotenv from 'dotenv';
 
 function parseArgs(argv) {
-  const args = { envFile: '.env.local', requireOidc: false };
+  const args = { envFile: '.env', requireOidc: false };
   for (let i = 0; i < argv.length; i += 1) {
     const token = argv[i];
     if (token === '--config-file' && argv[i + 1]) {
@@ -112,19 +112,10 @@ function validateProd(errors) {
 }
 
 function resolveEnvFile(envFile) {
-  const candidates = [envFile];
-  if (envFile === '.env.local') {
-    candidates.push('.env');
-  }
-
-  for (const candidate of candidates) {
-    const absolute = path.resolve(process.cwd(), candidate);
-    if (fs.existsSync(absolute)) {
-      return { absoluteEnvFile: absolute, resolvedEnvFile: candidate };
-    }
-  }
-
-  return { absoluteEnvFile: path.resolve(process.cwd(), envFile), resolvedEnvFile: envFile };
+  return {
+    absoluteEnvFile: path.resolve(process.cwd(), envFile),
+    resolvedEnvFile: envFile,
+  };
 }
 
 function main() {
@@ -165,9 +156,6 @@ function main() {
 
   const suffix = requireOidc ? ' | modo=require-oidc' : '';
   console.log(`[env:validate] perfil ${appEnv} OK (${absoluteEnvFile})${suffix}`);
-  if (resolvedEnvFile !== envFile) {
-    console.log(`[env:validate] usando fallback de arquivo: ${resolvedEnvFile}`);
-  }
 }
 
 main();

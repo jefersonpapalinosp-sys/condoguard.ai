@@ -4,6 +4,7 @@ import { LineChart, Line, ResponsiveContainer } from 'recharts';
 import { fetchDashboardData } from '../services/dashboardService';
 import type { DashboardData, DashboardSparklines } from '../services/mockApi';
 import { DataSourceBadge } from '../shared/ui/DataSourceBadge';
+import { StatusBadge, alertSeverityVariant } from '../shared/ui/StatusBadge';
 import { LoadingState } from '../shared/ui/states/LoadingState';
 import { ErrorState } from '../shared/ui/states/ErrorState';
 import { EmptyState } from '../shared/ui/states/EmptyState';
@@ -234,9 +235,7 @@ export default function Dashboard() {
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <p className="text-sm font-bold text-on-surface">{alert.title}</p>
-                    <span className={`rounded-full px-2 py-1 text-[10px] font-bold ${levelTagClass[alert.level]}`}>
-                      {levelLabel[alert.level]}
-                    </span>
+                    <StatusBadge label={levelLabel[alert.level]} variant={alertSeverityVariant(alert.level)} />
                   </div>
                   <p className="mt-1 text-xs text-on-surface-variant">{alert.subtitle}</p>
                   <p className="mt-2 text-[11px] uppercase tracking-widest text-on-surface-variant">{alert.time}</p>

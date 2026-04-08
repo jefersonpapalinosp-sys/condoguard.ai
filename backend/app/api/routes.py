@@ -510,6 +510,28 @@ async def observability_alerts_dispatch(_auth: dict = Depends(require_tenant_sco
     return {**payload, "dispatch": dispatch}
 
 
+@router.get("/alerts/summary")
+async def alerts_summary(
+    auth: dict = Depends(require_tenant_scope),
+    _role: dict = Depends(require_roles(AUTH_ROLES)),
+) -> dict[str, Any]:
+    payload = await get_alerts_data(auth["condominiumId"])
+    items = payload["items"]
+    active = [i for i in items if i.get("status") == "active"]
+    top = sorted(
+        active,
+        key=lambda x: (0 if x.get("severity") == "critical" else 1 if x.get("severity") == "warning" else 2),
+    )[:5]
+    return {
+        "total": len(items),
+        "activeCount": len(active),
+        "critical": len([i for i in active if i.get("severity") == "critical"]),
+        "warning": len([i for i in active if i.get("severity") == "warning"]),
+        "info": len([i for i in active if i.get("severity") == "info"]),
+        "top": top,
+    }
+
+
 @router.get("/alerts")
 async def list_alerts(
     auth: dict = Depends(require_tenant_scope),

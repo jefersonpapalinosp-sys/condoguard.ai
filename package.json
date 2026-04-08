@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite --port=3000 --host=0.0.0.0",
+    "dev:local": "node scripts/dev-local.mjs",
     "build": "vite build",
     "preview": "vite preview",
     "api:dev": "node scripts/run-fastapi.mjs --reload",
@@ -21,6 +22,7 @@
     "db:smoke:sprint3:rbac": "powershell -ExecutionPolicy Bypass -File scripts/db/sprint3-rbac-smoke.ps1",
     "security:smoke:sprint3:oidc": "powershell -ExecutionPolicy Bypass -File scripts/security/sprint3-oidc-closure-smoke.ps1",
     "security:smoke:s3:s7:oidc-gate": "powershell -ExecutionPolicy Bypass -File scripts/security/sprint3-s7-oidc-final-gate.ps1",
+    "security:smoke:s11": "powershell -ExecutionPolicy Bypass -File scripts/security/sprint11-security-tenancy-smoke.ps1",
     "clean": "node -e \"require('node:fs').rmSync('dist', { recursive: true, force: true })\"",
     "lint": "tsc --noEmit",
     "check": "npm run lint && npm run build",
@@ -32,6 +34,7 @@
     "test:integration": "vitest run tests/integration",
     "test:api": "node scripts/run-python-module.mjs pytest -q backend/tests/test_api_parity_fastapi.py",
     "test:contract": "node scripts/run-python-module.mjs pytest -q backend/tests/test_contract_endpoints.py backend/tests/test_auth_and_invoices.py",
+    "test:integrations": "node scripts/run-python-module.mjs pytest -q backend/tests/test_enel_integration_endpoints.py backend/tests/test_sabesp_integration_endpoints.py",
     "test:smoke": "node scripts/run-python-module.mjs pytest -q backend/tests/test_health.py",
     "test:coverage": "vitest run --coverage",
     "test:coverage:check": "npm run test:coverage && node scripts/testing/enforceCoverage.mjs",
@@ -40,7 +43,7 @@
     "test:e2e:install": "playwright install",
     "test:all": "npm run test:frontend && npm run test:py && npm run test:e2e",
     "test:py": "node scripts/run-python-module.mjs pytest -q backend/tests",
-    "env:validate": "node scripts/release/validate-env-profile.mjs --config-file .env.local",
+    "env:validate": "node scripts/release/validate-env-profile.mjs --config-file .env",
     "env:validate:s11:oidc": "node scripts/release/validate-env-profile.mjs --require-oidc",
     "release:s7:hml-smoke": "powershell -ExecutionPolicy Bypass -File scripts/release/sprint7-hml-go-live-smoke.ps1",
     "release:s7:rollback-drill": "powershell -ExecutionPolicy Bypass -File scripts/release/sprint7-rollback-drill.ps1"

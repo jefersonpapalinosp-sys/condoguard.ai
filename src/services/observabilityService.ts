@@ -37,6 +37,25 @@ export type ObservabilityMetricsResponse = {
   }>;
 };
 
+export type IntegrationRunSummary = {
+  provider: string;
+  totalRuns: number;
+  lastRunAt: string | null;
+  lastRunStatus: string | null;
+  lastError: string | null;
+  source: string;
+};
+
+export type IntegrationHealthResponse = {
+  ok: boolean;
+  generatedAt: string;
+  integrations: Record<string, IntegrationRunSummary>;
+};
+
+export async function fetchIntegrationHealth(): Promise<IntegrationHealthResponse> {
+  return requestJson<IntegrationHealthResponse>('/api/integrations/health');
+}
+
 export async function fetchObservabilityMetrics(routeLimit = 10, codeLimit = 10): Promise<ObservabilityMetricsResponse> {
   try {
     const response = await requestJson<ObservabilityMetricsResponse>(

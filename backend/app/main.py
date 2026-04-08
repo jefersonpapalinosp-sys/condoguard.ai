@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 from collections import defaultdict, deque
 from datetime import datetime, timezone
 from time import perf_counter
@@ -14,6 +15,7 @@ from app.api.routes import router
 from app.api.contracts_module_routes import contracts_router
 from app.api.enel_integration_routes import enel_router
 from app.api.sabesp_integration_routes import sabesp_router
+from app.api.integration_health_routes import integration_health_router
 from app.core.config import settings
 from app.core.errors import ApiRequestError
 from app.observability.metrics_store import (
@@ -173,6 +175,7 @@ reset_enel_integration_state()
 reset_sabesp_integration_state()
 
 app = FastAPI(title="CondoGuard API (FastAPI)", version="1.0.0")
+_STARTUP_BACKGROUND_JOBS: set[asyncio.Future[Any]] = set()
 
 
 def _log_oidc_startup_readiness() -> None:
@@ -193,19 +196,41 @@ def _log_oidc_startup_readiness() -> None:
     _log.info("OIDC readiness no startup: %s", readiness)
 
 
-@app.on_event("startup")
-async def _startup_ingest_knowledge_base():
-    """Index the knowledge base into Chroma on server startup (idempotent)."""
+def _track_background_job(job: asyncio.Future[Any]) -> None:
+    _STARTUP_BACKGROUND_JOBS.add(job)
+    job.add_done_callback(_STARTUP_BACKGROUND_JOBS.discard)
+
+
+async def _ingest_knowledge_base_background() -> None:
+    """Index the knowledge base without blocking API readiness during startup."""
     import logging  # noqa: PLC0415
+
     _log = logging.getLogger(__name__)
-    _log_oidc_startup_readiness()
     try:
         from app.ai.rag.vector_store import ingest_knowledge_base  # noqa: PLC0415
+
         n = await ingest_knowledge_base()
         if n:
             _log.info("RAG: %d chunks indexados na base de conhecimento", n)
     except Exception as exc:
         _log.warning("RAG startup ingestao falhou (ignorado): %s", exc)
+
+
+def _spawn_rag_background_job() -> None:
+    loop = asyncio.get_running_loop()
+    job = loop.run_in_executor(None, lambda: asyncio.run(_ingest_knowledge_base_background()))
+    _track_background_job(job)
+
+
+@app.on_event("startup")
+async def _startup_ingest_knowledge_base():
+    """Start knowledge base ingestion in the background so the API becomes ready first."""
+    import logging  # noqa: PLC0415
+
+    _log = logging.getLogger(__name__)
+    _log_oidc_startup_readiness()
+    _spawn_rag_background_job()
+    _log.info("RAG startup: ingestao agendada em background")
 app.add_middleware(SecurityHeadersMiddleware)
 app.add_middleware(CorsAllowlistMiddleware)
 app.add_middleware(RateLimitMiddleware)
@@ -215,6 +240,7 @@ app.include_router(router)
 app.include_router(contracts_router)
 app.include_router(enel_router)
 app.include_router(sabesp_router)
+app.include_router(integration_health_router)
 
 
 def reset_runtime_state() -> None:

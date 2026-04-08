@@ -4,6 +4,11 @@ import Observability from '../../../src/views/Observability';
 
 vi.mock('../../../src/services/observabilityService', () => ({
   fetchObservabilityMetrics: vi.fn(),
+  fetchIntegrationHealth: vi.fn().mockResolvedValue({
+    ok: true,
+    generatedAt: new Date().toISOString(),
+    integrations: {},
+  }),
 }));
 
 describe('Observability view', () => {

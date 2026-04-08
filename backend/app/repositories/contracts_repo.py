@@ -182,32 +182,46 @@ async def get_contracts_data(condominium_id: int) -> dict:
                 if contracts_items:
                     break
 
-            totals_rows = await run_oracle_query(
-                """
-                select nvl(sum(amount), 0) as TOTAL_AMOUNT
-                from mart.vw_financial_invoices
-                where condominio_id = :condominiumId
-                """,
-                {"condominiumId": condominium_id},
-            )
-            overdue_rows = await run_oracle_query(
-                """
-                select nvl(sum(amount), 0) as OVERDUE_AMOUNT
-                from mart.vw_financial_invoices
-                where condominio_id = :condominiumId
-                  and lower(status) = 'overdue'
-                """,
-                {"condominiumId": condominium_id},
-            )
-            critical_alerts_rows = await run_oracle_query(
-                """
-                select count(1) as CRITICAL_TOTAL
-                from mart.vw_alerts_operational
-                where condominio_id = :condominiumId
-                  and lower(gravidade) in ('alta', 'critica')
-                """,
-                {"condominiumId": condominium_id},
-            )
+            # Each MART view query is wrapped independently: if a view is missing or
+            # grants are not configured the query returns an empty list and the
+            # downstream calculation falls back to zero, keeping the Oracle path alive.
+            try:
+                totals_rows = await run_oracle_query(
+                    """
+                    select nvl(sum(amount), 0) as TOTAL_AMOUNT
+                    from mart.vw_financial_invoices
+                    where condominio_id = :condominiumId
+                    """,
+                    {"condominiumId": condominium_id},
+                )
+            except Exception:
+                totals_rows = []
+
+            try:
+                overdue_rows = await run_oracle_query(
+                    """
+                    select nvl(sum(amount), 0) as OVERDUE_AMOUNT
+                    from mart.vw_financial_invoices
+                    where condominio_id = :condominiumId
+                      and lower(status) = 'overdue'
+                    """,
+                    {"condominiumId": condominium_id},
+                )
+            except Exception:
+                overdue_rows = []
+
+            try:
+                critical_alerts_rows = await run_oracle_query(
+                    """
+                    select count(1) as CRITICAL_TOTAL
+                    from mart.vw_alerts_operational
+                    where condominio_id = :condominiumId
+                      and lower(gravidade) in ('alta', 'critica')
+                    """,
+                    {"condominiumId": condominium_id},
+                )
+            except Exception:
+                critical_alerts_rows = []
 
             total_amount = float((totals_rows or [{}])[0].get("TOTAL_AMOUNT") or 0)
             overdue_amount = float((overdue_rows or [{}])[0].get("OVERDUE_AMOUNT") or 0)

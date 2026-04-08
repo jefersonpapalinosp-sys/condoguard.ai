@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { fetchAlertsData, markAlertAsRead } from '../services/alertsService';
 import type { AlertsData } from '../services/mockApi';
 import { DataSourceBadge } from '../shared/ui/DataSourceBadge';
+import { PaginationBar } from '../shared/ui/PaginationBar';
+import { StatusBadge, alertSeverityVariant } from '../shared/ui/StatusBadge';
 import { LoadingState } from '../shared/ui/states/LoadingState';
 import { ErrorState } from '../shared/ui/states/ErrorState';
 import { EmptyState } from '../shared/ui/states/EmptyState';
@@ -10,12 +12,6 @@ const severityStyles: Record<'critical' | 'warning' | 'info', string> = {
   critical: 'border-error/40 bg-error-container/25',
   warning: 'border-secondary/35 bg-secondary-container/30',
   info: 'border-on-primary-fixed-variant/35 bg-surface-container-highest',
-};
-
-const severityBadgeClass: Record<'critical' | 'warning' | 'info', string> = {
-  critical: 'bg-error-container text-on-error-container',
-  warning: 'bg-secondary-container text-on-secondary-container',
-  info: 'bg-tertiary-fixed-dim/30 text-on-tertiary-fixed-variant',
 };
 
 const severityLabel: Record<'critical' | 'warning' | 'info', string> = {
@@ -267,9 +263,7 @@ export default function Alerts() {
           {data.items.map((item) => (
             <article key={item.id} className={`rounded-2xl border p-4 shadow-[0_1px_0_rgba(19,27,46,0.04)] ${severityStyles[item.severity]}`}>
               <div className="mb-2 flex flex-wrap items-start justify-between gap-2">
-                <span className={`rounded-full px-2 py-1 text-[10px] font-bold uppercase tracking-widest ${severityBadgeClass[item.severity]}`}>
-                  {severityLabel[item.severity]}
-                </span>
+                <StatusBadge label={severityLabel[item.severity]} variant={alertSeverityVariant(item.severity)} />
                 <span className="text-[11px] font-semibold uppercase tracking-wider text-on-surface-variant">{item.time}</span>
               </div>
 
@@ -293,27 +287,15 @@ export default function Alerts() {
             </article>
           ))}
 
-          <div className="mt-2 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-outline-variant/30 bg-surface-container-low px-4 py-3">
-            <p className="text-xs font-semibold text-on-surface-variant">
-              Pagina {meta.page} de {meta.totalPages} | Total: {meta.total}
-            </p>
-            <div className="flex gap-2">
-              <button
-                onClick={() => setPage((current) => Math.max(1, current - 1))}
-                disabled={!meta.hasPrevious}
-                className="rounded-lg bg-surface-container-highest px-3 py-2 text-xs font-bold disabled:opacity-50"
-              >
-                Anterior
-              </button>
-              <button
-                onClick={() => setPage((current) => current + 1)}
-                disabled={!meta.hasNext}
-                className="rounded-lg bg-primary px-3 py-2 text-xs font-bold text-on-primary disabled:opacity-50"
-              >
-                Proxima
-              </button>
-            </div>
-          </div>
+          <PaginationBar
+            page={meta.page}
+            totalPages={meta.totalPages}
+            total={meta.total}
+            hasPrevious={meta.hasPrevious}
+            hasNext={meta.hasNext}
+            onPrevious={() => setPage((current) => Math.max(1, current - 1))}
+            onNext={() => setPage((current) => current + 1)}
+          />
         </section>
       )}
     </div>

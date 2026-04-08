@@ -13,10 +13,234 @@ from app.observability.metrics_store import record_api_fallback_metric
 from app.repositories.state_store import read_json_state, write_json_state
 
 SABESP_STATE_FILE = Path(__file__).resolve().parents[4] / "backend" / "data" / "sabesp_integration_state.json"
+_PROVIDER = "sabesp"
 
 
 def _now_iso() -> str:
     return datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+
+
+# ---------------------------------------------------------------------------
+# Oracle persistence helpers (Sprint 13 — S13-04)
+# ---------------------------------------------------------------------------
+
+async def _persist_run_oracle(condominium_id: int, run_record: dict[str, Any]) -> None:
+    """Best-effort: persist SABESP run to app.integracoes_execucoes + app.integracoes_itens."""
+    try:
+        summary = run_record.get("summary") or {}
+        await run_oracle_execute(
+            """
+            merge into app.integracoes_execucoes t
+            using dual on (t.run_id = :runId)
+            when not matched then insert (
+              run_id, condominio_id, provider, source, status, requested_by,
+              started_at, finished_at, duration_ms,
+              total_items, imported_items, skipped_items, failed_items,
+              error_summary, notes
+            ) values (
+              :runId, :condominiumId, :provider, :source, :status, :requestedBy,
+              cast(:startedAt as timestamp with time zone),
+              cast(:finishedAt as timestamp with time zone),
+              :durationMs,
+              :total, :imported, :skipped, :failed,
+              :errorSummary, :notes
+            )
+            """,
+            {
+                "runId": run_record["runId"],
+                "condominiumId": condominium_id,
+                "provider": _PROVIDER,
+                "source": str(run_record.get("source") or "manual_assisted")[:40],
+                "status": str(run_record.get("status") or "completed")[:30],
+                "requestedBy": str(run_record.get("requestedBy") or "system")[:255],
+                "startedAt": str(run_record.get("startedAt") or "").replace("Z", "+00:00"),
+                "finishedAt": str(run_record.get("finishedAt") or "").replace("Z", "+00:00"),
+                "durationMs": run_record.get("durationMs"),
+                "total": int(summary.get("total") or 0),
+                "imported": int(summary.get("imported") or 0),
+                "skipped": int(summary.get("skipped") or 0),
+                "failed": int(summary.get("failed") or 0),
+                "errorSummary": (str(run_record.get("errorSummary") or "")[:500] or None),
+                "notes": (str(run_record.get("notes") or "")[:500] or None),
+            },
+        )
+        for item in run_record.get("items") or []:
+            raw = item.get("raw") or {}
+            await run_oracle_execute(
+                """
+                merge into app.integracoes_itens t
+                using dual on (t.run_id = :runId and t.item_index = :idx)
+                when not matched then insert (
+                  run_id, condominio_id, item_index, result, reason,
+                  external_reference, unit_code, resident_name, reference_code,
+                  due_date, amount, invoice_status, business_key, external_hash
+                ) values (
+                  :runId, :condominiumId, :idx, :result, :reason,
+                  :externalRef, :unit, :resident, :reference,
+                  to_date(:dueDate, 'YYYY-MM-DD'), :amount, :invoiceStatus,
+                  :businessKey, :externalHash
+                )
+                """,
+                {
+                    "runId": run_record["runId"],
+                    "condominiumId": condominium_id,
+                    "idx": int(item.get("index") or 0),
+                    "result": str(item.get("result") or "failed")[:20],
+                    "reason": (str(item.get("reason") or "")[:500] or None),
+                    "externalRef": (str(item.get("externalReference") or "")[:120] or None),
+                    "unit": (str(raw.get("unit") or "")[:30] or None),
+                    "resident": (str(raw.get("resident") or "")[:255] or None),
+                    "reference": (str(raw.get("reference") or "")[:20] or None),
+                    "dueDate": (str(raw.get("dueDate") or "")[:10] or None),
+                    "amount": (float(raw.get("amount") or 0) or None),
+                    "invoiceStatus": "pending",
+                    "businessKey": (str(item.get("businessKey") or "")[:240] or None),
+                    "externalHash": (str(item.get("externalHash") or "")[:128] or None),
+                },
+            )
+    except Exception:
+        record_api_fallback_metric("integrations_sabesp", "oracle_run_persist_failed")
+
+
+async def _list_runs_oracle(
+    condominium_id: int, page: int, page_size: int, status: str | None
+) -> dict[str, Any] | None:
+    try:
+        count_rows = await run_oracle_query(
+            """
+            select count(1) as TOTAL
+            from app.integracoes_execucoes
+            where condominio_id = :condominiumId and provider = :provider
+              and (:status is null or status = :status)
+            """,
+            {"condominiumId": condominium_id, "provider": _PROVIDER, "status": status},
+        )
+        total = int((count_rows or [{}])[0].get("TOTAL") or 0)
+        safe_size = min(200, max(1, int(page_size or 20)))
+        safe_page = max(1, int(page or 1))
+        total_pages = max(1, (total + safe_size - 1) // safe_size)
+        current_page = min(safe_page, total_pages)
+        offset = (current_page - 1) * safe_size
+        rows = await run_oracle_query(
+            """
+            select run_id, provider, source, status, started_at, finished_at,
+                   duration_ms, requested_by, total_items, imported_items,
+                   skipped_items, failed_items, error_summary
+            from app.integracoes_execucoes
+            where condominio_id = :condominiumId and provider = :provider
+              and (:status is null or status = :status)
+            order by started_at desc
+            offset :offset rows fetch next :pageSize rows only
+            """,
+            {
+                "condominiumId": condominium_id,
+                "provider": _PROVIDER,
+                "status": status,
+                "offset": offset,
+                "pageSize": safe_size,
+            },
+        )
+        items = [
+            {
+                "runId": str(row.get("RUN_ID") or ""),
+                "provider": str(row.get("PROVIDER") or _PROVIDER),
+                "source": str(row.get("SOURCE") or "manual_assisted"),
+                "status": str(row.get("STATUS") or "completed"),
+                "startedAt": str(row.get("STARTED_AT") or ""),
+                "finishedAt": str(row.get("FINISHED_AT") or ""),
+                "durationMs": row.get("DURATION_MS"),
+                "requestedBy": str(row.get("REQUESTED_BY") or "system"),
+                "summary": {
+                    "total": int(row.get("TOTAL_ITEMS") or 0),
+                    "imported": int(row.get("IMPORTED_ITEMS") or 0),
+                    "skipped": int(row.get("SKIPPED_ITEMS") or 0),
+                    "failed": int(row.get("FAILED_ITEMS") or 0),
+                },
+                "errorSummary": str(row.get("ERROR_SUMMARY") or ""),
+            }
+            for row in (rows or [])
+        ]
+        return {
+            "items": items,
+            "meta": {
+                "page": current_page,
+                "pageSize": safe_size,
+                "total": total,
+                "totalPages": total_pages,
+                "hasNext": current_page < total_pages,
+                "hasPrevious": current_page > 1,
+            },
+            "filters": {"status": status},
+        }
+    except Exception:
+        return None
+
+
+async def _get_run_detail_oracle(condominium_id: int, run_id: str) -> dict[str, Any] | None:
+    try:
+        run_rows = await run_oracle_query(
+            """
+            select run_id, provider, source, status, started_at, finished_at,
+                   duration_ms, requested_by, total_items, imported_items,
+                   skipped_items, failed_items, error_summary, notes
+            from app.integracoes_execucoes
+            where condominio_id = :condominiumId and provider = :provider and run_id = :runId
+            """,
+            {"condominiumId": condominium_id, "provider": _PROVIDER, "runId": run_id},
+        )
+        if not run_rows:
+            return None
+        row = run_rows[0]
+        item_rows = await run_oracle_query(
+            """
+            select item_index, result, reason, external_reference, unit_code,
+                   resident_name, reference_code, due_date, amount, business_key, external_hash
+            from app.integracoes_itens
+            where run_id = :runId and condominio_id = :condominiumId
+            order by item_index
+            """,
+            {"runId": run_id, "condominiumId": condominium_id},
+        )
+        items = [
+            {
+                "index": int(r.get("ITEM_INDEX") or 0),
+                "result": str(r.get("RESULT") or "failed"),
+                "reason": str(r.get("REASON") or ""),
+                "recordId": None,
+                "businessKey": str(r.get("BUSINESS_KEY") or ""),
+                "externalHash": str(r.get("EXTERNAL_HASH") or ""),
+                "externalReference": str(r.get("EXTERNAL_REFERENCE") or ""),
+                "raw": {
+                    "unit": str(r.get("UNIT_CODE") or ""),
+                    "resident": str(r.get("RESIDENT_NAME") or ""),
+                    "reference": str(r.get("REFERENCE_CODE") or ""),
+                    "dueDate": str(r.get("DUE_DATE") or ""),
+                    "amount": float(r.get("AMOUNT") or 0),
+                },
+            }
+            for r in (item_rows or [])
+        ]
+        return {
+            "runId": str(row.get("RUN_ID") or run_id),
+            "provider": str(row.get("PROVIDER") or _PROVIDER),
+            "source": str(row.get("SOURCE") or "manual_assisted"),
+            "status": str(row.get("STATUS") or "completed"),
+            "startedAt": str(row.get("STARTED_AT") or ""),
+            "finishedAt": str(row.get("FINISHED_AT") or ""),
+            "durationMs": row.get("DURATION_MS"),
+            "requestedBy": str(row.get("REQUESTED_BY") or "system"),
+            "notes": str(row.get("NOTES") or ""),
+            "summary": {
+                "total": int(row.get("TOTAL_ITEMS") or 0),
+                "imported": int(row.get("IMPORTED_ITEMS") or 0),
+                "skipped": int(row.get("SKIPPED_ITEMS") or 0),
+                "failed": int(row.get("FAILED_ITEMS") or 0),
+            },
+            "errorSummary": str(row.get("ERROR_SUMMARY") or ""),
+            "items": items,
+        }
+    except Exception:
+        return None
 
 
 def _default_tenant_state() -> dict[str, Any]:
@@ -373,11 +597,20 @@ async def execute_sabesp_assisted_run(
     tenant["importedConsumptions"] = imported_consumptions[:1000]
     state[str(condominium_id)] = tenant
     await write_json_state(SABESP_STATE_FILE, state)
+
+    if settings.db_dialect == "oracle":
+        await _persist_run_oracle(condominium_id, run_record)
+
     return run_record
 
 
 async def list_sabesp_runs(condominium_id: int, page: int = 1, page_size: int = 20, status: str | None = None) -> dict[str, Any]:
     condominium_id = ensure_condominium_id(condominium_id)
+    if settings.db_dialect == "oracle":
+        oracle_result = await _list_runs_oracle(condominium_id, page, page_size, status)
+        if oracle_result is not None:
+            return oracle_result
+        record_api_fallback_metric("integrations_sabesp", "oracle_list_runs_fallback")
     state = await read_json_state(SABESP_STATE_FILE)
     tenant = _safe_tenant_state(state, condominium_id)
     runs = tenant.get("runs", [])
@@ -428,6 +661,11 @@ async def list_sabesp_runs(condominium_id: int, page: int = 1, page_size: int = 
 
 async def get_sabesp_run_detail(condominium_id: int, run_id: str) -> dict[str, Any] | None:
     condominium_id = ensure_condominium_id(condominium_id)
+    if settings.db_dialect == "oracle":
+        oracle_run = await _get_run_detail_oracle(condominium_id, run_id)
+        if oracle_run is not None:
+            return oracle_run
+        record_api_fallback_metric("integrations_sabesp", "oracle_run_detail_fallback")
     state = await read_json_state(SABESP_STATE_FILE)
     tenant = _safe_tenant_state(state, condominium_id)
     runs = tenant.get("runs", [])

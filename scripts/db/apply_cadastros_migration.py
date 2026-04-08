@@ -34,7 +34,6 @@ def _prepare_sql(content: str) -> str:
 
 
 def main() -> int:
-    _load_env_file(ROOT / ".env.local")
     _load_env_file(ROOT / ".env")
 
     user = os.getenv("ORACLE_USER", "").strip()

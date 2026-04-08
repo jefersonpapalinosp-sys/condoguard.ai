@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
-import { fetchObservabilityMetrics, type ObservabilityMetricsResponse } from '../services/observabilityService';
+import { fetchObservabilityMetrics, fetchIntegrationHealth, type ObservabilityMetricsResponse, type IntegrationHealthResponse } from '../services/observabilityService';
+import { fetchHealth, type HealthResponse } from '../services/healthService';
+import { StatusBadge, integrationStatusVariant } from '../shared/ui/StatusBadge';
 import { DataSourceBadge } from '../shared/ui/DataSourceBadge';
 import { ErrorState } from '../shared/ui/states/ErrorState';
 import { LoadingState } from '../shared/ui/states/LoadingState';
@@ -110,6 +112,13 @@ export default function Observability() {
   const [codeLimit, setCodeLimit] = useState(10);
   const [reloadKey, setReloadKey] = useState(0);
   const hasLoadedOnceRef = useRef(false);
+  const [health, setHealth] = useState<HealthResponse | null>(null);
+  const [integrationHealth, setIntegrationHealth] = useState<IntegrationHealthResponse | null>(null);
+
+  useEffect(() => {
+    fetchHealth().then(setHealth).catch(() => {/* health panel degrades gracefully */});
+    fetchIntegrationHealth().then(setIntegrationHealth).catch(() => {/* degrades gracefully */});
+  }, [reloadKey]);
 
   useEffect(() => {
     let active = true;
@@ -342,6 +351,112 @@ export default function Observability() {
           </div>
         </article>
       </section>
+
+      {health && (
+        <section className="rounded-2xl border border-outline-variant/30 bg-surface-container-low p-5">
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-on-surface-variant">Autenticacao e banco</p>
+              <h3 className="mt-1 font-headline text-xl font-extrabold">Status do sistema</h3>
+            </div>
+            <span className={`rounded-full px-3 py-1 text-xs font-bold ${health.ok ? 'bg-tertiary-fixed-dim/30 text-on-tertiary-fixed-variant' : 'bg-error-container text-on-error-container'}`}>
+              {health.ok ? 'Online' : 'Degradado'}
+            </span>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+            <div className="rounded-xl border border-outline-variant/20 bg-surface-container-highest px-3 py-3">
+              <p className="text-[10px] uppercase tracking-widest text-on-surface-variant">Auth provider</p>
+              <p className="mt-1 text-sm font-bold text-on-surface">{health.authProvider}</p>
+            </div>
+            <div className="rounded-xl border border-outline-variant/20 bg-surface-container-highest px-3 py-3">
+              <p className="text-[10px] uppercase tracking-widest text-on-surface-variant">OIDC configurado</p>
+              <p className={`mt-1 text-sm font-bold ${health.oidcConfigured ? 'text-on-tertiary-fixed-variant' : 'text-on-surface-variant'}`}>
+                {health.oidcConfigured ? 'Sim' : 'Nao'}
+              </p>
+            </div>
+            <div className="rounded-xl border border-outline-variant/20 bg-surface-container-highest px-3 py-3">
+              <p className="text-[10px] uppercase tracking-widest text-on-surface-variant">Banco de dados</p>
+              <p className="mt-1 text-sm font-bold text-on-surface">{health.dbStatus}</p>
+            </div>
+            <div className="rounded-xl border border-outline-variant/20 bg-surface-container-highest px-3 py-3">
+              <p className="text-[10px] uppercase tracking-widest text-on-surface-variant">Ambiente</p>
+              <p className="mt-1 text-sm font-bold text-on-surface">{health.env}</p>
+            </div>
+          </div>
+
+          {health.oidcConfigured && (
+            <div className="mt-3 rounded-xl border border-outline-variant/20 bg-surface-container-highest px-3 py-3">
+              <p className="text-[10px] uppercase tracking-widest text-on-surface-variant">OIDC readiness</p>
+              <p className={`mt-1 text-sm font-bold ${health.oidcReadiness.ready ? 'text-on-tertiary-fixed-variant' : 'text-error'}`}>
+                {health.oidcReadiness.ready ? 'Pronto' : `Pendente — ${health.oidcReadiness.issues.join('; ')}`}
+              </p>
+            </div>
+          )}
+        </section>
+      )}
+
+      {integrationHealth && (
+        <section className="rounded-2xl border border-outline-variant/30 bg-surface-container-low p-5">
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-on-surface-variant">Integracoes externas</p>
+              <h3 className="mt-1 font-headline text-xl font-extrabold">Saude das integracoes</h3>
+            </div>
+            <StatusBadge
+              label={integrationHealth.ok ? 'Operacional' : 'Com problemas'}
+              variant={integrationHealth.ok ? 'success' : 'error'}
+              size="sm"
+            />
+          </div>
+
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            {Object.values(integrationHealth.integrations).map((integ) => {
+              const statusVariant = integrationStatusVariant(integ.lastRunStatus);
+              const formattedDate = integ.lastRunAt
+                ? new Date(integ.lastRunAt).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })
+                : null;
+              return (
+                <article
+                  key={integ.provider}
+                  className="rounded-xl border border-outline-variant/20 bg-surface-container-highest p-4"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-[10px] uppercase tracking-widest text-on-surface-variant">Provedor</p>
+                      <p className="mt-1 text-base font-bold uppercase text-on-surface">{integ.provider}</p>
+                    </div>
+                    {integ.lastRunStatus ? (
+                      <StatusBadge label={integ.lastRunStatus} variant={statusVariant} />
+                    ) : (
+                      <StatusBadge label="sem runs" variant="neutral" />
+                    )}
+                  </div>
+                  <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
+                    <div>
+                      <p className="uppercase tracking-widest text-on-surface-variant">Execucoes</p>
+                      <p className="mt-0.5 font-semibold text-on-surface">{integ.totalRuns}</p>
+                    </div>
+                    <div>
+                      <p className="uppercase tracking-widest text-on-surface-variant">Ultimo run</p>
+                      <p className="mt-0.5 font-semibold text-on-surface">{formattedDate ?? '—'}</p>
+                    </div>
+                  </div>
+                  {integ.lastError && (
+                    <p className="mt-2 rounded-lg bg-error-container/40 px-2 py-1.5 text-[11px] font-semibold text-on-error-container">
+                      {integ.lastError}
+                    </p>
+                  )}
+                </article>
+              );
+            })}
+          </div>
+
+          <p className="mt-3 text-[10px] text-on-surface-variant">
+            Gerado em {new Date(integrationHealth.generatedAt).toLocaleString('pt-BR')} · fonte: {Object.values(integrationHealth.integrations)[0]?.source ?? '—'}
+          </p>
+        </section>
+      )}
 
       <section className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-6">
         <article className="hover-lift rounded-2xl bg-primary-container p-4 text-white">

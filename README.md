@@ -15,9 +15,10 @@ Plataforma de inteligencia predial em React + Vite.
 2. Instale dependencias do backend Python:
    `py -m pip install -r backend/requirements.txt`
 3. Configure variaveis em `.env`
-4. Rode frontend:
+4. Rode frontend + API com um comando:
+   `npm run dev:local`
+5. Se preferir subir separado:
    `npm run dev`
-5. Rode API local (FastAPI):
    `npm run api:dev`
 6. Se aparecer `No module named uvicorn`, rode:
    `py -m pip install -r backend/requirements.txt`
@@ -33,6 +34,7 @@ Credenciais locais de desenvolvimento (P0 auth):
 ## Scripts
 
 - `npm run dev`: frontend
+- `npm run dev:local`: sobe frontend + API local no mesmo terminal
 - `npm run api:dev`: API FastAPI local
 - `npm run api:dev:mock`: API FastAPI local (usa DB_DIALECT do ambiente)
 - `npm run api:dev:oracle`: API FastAPI local (usa DB_DIALECT do ambiente)
@@ -155,7 +157,7 @@ Health detalhado (Sprint 2):
 - `npm run test:e2e`: Playwright E2E
 - `npm run test:e2e:install`: instala browsers do Playwright
 - `npm run test:py`: testes do backend FastAPI (`backend/tests`)
-- `npm run env:validate`: valida perfil de ambiente (`.env`, com fallback interno para `.env.local` se existir) para gate de go-live
+- `npm run env:validate`: valida perfil de ambiente usando o arquivo `.env`
 - `npm run release:s7:hml-smoke`: smoke dos fluxos criticos para gate da Sprint 7 (`S7-01`)
 - `npm run release:s7:rollback-drill`: simulacao assistida de rollback com relatorio (`S7-03`)
 
