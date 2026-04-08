@@ -12,6 +12,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from app.api.routes import router
 from app.api.contracts_module_routes import contracts_router
 from app.api.enel_integration_routes import enel_router
+from app.api.sabesp_integration_routes import sabesp_router
 from app.core.config import settings
 from app.core.errors import ApiRequestError
 from app.observability.metrics_store import (
@@ -23,6 +24,7 @@ from app.repositories.cadastros_repo import reset_cadastros_store
 from app.repositories.chat_telemetry_repo import reset_chat_telemetry_store
 from app.repositories.contracts_management_repo import reset_contracts_management_state
 from app.integrations.enel.repository import reset_enel_integration_state
+from app.integrations.sabesp.repository import reset_sabesp_integration_state
 from app.ai.memory import clear_all_memories
 from app.ai.chains import clear_chains_cache
 from app.ai.graph import reset_agent_graph
@@ -136,6 +138,7 @@ reset_chat_telemetry_store()
 reset_cadastros_store()
 reset_contracts_management_state()
 reset_enel_integration_state()
+reset_sabesp_integration_state()
 
 app = FastAPI(title="CondoGuard API (FastAPI)", version="1.0.0")
 
@@ -159,6 +162,7 @@ app.add_middleware(ObservabilityMiddleware)
 app.include_router(router)
 app.include_router(contracts_router)
 app.include_router(enel_router)
+app.include_router(sabesp_router)
 
 
 def reset_runtime_state() -> None:
@@ -167,6 +171,7 @@ def reset_runtime_state() -> None:
     reset_cadastros_store()
     reset_contracts_management_state()
     reset_enel_integration_state()
+    reset_sabesp_integration_state()
     clear_all_memories()
     clear_chains_cache()
     reset_agent_graph()

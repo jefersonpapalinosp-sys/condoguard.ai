@@ -22,6 +22,7 @@ import SettingsPage from '../../features/settings/pages/SettingsPage';
 import CadastrosGeraisPage from '../../features/cadastros/pages/CadastrosGeraisPage';
 import ObservabilityPage from '../../features/observability/pages/ObservabilityPage';
 import EnelIntegrationPage from '../../features/integrations/pages/EnelIntegrationPage';
+import SabespIntegrationPage from '../../features/integrations/pages/SabespIntegrationPage';
 
 export function AppRouter() {
   return (
@@ -81,6 +82,14 @@ export function AppRouter() {
           element={(
             <ProtectedRoute requiredRoles={['admin', 'sindico']}>
               <EnelIntegrationPage />
+            </ProtectedRoute>
+          )}
+        />
+        <Route
+          path="integrations/sabesp"
+          element={(
+            <ProtectedRoute requiredRoles={['admin', 'sindico']}>
+              <SabespIntegrationPage />
             </ProtectedRoute>
           )}
         />

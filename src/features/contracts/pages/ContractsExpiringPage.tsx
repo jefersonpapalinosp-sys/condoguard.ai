@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ContractRiskBadge, ContractStatusBadge } from '../components/ContractsBadges';
 import { ContractsLoadingSkeleton } from '../components/ContractsLoadingSkeleton';
 import { ContractsPageShell } from '../components/ContractsPageShell';
@@ -19,26 +19,36 @@ const groupLabel: Record<GroupKey, string> = {
 export default function ContractsExpiringPage() {
   const [data, setData] = useState<ContractsExpiringResponse | null>(null);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [runningAction, setRunningAction] = useState<{ id: string; type: 'renew' | 'close' } | null>(null);
+  const hasLoadedOnceRef = useRef(false);
 
   useEffect(() => {
     let active = true;
     async function load() {
+      const isRefreshing = hasLoadedOnceRef.current;
+
       try {
-        setLoading(true);
+        if (isRefreshing) {
+          setRefreshing(true);
+        } else {
+          setLoading(true);
+        }
         const payload = await fetchContractsExpiring();
         if (active) {
           setData(payload);
           setError(null);
+          hasLoadedOnceRef.current = true;
         }
       } catch {
         if (active) {
-          setError('Falha ao carregar contratos com vencimento.');
+          setError(isRefreshing ? 'Falha ao atualizar vencimentos.' : 'Falha ao carregar contratos com vencimento.');
         }
       } finally {
         if (active) {
           setLoading(false);
+          setRefreshing(false);
         }
       }
     }
@@ -50,25 +60,35 @@ export default function ContractsExpiringPage() {
 
   async function handleRenew(item: ContractRecord) {
     setRunningAction({ id: item.id, type: 'renew' });
+    setRefreshing(true);
     try {
       await renewContract(item.id);
       setData(await fetchContractsExpiring());
+      setError(null);
+    } catch {
+      setError('Falha ao renovar contrato.');
     } finally {
+      setRefreshing(false);
       setRunningAction(null);
     }
   }
 
   async function handleClose(item: ContractRecord) {
     setRunningAction({ id: item.id, type: 'close' });
+    setRefreshing(true);
     try {
       await closeContract(item.id);
       setData(await fetchContractsExpiring());
+      setError(null);
+    } catch {
+      setError('Falha ao encerrar contrato.');
     } finally {
+      setRefreshing(false);
       setRunningAction(null);
     }
   }
 
-  if (loading) {
+  if (loading && !data) {
     return (
       <ContractsLoadingSkeleton
         title="Vencimentos de contratos"
@@ -78,7 +98,7 @@ export default function ContractsExpiringPage() {
       />
     );
   }
-  if (error || !data) return <ErrorState message={error || 'Falha ao carregar vencimentos.'} />;
+  if (!data) return <ErrorState message={error || 'Falha ao carregar vencimentos.'} />;
 
   const groups = Object.entries(data.groups) as Array<[GroupKey, ContractRecord[]]>;
   const allEmpty = groups.every(([, items]) => items.length === 0);
@@ -105,65 +125,81 @@ export default function ContractsExpiringPage() {
       </section>
 
       {runningAction ? (
-        <p className="text-xs text-on-surface-variant" aria-live="polite">
-          Atualizando contrato...
+        <p className="rounded-xl border border-primary-fixed/40 bg-primary-fixed/25 px-3 py-2 text-xs font-semibold text-on-surface-variant" aria-live="polite">
+          Atualizando contrato selecionado...
+        </p>
+      ) : null}
+      {error ? (
+        <p className="rounded-xl border border-error/30 bg-error-container/40 px-3 py-2 text-xs font-semibold text-on-error-container" role="status" aria-live="polite">
+          {error}
         </p>
       ) : null}
 
-      {allEmpty ? (
-        <EmptyState message="Nao ha contratos em janela de vencimento." />
-      ) : (
-        <section className="space-y-4" aria-busy={runningAction?.id ? true : undefined}>
-          {groups.map(([key, items]) => (
-            <article key={key} className="motion-fade-up motion-delay-2 rounded-2xl border border-outline-variant/30 bg-surface-container-low p-4 md:p-5">
-              <h4 className="font-headline text-lg font-extrabold">{groupLabel[key]}</h4>
-              {items.length === 0 ? (
-                <p className="text-sm text-on-surface-variant mt-2">Sem contratos neste grupo.</p>
-              ) : (
-                <div className="mt-3 space-y-2">
-                  {items.map((item) => (
-                    <div key={item.id} className="hover-lift rounded-lg bg-surface-container-highest px-3 py-3">
-                      <div className="flex flex-wrap items-start justify-between gap-3">
-                        <div>
-                          <p className="text-xs uppercase tracking-widest text-on-surface-variant">{item.contractNumber}</p>
-                          <p className="font-semibold">{item.name}</p>
-                          <p className="text-xs text-on-surface-variant">
-                            {item.supplier} · Fim: {item.endDate}
-                          </p>
+      <div className="relative" aria-busy={refreshing ? true : undefined}>
+        {allEmpty ? (
+          <EmptyState message="Nao ha contratos em janela de vencimento." />
+        ) : (
+          <section className="space-y-4" aria-busy={runningAction?.id ? true : undefined}>
+            {groups.map(([key, items]) => (
+              <article key={key} className="motion-fade-up motion-delay-2 rounded-2xl border border-outline-variant/30 bg-surface-container-low p-4 md:p-5">
+                <h4 className="font-headline text-lg font-extrabold">{groupLabel[key]}</h4>
+                {items.length === 0 ? (
+                  <p className="mt-2 text-sm text-on-surface-variant">Sem contratos neste grupo.</p>
+                ) : (
+                  <div className="mt-3 space-y-2">
+                    {items.map((item) => (
+                      <div key={item.id} className="hover-lift rounded-lg bg-surface-container-highest px-3 py-3">
+                        <div className="flex flex-wrap items-start justify-between gap-3">
+                          <div>
+                            <p className="text-xs uppercase tracking-widest text-on-surface-variant">{item.contractNumber}</p>
+                            <p className="font-semibold">{item.name}</p>
+                            <p className="text-xs text-on-surface-variant">
+                              {item.supplier} · Fim: {item.endDate}
+                            </p>
+                          </div>
+                          <div className="flex flex-wrap items-center gap-2">
+                            <ContractStatusBadge status={item.status} />
+                            <ContractRiskBadge risk={item.risk} />
+                          </div>
                         </div>
-                        <div className="flex flex-wrap items-center gap-2">
-                          <ContractStatusBadge status={item.status} />
-                          <ContractRiskBadge risk={item.risk} />
+                        <div className="mt-3 grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:flex-wrap">
+                          <button
+                            type="button"
+                            aria-label={`Renovar contrato ${item.contractNumber}`}
+                            onClick={() => void handleRenew(item)}
+                            disabled={runningAction?.id === item.id}
+                            className="interactive-focus rounded bg-primary px-3 py-2 text-xs font-bold text-on-primary disabled:opacity-50"
+                          >
+                            {runningAction?.id === item.id && runningAction.type === 'renew' ? 'Renovando...' : 'Renovar'}
+                          </button>
+                          <button
+                            type="button"
+                            aria-label={`Encerrar contrato ${item.contractNumber}`}
+                            onClick={() => void handleClose(item)}
+                            disabled={runningAction?.id === item.id}
+                            className="interactive-focus rounded bg-error px-3 py-2 text-xs font-bold text-white disabled:opacity-50"
+                          >
+                            {runningAction?.id === item.id && runningAction.type === 'close' ? 'Encerrando...' : 'Encerrar'}
+                          </button>
                         </div>
                       </div>
-                      <div className="mt-3 grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:flex-wrap">
-                        <button
-                          type="button"
-                          aria-label={`Renovar contrato ${item.contractNumber}`}
-                          onClick={() => void handleRenew(item)}
-                          disabled={runningAction?.id === item.id}
-                          className="interactive-focus rounded bg-primary px-3 py-2 text-xs font-bold text-on-primary disabled:opacity-50"
-                        >
-                          {runningAction?.id === item.id && runningAction.type === 'renew' ? 'Renovando...' : 'Renovar'}
-                        </button>
-                        <button
-                          type="button"
-                          aria-label={`Encerrar contrato ${item.contractNumber}`}
-                          onClick={() => void handleClose(item)}
-                          disabled={runningAction?.id === item.id}
-                          className="interactive-focus rounded bg-error px-3 py-2 text-xs font-bold text-white disabled:opacity-50"
-                        >
-                          {runningAction?.id === item.id && runningAction.type === 'close' ? 'Encerrando...' : 'Encerrar'}
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </article>
-          ))}
-        </section>
-      )}
+                    ))}
+                  </div>
+                )}
+              </article>
+            ))}
+          </section>
+        )}
+
+        {refreshing ? (
+          <div className="pointer-events-none absolute inset-0 flex items-start justify-end rounded-2xl p-3">
+            <div className="flex items-center gap-2 rounded-full border border-outline-variant/35 bg-surface-container-low px-3 py-1.5 text-[11px] font-bold uppercase tracking-widest text-on-surface-variant shadow-sm">
+              <span className="h-2 w-2 animate-pulse rounded-full bg-primary" aria-hidden="true" />
+              Atualizando vencimentos...
+            </div>
+          </div>
+        ) : null}
+      </div>
     </ContractsPageShell>
   );
 }

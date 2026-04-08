@@ -24,6 +24,19 @@ const anomalyLabel: Record<'critical' | 'warning' | 'info', string> = {
   info: 'Informativo',
 };
 
+function normalizeText(value: unknown, fallback: string) {
+  if (typeof value !== 'string') {
+    return fallback;
+  }
+
+  const raw = value.trim();
+  if (!raw || raw === '[object Object]' || raw.includes('oracledb.AsyncLOB object at')) {
+    return fallback;
+  }
+
+  return raw;
+}
+
 export default function Consumption() {
   const [data, setData] = useState<ConsumptionData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -114,8 +127,10 @@ export default function Consumption() {
                 </span>
                 <span className="rounded-full bg-surface-container-low px-2 py-1 text-[11px] font-bold text-on-surface-variant">{item.sigma}</span>
               </div>
-              <h4 className="mt-3 font-headline text-lg font-bold">{item.title}</h4>
-              <p className="mt-2 text-sm text-on-surface-variant">{item.description}</p>
+              <h4 className="mt-3 font-headline text-lg font-bold">{normalizeText(item.title, 'anomalia operacional')}</h4>
+              <p className="mt-2 text-sm text-on-surface-variant">
+                {normalizeText(item.description, 'Anomalia detectada automaticamente')}
+              </p>
             </article>
           ))}
         </div>

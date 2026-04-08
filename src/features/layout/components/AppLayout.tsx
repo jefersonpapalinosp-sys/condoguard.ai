@@ -20,6 +20,7 @@ const navItems: NavItem[] = [
   { id: 'contracts', label: 'Contratos', icon: 'description' },
   { id: 'invoices', label: 'Faturas', icon: 'receipt_long', allowedRoles: ['admin', 'sindico'] },
   { id: 'integrations/enel', label: 'Importacao Enel', icon: 'bolt', allowedRoles: ['admin', 'sindico'] },
+  { id: 'integrations/sabesp', label: 'Importacao Sabesp', icon: 'water_drop', allowedRoles: ['admin', 'sindico'] },
   { id: 'chat', label: 'Chat', icon: 'forum' },
   { id: 'management', label: 'Gestao', icon: 'domain', allowedRoles: ['admin', 'sindico'] },
   { id: 'observability', label: 'Observabilidade', icon: 'monitoring', allowedRoles: ['admin'] },
@@ -54,6 +55,15 @@ export function AppLayout() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const mobileMenuId = useId();
   const visibleNavItems = navItems.filter((item) => !item.allowedRoles || (role && item.allowedRoles.includes(role)));
+  const avatarIcon = useMemo(() => {
+    if (role === 'admin') {
+      return 'admin_panel_settings';
+    }
+    if (role === 'sindico') {
+      return 'assignment_ind';
+    }
+    return 'person';
+  }, [role]);
   const roleLabel = useMemo(() => {
     if (role === 'admin') {
       return 'Administrador';
@@ -182,11 +192,12 @@ export function AppLayout() {
               </button>
               <div className="hidden h-8 w-px bg-outline-variant/40 md:block" />
               <div className="flex items-center gap-2 sm:gap-3">
-                <img
-                  src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"
-                  alt={`Avatar de ${userName}`}
-                  className="h-8 w-8 rounded-full border border-outline-variant/60 object-cover"
-                />
+                <div
+                  aria-label={`Avatar do usuario ${userName}`}
+                  className="flex h-8 w-8 items-center justify-center rounded-full border border-outline-variant/60 bg-surface-container-high text-on-surface-variant"
+                >
+                  <span className="material-symbols-outlined text-[18px]">{avatarIcon}</span>
+                </div>
                 <div className="min-w-0 text-right">
                   <p className="truncate text-xs font-semibold text-on-surface sm:text-sm">{userName}</p>
                   <p className="text-[10px] uppercase tracking-[0.15em] text-on-surface-variant">{roleLabel}</p>
