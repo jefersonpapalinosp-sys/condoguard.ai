@@ -62,6 +62,14 @@ class Settings(BaseSettings):
     gemini_api_key: str = Field(default="", alias="GEMINI_API_KEY")
     gemini_model: str = Field(default="gemini-2.0-flash", alias="GEMINI_MODEL")
 
+    langchain_tracing_v2: bool = Field(default=False, alias="LANGCHAIN_TRACING_V2")
+    langchain_api_key: str = Field(default="", alias="LANGCHAIN_API_KEY")
+    embedding_provider: Literal["google", "local"] = Field(default="local", alias="EMBEDDING_PROVIDER")
+    chroma_persist_dir: str = Field(default="./data/chroma_db", alias="CHROMA_PERSIST_DIR")
+    rag_top_k: int = Field(default=3, alias="RAG_TOP_K")
+    rag_enabled: bool = Field(default=True, alias="RAG_ENABLED")
+    knowledge_base_dir: str = Field(default="backend/data/knowledge_base", alias="KNOWLEDGE_BASE_DIR")
+
     oracle_user: str = Field(default="", alias="ORACLE_USER")
     oracle_password: str = Field(default="", alias="ORACLE_PASSWORD")
     oracle_connect_string: str = Field(default="", alias="ORACLE_CONNECT_STRING")

@@ -32,6 +32,17 @@ class CadastroStatusBody(BaseModel):
     status: Literal["active", "pending", "inactive"]
 
 
+class CadastroUpdateBody(BaseModel):
+    tipo: Literal["unidade", "morador", "fornecedor", "servico"] | None = None
+    titulo: str | None = Field(default=None, min_length=1, max_length=120)
+    descricao: str | None = Field(default=None, min_length=1, max_length=240)
+    status: Literal["active", "pending", "inactive"] | None = None
+
+
+class UnitStatusBody(BaseModel):
+    status: Literal["occupied", "vacant", "maintenance"]
+
+
 class ContractCreateBody(BaseModel):
     contractNumber: str | None = Field(default=None, max_length=60)
     name: str = Field(min_length=1, max_length=180)
@@ -78,6 +89,23 @@ class ContractDocumentCreateBody(BaseModel):
     sizeKb: float = Field(ge=0, le=102400)
     status: Literal["active", "archived", "pending_review"] = "active"
     url: str | None = Field(default=None, max_length=500)
+
+
+class InvoiceCreateBody(BaseModel):
+    unit: str = Field(min_length=1, max_length=30)
+    resident: str | None = Field(default=None, max_length=180)
+    reference: str | None = Field(default=None, max_length=20)
+    dueDate: str = Field(min_length=8, max_length=10)
+    amount: float = Field(gt=0, le=999999999)
+    status: Literal["pending", "paid", "overdue"] = "pending"
+
+
+class InvoiceUpdateBody(BaseModel):
+    unit: str | None = Field(default=None, min_length=1, max_length=30)
+    resident: str | None = Field(default=None, max_length=180)
+    reference: str | None = Field(default=None, max_length=20)
+    dueDate: str | None = Field(default=None, min_length=8, max_length=10)
+    amount: float | None = Field(default=None, gt=0, le=999999999)
 
 
 class EnelInvoiceInputBody(BaseModel):

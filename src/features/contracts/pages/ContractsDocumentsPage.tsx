@@ -1,6 +1,9 @@
 import type { ChangeEvent } from 'react';
 import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { EmptyState } from '../../../shared/ui/states/EmptyState';
+import { ErrorState } from '../../../shared/ui/states/ErrorState';
+import { ContractsLoadingSkeleton } from '../components/ContractsLoadingSkeleton';
 import { ContractsPageShell } from '../components/ContractsPageShell';
 import {
   deleteContractDocument,
@@ -9,9 +12,21 @@ import {
   uploadContractDocument,
 } from '../services/contractsManagementService';
 import type { ContractDocument, ContractRecord } from '../types/contracts';
-import { EmptyState } from '../../../shared/ui/states/EmptyState';
-import { ErrorState } from '../../../shared/ui/states/ErrorState';
-import { LoadingState } from '../../../shared/ui/states/LoadingState';
+
+const filterFieldClass =
+  'rounded-xl border border-outline-variant/30 bg-surface-container-highest px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-primary-fixed';
+
+const documentStatusLabel: Record<ContractDocument['status'], string> = {
+  active: 'Ativo',
+  archived: 'Arquivado',
+  pending_review: 'Pendente de revisao',
+};
+
+const documentStatusClass: Record<ContractDocument['status'], string> = {
+  active: 'bg-tertiary-fixed-dim/30 text-on-tertiary-fixed-variant',
+  archived: 'bg-surface-container-high text-on-surface-variant',
+  pending_review: 'bg-secondary-container text-on-secondary-container',
+};
 
 export default function ContractsDocumentsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -95,98 +110,191 @@ export default function ContractsDocumentsPage() {
     }
   }
 
-  if (loading) return <LoadingState message="Carregando documentos contratuais..." />;
+  if (loading) {
+    return (
+      <ContractsLoadingSkeleton
+        title="Documentos de contratos"
+        subtitle="Gestao de anexos por contrato, tipo de documento e status de envio."
+        variant="table"
+        message="Carregando documentos contratuais..."
+      />
+    );
+  }
   if (error) return <ErrorState message={error} />;
 
   return (
     <ContractsPageShell title="Documentos de contratos" subtitle="Gestao de anexos por contrato, tipo de documento e status de envio.">
-      <section className="bg-surface-container-low rounded-xl p-4 grid grid-cols-1 md:grid-cols-3 gap-3">
-        <select
-          value={selectedContractId}
-          onChange={(event) => {
-            const value = event.target.value;
-            setSelectedContractId(value);
-            if (value) {
-              setSearchParams({ contractId: value });
-            } else {
-              setSearchParams({});
-            }
-          }}
-          className="px-3 py-2 rounded-lg bg-surface-container-highest outline-none"
-        >
-          <option value="">Todos os contratos</option>
-          {contracts.map((item) => (
-            <option key={item.id} value={item.id}>
-              {item.contractNumber} - {item.name}
-            </option>
-          ))}
-        </select>
+      <section className="rounded-2xl border border-outline-variant/30 bg-surface-container-low p-4 md:p-5">
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+          <select
+            aria-label="Filtrar documentos por contrato"
+            value={selectedContractId}
+            onChange={(event) => {
+              const value = event.target.value;
+              setSelectedContractId(value);
+              if (value) {
+                setSearchParams({ contractId: value });
+              } else {
+                setSearchParams({});
+              }
+            }}
+            className={filterFieldClass}
+          >
+            <option value="">Todos os contratos</option>
+            {contracts.map((item) => (
+              <option key={item.id} value={item.id}>
+                {item.contractNumber} - {item.name}
+              </option>
+            ))}
+          </select>
 
-        <select value={docType} onChange={(event) => setDocType(event.target.value)} className="px-3 py-2 rounded-lg bg-surface-container-highest outline-none">
-          <option value="geral">Documento geral</option>
-          <option value="aditivo">Aditivo</option>
-          <option value="fiscal">Fiscal</option>
-          <option value="juridico">Juridico</option>
-          <option value="sla">SLA</option>
-        </select>
+          <select aria-label="Selecionar tipo de documento para upload" value={docType} onChange={(event) => setDocType(event.target.value)} className={filterFieldClass}>
+            <option value="geral">Documento geral</option>
+            <option value="aditivo">Aditivo</option>
+            <option value="fiscal">Fiscal</option>
+            <option value="juridico">Juridico</option>
+            <option value="sla">SLA</option>
+          </select>
 
-        <label className="px-3 py-2 rounded-lg bg-primary text-on-primary text-xs font-bold uppercase tracking-widest cursor-pointer text-center">
-          {submitting ? 'Enviando...' : 'Upload de documento'}
-          <input type="file" className="hidden" disabled={!selectedContractId || submitting} onChange={handleUpload} />
-        </label>
+          <label
+            className={`flex items-center justify-center rounded-xl px-3 py-2.5 text-xs font-bold uppercase tracking-widest text-center ${
+              !selectedContractId || submitting
+                ? 'cursor-not-allowed bg-surface-container-highest text-on-surface-variant'
+                : 'cursor-pointer bg-primary text-on-primary'
+            } interactive-focus`}
+          >
+            {submitting ? 'Enviando...' : 'Upload de documento'}
+            <input type="file" className="hidden" disabled={!selectedContractId || submitting} onChange={handleUpload} />
+          </label>
+        </div>
+
+        {!selectedContractId ? (
+          <p className="mt-3 text-xs text-on-surface-variant">Selecione um contrato para liberar o upload de anexos.</p>
+        ) : null}
       </section>
+
+      {submitting || runningDeleteId ? (
+        <p className="text-xs text-on-surface-variant" aria-live="polite">
+          Atualizando documentos...
+        </p>
+      ) : null}
 
       {filteredDocuments.length === 0 ? (
         <EmptyState message="Nenhum documento encontrado para o filtro selecionado." />
       ) : (
-        <section className="bg-surface-container-low rounded-xl p-4 overflow-x-auto">
-          <table className="w-full min-w-[820px] text-sm">
-            <thead>
-              <tr className="text-left text-on-surface-variant uppercase tracking-widest text-[10px]">
-                <th className="py-3">Contrato</th>
-                <th className="py-3">Documento</th>
-                <th className="py-3">Tipo</th>
-                <th className="py-3">Data envio</th>
-                <th className="py-3">Status</th>
-                <th className="py-3">Acoes</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredDocuments.map((doc) => (
-                <tr key={doc.id} className="border-t border-outline-variant/20">
-                  <td className="py-3">{doc.contractName || doc.contractId}</td>
-                  <td className="py-3">
-                    <p className="font-semibold">{doc.name}</p>
-                    <p className="text-xs text-on-surface-variant">{doc.sizeKb.toFixed(2)} KB</p>
-                  </td>
-                  <td className="py-3">{doc.type}</td>
-                  <td className="py-3">{doc.uploadedAt}</td>
-                  <td className="py-3">{doc.status}</td>
-                  <td className="py-3">
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => {
-                          if (doc.url) window.open(doc.url, '_blank', 'noopener,noreferrer');
-                        }}
-                        className="px-3 py-2 rounded bg-surface-container-highest text-xs font-bold"
-                        disabled={!doc.url}
-                      >
-                        Baixar
-                      </button>
-                      <button
-                        onClick={() => void handleDelete(doc.id)}
-                        disabled={runningDeleteId === doc.id}
-                        className="px-3 py-2 rounded bg-error text-white text-xs font-bold disabled:opacity-50"
-                      >
-                        Remover
-                      </button>
-                    </div>
-                  </td>
+        <>
+          <section className="space-y-3 md:hidden" aria-busy={submitting || Boolean(runningDeleteId)}>
+            {filteredDocuments.map((doc) => (
+              <article key={doc.id} className="hover-lift rounded-2xl border border-outline-variant/25 bg-surface-container-low p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-[10px] uppercase tracking-widest text-on-surface-variant">{doc.contractName || doc.contractId}</p>
+                    <h3 className="mt-1 font-headline text-base font-bold">{doc.name}</h3>
+                  </div>
+                  <span className={`rounded-full px-2 py-1 text-[10px] font-bold ${documentStatusClass[doc.status]}`}>
+                    {documentStatusLabel[doc.status]}
+                  </span>
+                </div>
+
+                <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
+                  <div className="rounded-lg bg-surface-container-highest px-2.5 py-2">
+                    <p className="uppercase tracking-widest text-on-surface-variant">Tipo</p>
+                    <p className="mt-1 font-semibold">{doc.type}</p>
+                  </div>
+                  <div className="rounded-lg bg-surface-container-highest px-2.5 py-2">
+                    <p className="uppercase tracking-widest text-on-surface-variant">Tamanho</p>
+                    <p className="mt-1 font-semibold">{doc.sizeKb.toFixed(2)} KB</p>
+                  </div>
+                  <div className="col-span-2 rounded-lg bg-surface-container-highest px-2.5 py-2">
+                    <p className="uppercase tracking-widest text-on-surface-variant">Data envio</p>
+                    <p className="mt-1 font-semibold">{doc.uploadedAt}</p>
+                  </div>
+                </div>
+
+                <div className="mt-3 grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    aria-label={`Baixar documento ${doc.name}`}
+                    onClick={() => {
+                      if (doc.url) window.open(doc.url, '_blank', 'noopener,noreferrer');
+                    }}
+                    className="interactive-focus w-full rounded-lg bg-surface-container-highest px-3 py-2 text-xs font-bold"
+                    disabled={!doc.url}
+                  >
+                    Baixar
+                  </button>
+                  <button
+                    type="button"
+                    aria-label={`Remover documento ${doc.name}`}
+                    onClick={() => void handleDelete(doc.id)}
+                    disabled={runningDeleteId === doc.id}
+                    className="interactive-focus w-full rounded-lg bg-error px-3 py-2 text-xs font-bold text-white disabled:opacity-50"
+                  >
+                    {runningDeleteId === doc.id ? 'Removendo...' : 'Remover'}
+                  </button>
+                </div>
+              </article>
+            ))}
+          </section>
+
+          <section className="hidden overflow-x-auto rounded-2xl border border-outline-variant/30 bg-surface-container-low p-5 md:block" aria-busy={submitting || Boolean(runningDeleteId)}>
+            <table className="w-full min-w-[820px] text-sm">
+              <caption className="sr-only">Documentos de contratos com tipo, data de envio e status.</caption>
+              <thead>
+                <tr className="text-left text-[10px] uppercase tracking-widest text-on-surface-variant">
+                  <th scope="col" className="py-3">Contrato</th>
+                  <th scope="col" className="py-3">Documento</th>
+                  <th scope="col" className="py-3">Tipo</th>
+                  <th scope="col" className="py-3">Data envio</th>
+                  <th scope="col" className="py-3">Status</th>
+                  <th scope="col" className="py-3">Acoes</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </section>
+              </thead>
+              <tbody>
+                {filteredDocuments.map((doc) => (
+                  <tr key={doc.id} className="border-t border-outline-variant/20">
+                    <th scope="row" className="py-3 text-left">{doc.contractName || doc.contractId}</th>
+                    <td className="py-3">
+                      <p className="font-semibold">{doc.name}</p>
+                      <p className="text-xs text-on-surface-variant">{doc.sizeKb.toFixed(2)} KB</p>
+                    </td>
+                    <td className="py-3">{doc.type}</td>
+                    <td className="py-3">{doc.uploadedAt}</td>
+                    <td className="py-3">
+                      <span className={`rounded px-2 py-1 text-xs font-bold ${documentStatusClass[doc.status]}`}>
+                        {documentStatusLabel[doc.status]}
+                      </span>
+                    </td>
+                    <td className="py-3">
+                      <div className="flex gap-2">
+                        <button
+                          type="button"
+                          aria-label={`Baixar documento ${doc.name}`}
+                          onClick={() => {
+                            if (doc.url) window.open(doc.url, '_blank', 'noopener,noreferrer');
+                          }}
+                          className="interactive-focus rounded bg-surface-container-highest px-3 py-2 text-xs font-bold"
+                          disabled={!doc.url}
+                        >
+                          Baixar
+                        </button>
+                        <button
+                          type="button"
+                          aria-label={`Remover documento ${doc.name}`}
+                          onClick={() => void handleDelete(doc.id)}
+                          disabled={runningDeleteId === doc.id}
+                          className="interactive-focus rounded bg-error px-3 py-2 text-xs font-bold text-white disabled:opacity-50"
+                        >
+                          {runningDeleteId === doc.id ? 'Removendo...' : 'Remover'}
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </section>
+        </>
       )}
     </ContractsPageShell>
   );

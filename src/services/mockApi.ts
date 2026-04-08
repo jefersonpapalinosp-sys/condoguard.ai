@@ -114,6 +114,10 @@ export type ChatMessage = {
     reason: string | null;
     policyVersion: string;
   };
+  // Sprint 2+ — multi-agent fields (optional, backwards-compatible)
+  agentName?: string | null;
+  ragSources?: string[];
+  aiPowered?: boolean;
 };
 
 export type ChatData = {

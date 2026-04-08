@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { fetchManagementData } from '../services/managementService';
+import { fetchManagementData, updateUnitStatus } from '../services/managementService';
 import type { ManagementUnit, UnitStatus } from '../services/mockApi';
 import { DataSourceBadge } from '../shared/ui/DataSourceBadge';
 import { EmptyState } from '../shared/ui/states/EmptyState';
@@ -16,6 +16,12 @@ const statusClass: Record<UnitStatus, string> = {
   occupied: 'bg-tertiary-fixed-dim/30 text-on-tertiary-fixed-variant',
   vacant: 'bg-surface-container-highest text-on-surface-variant',
   maintenance: 'bg-error-container text-on-error-container',
+};
+
+const statusLabelCompact: Record<UnitStatus, string> = {
+  occupied: 'Ocupada',
+  vacant: 'Vaga',
+  maintenance: 'Manut.',
 };
 
 function nextStatus(status: UnitStatus): UnitStatus {
@@ -45,6 +51,7 @@ export default function Management() {
   const [search, setSearch] = useState('');
   const [sortBy, setSortBy] = useState<'block' | 'unit' | 'resident' | 'status' | 'lastUpdate'>('unit');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+  const [updatingUnitId, setUpdatingUnitId] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const [meta, setMeta] = useState({
     page: 1,
@@ -110,19 +117,27 @@ export default function Management() {
     };
   }, [blockFilter, meta.pageSize, page, search, sortBy, sortOrder, statusFilter]);
 
-  function rotateStatus(id: string) {
+  async function rotateStatus(id: string) {
+    const unit = units.find((u) => u.id === id);
+    if (!unit || updatingUnitId === id) return;
+
+    const newStatus = nextStatus(unit.status);
+
+    // optimistic update
     setUnits((current) =>
-      current.map((unit) => {
-        if (unit.id !== id) {
-          return unit;
-        }
-        return {
-          ...unit,
-          status: nextStatus(unit.status),
-          lastUpdate: 'Agora',
-        };
-      }),
+      current.map((u) => (u.id === id ? { ...u, status: newStatus, lastUpdate: 'Agora' } : u)),
     );
+    setUpdatingUnitId(id);
+
+    try {
+      const updated = await updateUnitStatus(id, newStatus);
+      setUnits((current) => current.map((u) => (u.id === id ? { ...u, ...updated } : u)));
+    } catch {
+      // revert on failure
+      setUnits((current) => current.map((u) => (u.id === id ? unit : u)));
+    } finally {
+      setUpdatingUnitId(null);
+    }
   }
 
   if (loading) {
@@ -150,159 +165,194 @@ export default function Management() {
   }
 
   return (
-    <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-8">
-      <section className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <h2 className="font-headline text-2xl md:text-4xl font-extrabold tracking-tight">Centro de gestao</h2>
-          <p className="text-on-surface-variant mt-2">Visao de unidades, ocupacao e manutencao em tempo real.</p>
+    <div className="mx-auto max-w-7xl space-y-6 p-4 md:space-y-8 md:p-8">
+      <section className="rounded-3xl bg-[linear-gradient(136deg,#182420_0%,#254b42_64%,#2f6e63_100%)] p-5 text-white shadow-xl md:p-7">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div className="max-w-2xl">
+            <p className="text-[11px] uppercase tracking-[0.2em] text-white/75">Gestao operacional</p>
+            <h2 className="mt-2 font-headline text-2xl font-extrabold tracking-tight md:text-4xl">Centro de gestao</h2>
+            <p className="mt-2 text-sm text-white/85 md:text-base">Acompanhamento de ocupacao, manutencao e pendencias por unidade.</p>
+          </div>
+          <DataSourceBadge module="management" />
         </div>
-        <DataSourceBadge module="management" />
-      </section>
 
-      <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-surface-container-highest p-6 rounded-xl">
-          <p className="text-xs uppercase tracking-widest text-on-surface-variant">Ocupacao</p>
-          <h3 className="text-2xl md:text-3xl font-headline font-extrabold mt-2">{indicators.occupancyRate}%</h3>
-          <p className="text-xs text-on-surface-variant mt-1">
-            {indicators.occupiedCount} ocupadas de {indicators.totalUnits}
-          </p>
-        </div>
-        <div className="bg-surface-container-highest p-6 rounded-xl">
-          <p className="text-xs uppercase tracking-widest text-on-surface-variant">Inadimplencia</p>
-          <h3 className="text-2xl md:text-3xl font-headline font-extrabold mt-2">{indicators.delinquencyRate}%</h3>
-          <p className="text-xs text-on-surface-variant mt-1">
-            {indicators.delinquencyUnits} unidades inadimplentes
-          </p>
-        </div>
-        <div className="bg-surface-container-highest p-6 rounded-xl">
-          <p className="text-xs uppercase tracking-widest text-on-surface-variant">Pendencias</p>
-          <h3 className="text-2xl md:text-3xl font-headline font-extrabold mt-2">{indicators.pendingCount}</h3>
-          <p className="text-xs text-on-surface-variant mt-1">Manutencoes + cadastros pendentes</p>
+        <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-3">
+          <article className="rounded-2xl bg-white/12 px-4 py-3">
+            <p className="text-[10px] uppercase tracking-widest text-white/75">Ocupacao</p>
+            <p className="mt-1 text-xl font-extrabold md:text-2xl">{indicators.occupancyRate}%</p>
+            <p className="text-[11px] text-white/80">{indicators.occupiedCount} de {indicators.totalUnits}</p>
+          </article>
+          <article className="rounded-2xl bg-white/12 px-4 py-3">
+            <p className="text-[10px] uppercase tracking-widest text-white/75">Inadimplencia</p>
+            <p className="mt-1 text-xl font-extrabold md:text-2xl">{indicators.delinquencyRate}%</p>
+            <p className="text-[11px] text-white/80">{indicators.delinquencyUnits} unidades</p>
+          </article>
+          <article className="rounded-2xl bg-white/12 px-4 py-3">
+            <p className="text-[10px] uppercase tracking-widest text-white/75">Pendencias</p>
+            <p className="mt-1 text-xl font-extrabold md:text-2xl">{indicators.pendingCount}</p>
+            <p className="text-[11px] text-white/80">manutencoes e cadastros</p>
+          </article>
         </div>
       </section>
 
-      <section className="flex flex-wrap gap-2">
-        <button onClick={() => { setPage(1); setBlockFilter('all'); }} className={blockFilterClass('all')}>
-          Todos os blocos
-        </button>
-        <button onClick={() => { setPage(1); setBlockFilter('A'); }} className={blockFilterClass('A')}>
-          Bloco A
-        </button>
-        <button onClick={() => { setPage(1); setBlockFilter('B'); }} className={blockFilterClass('B')}>
-          Bloco B
-        </button>
-        <button onClick={() => { setPage(1); setBlockFilter('C'); }} className={blockFilterClass('C')}>
-          Bloco C
-        </button>
+      <section className="rounded-2xl border border-outline-variant/30 bg-surface-container-low p-4 md:p-5">
+        <div className="flex flex-wrap gap-2">
+          <button onClick={() => { setPage(1); setBlockFilter('all'); }} className={blockFilterClass('all')}>
+            Todos os blocos
+          </button>
+          <button onClick={() => { setPage(1); setBlockFilter('A'); }} className={blockFilterClass('A')}>
+            Bloco A
+          </button>
+          <button onClick={() => { setPage(1); setBlockFilter('B'); }} className={blockFilterClass('B')}>
+            Bloco B
+          </button>
+          <button onClick={() => { setPage(1); setBlockFilter('C'); }} className={blockFilterClass('C')}>
+            Bloco C
+          </button>
+        </div>
+
+        <div className="mt-3 flex flex-wrap gap-2">
+          <button onClick={() => { setPage(1); setStatusFilter('all'); }} className={statusFilterClass('all')}>
+            Todos os status
+          </button>
+          <button onClick={() => { setPage(1); setStatusFilter('occupied'); }} className={statusFilterClass('occupied')}>
+            Ocupadas
+          </button>
+          <button onClick={() => { setPage(1); setStatusFilter('maintenance'); }} className={statusFilterClass('maintenance')}>
+            Manutencao
+          </button>
+          <button onClick={() => { setPage(1); setStatusFilter('vacant'); }} className={statusFilterClass('vacant')}>
+            Vagas
+          </button>
+        </div>
+
+        <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-3">
+          <input
+            value={search}
+            onChange={(event) => {
+              setPage(1);
+              setSearch(event.target.value);
+            }}
+            placeholder="Buscar por bloco, unidade ou morador..."
+            className="rounded-xl border border-outline-variant/30 bg-surface-container-highest px-4 py-3 text-sm outline-none"
+          />
+          <select
+            value={sortBy}
+            onChange={(event) => {
+              setPage(1);
+              setSortBy(event.target.value as 'block' | 'unit' | 'resident' | 'status' | 'lastUpdate');
+            }}
+            className="rounded-xl border border-outline-variant/30 bg-surface-container-highest px-4 py-3 text-sm outline-none"
+          >
+            <option value="unit">Ordenar por unidade</option>
+            <option value="block">Ordenar por bloco</option>
+            <option value="resident">Ordenar por morador</option>
+            <option value="status">Ordenar por status</option>
+            <option value="lastUpdate">Ordenar por atualizacao</option>
+          </select>
+          <select
+            value={sortOrder}
+            onChange={(event) => {
+              setPage(1);
+              setSortOrder(event.target.value as 'asc' | 'desc');
+            }}
+            className="rounded-xl border border-outline-variant/30 bg-surface-container-highest px-4 py-3 text-sm outline-none"
+          >
+            <option value="asc">Ordem crescente</option>
+            <option value="desc">Ordem decrescente</option>
+          </select>
+        </div>
       </section>
 
-      <section className="flex flex-wrap gap-2">
-        <button onClick={() => { setPage(1); setStatusFilter('all'); }} className={statusFilterClass('all')}>
-          Todos os status
-        </button>
-        <button onClick={() => { setPage(1); setStatusFilter('occupied'); }} className={statusFilterClass('occupied')}>
-          Ocupadas
-        </button>
-        <button onClick={() => { setPage(1); setStatusFilter('maintenance'); }} className={statusFilterClass('maintenance')}>
-          Manutencao
-        </button>
-        <button onClick={() => { setPage(1); setStatusFilter('vacant'); }} className={statusFilterClass('vacant')}>
-          Vagas
-        </button>
-      </section>
+      <section className="space-y-3 md:hidden">
+        {units.map((unit) => (
+          <article key={unit.id} className="rounded-2xl border border-outline-variant/25 bg-surface-container-low p-4">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-[10px] uppercase tracking-widest text-on-surface-variant">Unidade</p>
+                <h3 className="mt-1 font-headline text-lg font-bold">{unit.block}-{unit.unit}</h3>
+                <p className="mt-1 text-sm text-on-surface-variant">{unit.resident}</p>
+              </div>
+              <span className={`rounded-full px-2 py-1 text-[10px] font-bold ${statusClass[unit.status]}`}>
+                {statusLabelCompact[unit.status]}
+              </span>
+            </div>
 
-      <section className="grid grid-cols-1 md:grid-cols-3 gap-3">
-        <input
-          value={search}
-          onChange={(event) => {
-            setPage(1);
-            setSearch(event.target.value);
-          }}
-          placeholder="Buscar por bloco, unidade ou morador..."
-          className="bg-surface-container-highest rounded-xl px-4 py-3 text-sm outline-none border border-outline-variant/30"
-        />
-        <select
-          value={sortBy}
-          onChange={(event) => {
-            setPage(1);
-            setSortBy(event.target.value as 'block' | 'unit' | 'resident' | 'status' | 'lastUpdate');
-          }}
-          className="bg-surface-container-highest rounded-xl px-4 py-3 text-sm outline-none border border-outline-variant/30"
-        >
-          <option value="unit">Ordenar por unidade</option>
-          <option value="block">Ordenar por bloco</option>
-          <option value="resident">Ordenar por morador</option>
-          <option value="status">Ordenar por status</option>
-          <option value="lastUpdate">Ordenar por atualizacao</option>
-        </select>
-        <select
-          value={sortOrder}
-          onChange={(event) => {
-            setPage(1);
-            setSortOrder(event.target.value as 'asc' | 'desc');
-          }}
-          className="bg-surface-container-highest rounded-xl px-4 py-3 text-sm outline-none border border-outline-variant/30"
-        >
-          <option value="asc">Ordem crescente</option>
-          <option value="desc">Ordem decrescente</option>
-        </select>
-      </section>
-
-      {units.length === 0 ? (
-        <EmptyState message="Nenhuma unidade encontrada para os filtros selecionados." />
-      ) : (
-        <section className="bg-surface-container-low rounded-xl p-6 overflow-x-auto">
-          <table className="w-full min-w-[760px] text-sm">
-            <thead>
-              <tr className="text-left text-on-surface-variant uppercase tracking-widest text-[10px]">
-                <th className="py-3">Bloco/Unidade</th>
-                <th className="py-3">Morador</th>
-                <th className="py-3">Status</th>
-                <th className="py-3">Atualizacao</th>
-                <th className="py-3">Acao</th>
-              </tr>
-            </thead>
-            <tbody>
-              {units.map((unit) => (
-                <tr key={unit.id} className="border-t border-outline-variant/20">
-                  <td className="py-4 font-bold">{unit.block}-{unit.unit}</td>
-                  <td className="py-4">{unit.resident}</td>
-                  <td className="py-4">
-                    <span className={`px-2 py-1 rounded text-xs font-bold ${statusClass[unit.status]}`}>{statusLabel[unit.status]}</span>
-                  </td>
-                  <td className="py-4">{unit.lastUpdate}</td>
-                  <td className="py-4">
-                    <button onClick={() => rotateStatus(unit.id)} className="px-3 py-1.5 text-xs font-bold rounded bg-primary text-on-primary">
-                      Alterar status
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
-            <p className="text-xs text-on-surface-variant">
-              Pagina {meta.page} de {meta.totalPages} | Total: {meta.total}
-            </p>
-            <div className="flex gap-2">
+            <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
+              <div className="rounded-lg bg-surface-container-highest px-2.5 py-2">
+                <p className="uppercase tracking-widest text-on-surface-variant">Ultima atualizacao</p>
+                <p className="mt-1 font-semibold text-on-surface">{unit.lastUpdate}</p>
+              </div>
               <button
-                onClick={() => setPage((current) => Math.max(1, current - 1))}
-                disabled={!meta.hasPrevious}
-                className="px-3 py-2 text-xs font-bold rounded bg-surface-container-highest disabled:opacity-50"
+                onClick={() => void rotateStatus(unit.id)}
+                disabled={updatingUnitId === unit.id}
+                className="rounded-lg bg-primary px-3 py-2 text-xs font-bold text-on-primary disabled:opacity-50"
               >
-                Anterior
-              </button>
-              <button
-                onClick={() => setPage((current) => current + 1)}
-                disabled={!meta.hasNext}
-                className="px-3 py-2 text-xs font-bold rounded bg-primary text-on-primary disabled:opacity-50"
-              >
-                Proxima
+                {updatingUnitId === unit.id ? 'Atualizando...' : 'Alterar status'}
               </button>
             </div>
+          </article>
+        ))}
+      </section>
+
+      <section className="hidden overflow-x-auto rounded-2xl border border-outline-variant/30 bg-surface-container-low p-5 md:block">
+        <table className="w-full min-w-[760px] text-sm">
+          <thead>
+            <tr className="text-left text-[10px] uppercase tracking-widest text-on-surface-variant">
+              <th className="py-3">Bloco/Unidade</th>
+              <th className="py-3">Morador</th>
+              <th className="py-3">Status</th>
+              <th className="py-3">Atualizacao</th>
+              <th className="py-3">Acao</th>
+            </tr>
+          </thead>
+          <tbody>
+            {units.map((unit) => (
+              <tr key={unit.id} className="border-t border-outline-variant/20">
+                <td className="py-4 font-bold">{unit.block}-{unit.unit}</td>
+                <td className="py-4">{unit.resident}</td>
+                <td className="py-4">
+                  <span className={`rounded px-2 py-1 text-xs font-bold ${statusClass[unit.status]}`}>{statusLabel[unit.status]}</span>
+                </td>
+                <td className="py-4">{unit.lastUpdate}</td>
+                <td className="py-4">
+                  <button
+                    onClick={() => void rotateStatus(unit.id)}
+                    disabled={updatingUnitId === unit.id}
+                    className="rounded bg-primary px-3 py-1.5 text-xs font-bold text-on-primary disabled:opacity-50"
+                  >
+                    {updatingUnitId === unit.id ? 'Atualizando...' : 'Alterar status'}
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </section>
+
+      <section className="rounded-2xl border border-outline-variant/30 bg-surface-container-low px-4 py-3">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <p className="text-xs font-semibold text-on-surface-variant">
+            Pagina {meta.page} de {meta.totalPages} | Total: {meta.total}
+          </p>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setPage((current) => Math.max(1, current - 1))}
+              disabled={!meta.hasPrevious}
+              className="rounded-lg bg-surface-container-highest px-3 py-2 text-xs font-bold disabled:opacity-50"
+            >
+              Anterior
+            </button>
+            <button
+              onClick={() => setPage((current) => current + 1)}
+              disabled={!meta.hasNext}
+              className="rounded-lg bg-primary px-3 py-2 text-xs font-bold text-on-primary disabled:opacity-50"
+            >
+              Proxima
+            </button>
           </div>
-        </section>
-      )}
+        </div>
+      </section>
     </div>
   );
 }

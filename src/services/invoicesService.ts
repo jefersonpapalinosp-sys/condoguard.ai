@@ -101,6 +101,33 @@ export async function exportInvoicesCsv(params: InvoiceListQuery = {}): Promise<
   return response.blob();
 }
 
+export type InvoiceCreatePayload = {
+  unit: string;
+  resident?: string;
+  reference?: string;
+  dueDate: string;
+  amount: number;
+  status?: 'pending' | 'paid' | 'overdue';
+};
+
+export type InvoiceUpdatePayload = Partial<Pick<InvoiceCreatePayload, 'unit' | 'resident' | 'reference' | 'dueDate' | 'amount'>>;
+
+export async function createInvoiceData(payload: InvoiceCreatePayload): Promise<InvoicesData['items'][number]> {
+  const response = await requestJson<{ item: InvoicesData['items'][number] }>('/api/invoices', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+  return response.item;
+}
+
+export async function updateInvoiceData(invoiceId: string, payload: InvoiceUpdatePayload): Promise<InvoicesData['items'][number]> {
+  const response = await requestJson<{ item: InvoicesData['items'][number] }>(
+    `/api/invoices/${encodeURIComponent(invoiceId)}`,
+    { method: 'PATCH', body: JSON.stringify(payload) },
+  );
+  return response.item;
+}
+
 export async function markInvoiceAsPaid(invoiceId: string) {
   const safeId = encodeURIComponent(invoiceId);
   return requestJson<{ item: InvoicesData['items'][number] }>(`/api/invoices/${safeId}/pay`, {

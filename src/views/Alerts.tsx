@@ -7,9 +7,21 @@ import { ErrorState } from '../shared/ui/states/ErrorState';
 import { EmptyState } from '../shared/ui/states/EmptyState';
 
 const severityStyles: Record<'critical' | 'warning' | 'info', string> = {
-  critical: 'bg-error-container/30 border-error text-error',
-  warning: 'bg-surface-container-highest border-secondary text-secondary',
-  info: 'bg-surface-container-low border-on-primary-fixed-variant text-on-primary-fixed-variant',
+  critical: 'border-error/40 bg-error-container/25',
+  warning: 'border-secondary/35 bg-secondary-container/30',
+  info: 'border-on-primary-fixed-variant/35 bg-surface-container-highest',
+};
+
+const severityBadgeClass: Record<'critical' | 'warning' | 'info', string> = {
+  critical: 'bg-error-container text-on-error-container',
+  warning: 'bg-secondary-container text-on-secondary-container',
+  info: 'bg-tertiary-fixed-dim/30 text-on-tertiary-fixed-variant',
+};
+
+const severityLabel: Record<'critical' | 'warning' | 'info', string> = {
+  critical: 'Critico',
+  warning: 'Aviso',
+  info: 'Informativo',
 };
 
 function normalizeText(value: unknown, fallback: string) {
@@ -146,82 +158,106 @@ export default function Alerts() {
   }
 
   return (
-    <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-6">
-      <header className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
-        <div>
-          <h2 className="text-2xl md:text-3xl font-extrabold tracking-tight font-headline">Central de alertas</h2>
-          <p className="text-on-surface-variant mt-2">Monitoramento de eventos criticos e operacionais.</p>
+    <div className="mx-auto max-w-7xl space-y-6 p-4 md:p-8">
+      <header className="rounded-3xl bg-[linear-gradient(140deg,#131b2e_0%,#253a63_70%,#3b5489_100%)] p-5 text-white shadow-xl md:p-7">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div className="max-w-2xl">
+            <p className="text-[11px] uppercase tracking-[0.2em] text-white/75">Monitoramento residencial</p>
+            <h2 className="mt-2 text-2xl font-extrabold tracking-tight font-headline md:text-3xl">Central de alertas</h2>
+            <p className="mt-2 text-sm text-white/85 md:text-base">Eventos criticos, operacionais e informativos em uma fila unica.</p>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <DataSourceBadge module="alerts" />
+            <span className="rounded-full bg-white/12 px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-white/90">
+              {data.activeCount} alertas ativos
+            </span>
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-          <DataSourceBadge module="alerts" />
-          <span className="text-xs font-bold px-3 py-2 bg-surface-container-highest rounded text-on-surface-variant">
-            {data.activeCount} alertas ativos
-          </span>
+
+        <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <article className="rounded-2xl bg-white/12 px-3 py-3">
+            <p className="text-[10px] uppercase tracking-widest text-white/75">Ativos</p>
+            <p className="mt-1 text-xl font-extrabold">{data.items.filter((item) => item.status !== 'read').length}</p>
+          </article>
+          <article className="rounded-2xl bg-white/12 px-3 py-3">
+            <p className="text-[10px] uppercase tracking-widest text-white/75">Criticos</p>
+            <p className="mt-1 text-xl font-extrabold">{data.items.filter((item) => item.severity === 'critical').length}</p>
+          </article>
+          <article className="rounded-2xl bg-white/12 px-3 py-3">
+            <p className="text-[10px] uppercase tracking-widest text-white/75">Avisos</p>
+            <p className="mt-1 text-xl font-extrabold">{data.items.filter((item) => item.severity === 'warning').length}</p>
+          </article>
+          <article className="rounded-2xl bg-white/12 px-3 py-3">
+            <p className="text-[10px] uppercase tracking-widest text-white/75">Informativos</p>
+            <p className="mt-1 text-xl font-extrabold">{data.items.filter((item) => item.severity === 'info').length}</p>
+          </article>
         </div>
       </header>
 
-      <section className="flex flex-wrap gap-2">
-        <button className={filterButtonClass('all')} onClick={() => { setPage(1); setActiveFilter('all'); }}>
-          Todos
-        </button>
-        <button className={filterButtonClass('critical')} onClick={() => { setPage(1); setActiveFilter('critical'); }}>
-          Critico
-        </button>
-        <button className={filterButtonClass('warning')} onClick={() => { setPage(1); setActiveFilter('warning'); }}>
-          Aviso
-        </button>
-        <button className={filterButtonClass('info')} onClick={() => { setPage(1); setActiveFilter('info'); }}>
-          Informativo
-        </button>
-      </section>
+      <section className="rounded-2xl border border-outline-variant/30 bg-surface-container-low p-4 md:p-5">
+        <div className="flex flex-wrap gap-2">
+          <button className={filterButtonClass('all')} onClick={() => { setPage(1); setActiveFilter('all'); }}>
+            Todos
+          </button>
+          <button className={filterButtonClass('critical')} onClick={() => { setPage(1); setActiveFilter('critical'); }}>
+            Critico
+          </button>
+          <button className={filterButtonClass('warning')} onClick={() => { setPage(1); setActiveFilter('warning'); }}>
+            Aviso
+          </button>
+          <button className={filterButtonClass('info')} onClick={() => { setPage(1); setActiveFilter('info'); }}>
+            Informativo
+          </button>
+        </div>
 
-      <section className="flex flex-wrap gap-2">
-        <button className={statusFilterButtonClass('all')} onClick={() => { setPage(1); setStatusFilter('all'); }}>
-          Todos estados
-        </button>
-        <button className={statusFilterButtonClass('active')} onClick={() => { setPage(1); setStatusFilter('active'); }}>
-          Abertos
-        </button>
-        <button className={statusFilterButtonClass('read')} onClick={() => { setPage(1); setStatusFilter('read'); }}>
-          Lidos
-        </button>
-      </section>
+        <div className="mt-3 flex flex-wrap gap-2">
+          <button className={statusFilterButtonClass('all')} onClick={() => { setPage(1); setStatusFilter('all'); }}>
+            Todos estados
+          </button>
+          <button className={statusFilterButtonClass('active')} onClick={() => { setPage(1); setStatusFilter('active'); }}>
+            Abertos
+          </button>
+          <button className={statusFilterButtonClass('read')} onClick={() => { setPage(1); setStatusFilter('read'); }}>
+            Lidos
+          </button>
+        </div>
 
-      <section className="grid grid-cols-1 md:grid-cols-3 gap-3">
-        <input
-          value={search}
-          onChange={(event) => {
-            setPage(1);
-            setSearch(event.target.value);
-          }}
-          placeholder="Buscar em titulo ou descricao..."
-          className="bg-surface-container-highest rounded-xl px-4 py-3 text-sm outline-none border border-outline-variant/30"
-        />
-        <select
-          value={sortBy}
-          onChange={(event) => {
-            setPage(1);
-            setSortBy(event.target.value as 'severity' | 'title' | 'time' | 'status' | 'readAt');
-          }}
-          className="bg-surface-container-highest rounded-xl px-4 py-3 text-sm outline-none border border-outline-variant/30"
-        >
-          <option value="time">Ordenar por tempo</option>
-          <option value="title">Ordenar por titulo</option>
-          <option value="severity">Ordenar por severidade</option>
-          <option value="status">Ordenar por estado</option>
-          <option value="readAt">Ordenar por leitura</option>
-        </select>
-        <select
-          value={sortOrder}
-          onChange={(event) => {
-            setPage(1);
-            setSortOrder(event.target.value as 'asc' | 'desc');
-          }}
-          className="bg-surface-container-highest rounded-xl px-4 py-3 text-sm outline-none border border-outline-variant/30"
-        >
-          <option value="asc">Ordem crescente</option>
-          <option value="desc">Ordem decrescente</option>
-        </select>
+        <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-3">
+          <input
+            value={search}
+            onChange={(event) => {
+              setPage(1);
+              setSearch(event.target.value);
+            }}
+            placeholder="Buscar em titulo ou descricao..."
+            className="rounded-xl border border-outline-variant/30 bg-surface-container-highest px-4 py-3 text-sm outline-none"
+          />
+          <select
+            value={sortBy}
+            onChange={(event) => {
+              setPage(1);
+              setSortBy(event.target.value as 'severity' | 'title' | 'time' | 'status' | 'readAt');
+            }}
+            className="rounded-xl border border-outline-variant/30 bg-surface-container-highest px-4 py-3 text-sm outline-none"
+          >
+            <option value="time">Ordenar por tempo</option>
+            <option value="title">Ordenar por titulo</option>
+            <option value="severity">Ordenar por severidade</option>
+            <option value="status">Ordenar por estado</option>
+            <option value="readAt">Ordenar por leitura</option>
+          </select>
+          <select
+            value={sortOrder}
+            onChange={(event) => {
+              setPage(1);
+              setSortOrder(event.target.value as 'asc' | 'desc');
+            }}
+            className="rounded-xl border border-outline-variant/30 bg-surface-container-highest px-4 py-3 text-sm outline-none"
+          >
+            <option value="asc">Ordem crescente</option>
+            <option value="desc">Ordem decrescente</option>
+          </select>
+        </div>
       </section>
 
       {data.items.length === 0 ? (
@@ -229,45 +265,50 @@ export default function Alerts() {
       ) : (
         <section className="space-y-4">
           {data.items.map((item) => (
-            <article key={item.id} className={`p-5 rounded-xl border-l-4 ${severityStyles[item.severity]}`}>
-              <div className="flex justify-between items-start mb-2">
-                <span className="text-xs font-bold uppercase tracking-widest">{item.severity}</span>
-                <span className="text-[10px] font-medium text-on-surface-variant">{item.time}</span>
+            <article key={item.id} className={`rounded-2xl border p-4 shadow-[0_1px_0_rgba(19,27,46,0.04)] ${severityStyles[item.severity]}`}>
+              <div className="mb-2 flex flex-wrap items-start justify-between gap-2">
+                <span className={`rounded-full px-2 py-1 text-[10px] font-bold uppercase tracking-widest ${severityBadgeClass[item.severity]}`}>
+                  {severityLabel[item.severity]}
+                </span>
+                <span className="text-[11px] font-semibold uppercase tracking-wider text-on-surface-variant">{item.time}</span>
               </div>
-              <h3 className="font-headline font-bold text-lg mb-1">{normalizeText(item.title, 'anomalia detectada')}</h3>
-              <p className="text-sm text-on-surface-variant leading-relaxed">
+
+              <h3 className="mb-1 font-headline text-lg font-bold">{normalizeText(item.title, 'anomalia detectada')}</h3>
+              <p className="text-sm leading-relaxed text-on-surface-variant">
                 {normalizeText(item.description, 'Anomalia detectada automaticamente')}
               </p>
-              <div className="mt-3 flex items-center justify-between gap-3">
-                <span className="text-xs text-on-surface-variant">
+
+              <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+                <span className="rounded-full bg-surface-container-low px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-on-surface-variant">
                   Estado: {item.status === 'read' ? 'Lido' : 'Aberto'}
                 </span>
                 <button
                   onClick={() => void handleMarkRead(item.id)}
                   disabled={item.status === 'read' || markingId === item.id}
-                  className="px-3 py-1.5 text-xs font-bold rounded bg-primary text-on-primary disabled:opacity-50"
+                  className="rounded-lg bg-primary px-3 py-2 text-xs font-bold text-on-primary disabled:opacity-50"
                 >
                   {item.status === 'read' ? 'Ja lido' : (markingId === item.id ? 'Salvando...' : 'Marcar como lido')}
                 </button>
               </div>
             </article>
           ))}
-          <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
-            <p className="text-xs text-on-surface-variant">
+
+          <div className="mt-2 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-outline-variant/30 bg-surface-container-low px-4 py-3">
+            <p className="text-xs font-semibold text-on-surface-variant">
               Pagina {meta.page} de {meta.totalPages} | Total: {meta.total}
             </p>
             <div className="flex gap-2">
               <button
                 onClick={() => setPage((current) => Math.max(1, current - 1))}
                 disabled={!meta.hasPrevious}
-                className="px-3 py-2 text-xs font-bold rounded bg-surface-container-highest disabled:opacity-50"
+                className="rounded-lg bg-surface-container-highest px-3 py-2 text-xs font-bold disabled:opacity-50"
               >
                 Anterior
               </button>
               <button
                 onClick={() => setPage((current) => current + 1)}
                 disabled={!meta.hasNext}
-                className="px-3 py-2 text-xs font-bold rounded bg-primary text-on-primary disabled:opacity-50"
+                className="rounded-lg bg-primary px-3 py-2 text-xs font-bold text-on-primary disabled:opacity-50"
               >
                 Proxima
               </button>

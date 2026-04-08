@@ -65,6 +65,24 @@ export async function createCadastroData(payload: {
   }
 }
 
+export async function updateCadastroData(
+  id: string,
+  payload: Partial<{ tipo: CadastroTipo; titulo: string; descricao: string; status: CadastroStatus }>,
+): Promise<CadastroRegistro> {
+  try {
+    const response = await requestJson<{ item: CadastroRegistro }>(`/api/cadastros/${encodeURIComponent(id)}`, {
+      method: 'PATCH',
+      body: JSON.stringify(payload),
+    });
+    setModuleDataSource(MODULE_NAME, 'api');
+    return response.item;
+  } catch {
+    setModuleDataSource(MODULE_NAME, 'unknown');
+    notifyApiFallback({ module: 'Cadastros', message: 'Falha ao editar cadastro na API' });
+    throw new Error('Falha ao editar cadastro.');
+  }
+}
+
 export async function updateCadastroStatusData(id: string, status: CadastroStatus): Promise<CadastroRegistro> {
   try {
     const response = await requestJson<{ item: CadastroRegistro }>(`/api/cadastros/${encodeURIComponent(id)}/status`, {

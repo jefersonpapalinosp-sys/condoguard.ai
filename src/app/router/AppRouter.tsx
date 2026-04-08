@@ -21,6 +21,7 @@ import ReportsPage from '../../features/reports/pages/ReportsPage';
 import SettingsPage from '../../features/settings/pages/SettingsPage';
 import CadastrosGeraisPage from '../../features/cadastros/pages/CadastrosGeraisPage';
 import ObservabilityPage from '../../features/observability/pages/ObservabilityPage';
+import EnelIntegrationPage from '../../features/integrations/pages/EnelIntegrationPage';
 
 export function AppRouter() {
   return (
@@ -75,6 +76,14 @@ export function AppRouter() {
           )}
         />
         <Route path="settings" element={<SettingsPage />} />
+        <Route
+          path="integrations/enel"
+          element={(
+            <ProtectedRoute requiredRoles={['admin', 'sindico']}>
+              <EnelIntegrationPage />
+            </ProtectedRoute>
+          )}
+        />
       </Route>
       <Route path="*" element={<Navigate to="/dashboard" replace />} />
     </Routes>

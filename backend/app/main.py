@@ -23,6 +23,10 @@ from app.repositories.cadastros_repo import reset_cadastros_store
 from app.repositories.chat_telemetry_repo import reset_chat_telemetry_store
 from app.repositories.contracts_management_repo import reset_contracts_management_state
 from app.integrations.enel.repository import reset_enel_integration_state
+from app.ai.memory import clear_all_memories
+from app.ai.chains import clear_chains_cache
+from app.ai.graph import reset_agent_graph
+from app.ai.rag.vector_store import reset_vector_store
 from app.utils.logging import configure_logging, log_security_event
 
 
@@ -134,6 +138,20 @@ reset_contracts_management_state()
 reset_enel_integration_state()
 
 app = FastAPI(title="CondoGuard API (FastAPI)", version="1.0.0")
+
+
+@app.on_event("startup")
+async def _startup_ingest_knowledge_base():
+    """Index the knowledge base into Chroma on server startup (idempotent)."""
+    import logging  # noqa: PLC0415
+    _log = logging.getLogger(__name__)
+    try:
+        from app.ai.rag.vector_store import ingest_knowledge_base  # noqa: PLC0415
+        n = await ingest_knowledge_base()
+        if n:
+            _log.info("RAG: %d chunks indexados na base de conhecimento", n)
+    except Exception as exc:
+        _log.warning("RAG startup ingestao falhou (ignorado): %s", exc)
 app.add_middleware(SecurityHeadersMiddleware)
 app.add_middleware(CorsAllowlistMiddleware)
 app.add_middleware(RateLimitMiddleware)
@@ -149,6 +167,10 @@ def reset_runtime_state() -> None:
     reset_cadastros_store()
     reset_contracts_management_state()
     reset_enel_integration_state()
+    clear_all_memories()
+    clear_chains_cache()
+    reset_agent_graph()
+    reset_vector_store()
 
     if app.middleware_stack is None:
         app.middleware_stack = app.build_middleware_stack()

@@ -1,5 +1,5 @@
 import { FormEvent, useEffect, useMemo, useState } from 'react';
-import { createCadastroData, fetchCadastrosData, updateCadastroStatusData, type CadastroRegistro, type CadastroStatus, type CadastroTipo } from '../services/cadastrosService';
+import { createCadastroData, fetchCadastrosData, updateCadastroData, updateCadastroStatusData, type CadastroRegistro, type CadastroStatus, type CadastroTipo } from '../services/cadastrosService';
 import { DataSourceBadge } from '../shared/ui/DataSourceBadge';
 import { EmptyState } from '../shared/ui/states/EmptyState';
 import { ErrorState } from '../shared/ui/states/ErrorState';
@@ -50,6 +50,9 @@ export default function CadastrosGerais() {
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [createError, setCreateError] = useState<string | null>(null);
   const [createSuccess, setCreateSuccess] = useState<string | null>(null);
+  const [editingItem, setEditingItem] = useState<CadastroRegistro | null>(null);
+  const [editing, setEditing] = useState(false);
+  const [editError, setEditError] = useState<string | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -130,6 +133,37 @@ export default function CadastrosGerais() {
     }
   }
 
+  async function handleEditSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!editingItem) return;
+    setEditError(null);
+
+    const form = new FormData(event.currentTarget);
+    const payload = {
+      tipo: String(form.get('tipo') || '') as CadastroTipo,
+      titulo: String(form.get('titulo') || '').trim(),
+      descricao: String(form.get('descricao') || '').trim(),
+      status: String(form.get('status') || '') as CadastroStatus,
+    };
+
+    if (!payload.titulo || !payload.descricao) {
+      setEditError('Titulo e descricao sao obrigatorios.');
+      return;
+    }
+
+    try {
+      setEditing(true);
+      const updated = await updateCadastroData(editingItem.id, payload);
+      setItems((current) => current.map((item) => (item.id === editingItem.id ? updated : item)));
+      setEditingItem(null);
+      setCreateSuccess('Cadastro atualizado com sucesso.');
+    } catch {
+      setEditError('Nao foi possivel editar o cadastro no momento.');
+    } finally {
+      setEditing(false);
+    }
+  }
+
   async function handleStatusUpdate(id: string, status: CadastroStatus) {
     setCreateError(null);
     setCreateSuccess(null);
@@ -155,42 +189,146 @@ export default function CadastrosGerais() {
   }
 
   return (
-    <div className="p-4 md:p-8 space-y-8 max-w-7xl mx-auto">
-      <section className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-        <div>
-          <h3 className="font-headline text-2xl md:text-4xl font-extrabold tracking-tighter text-on-surface">Cadastros Gerais</h3>
-          <p className="text-on-surface-variant font-body mt-2">
-            Centro unificado para cadastros de unidades, moradores, fornecedores e servicos.
-          </p>
+    <div className="mx-auto max-w-7xl space-y-6 p-4 md:space-y-8 md:p-8">
+      <section className="rounded-3xl bg-[linear-gradient(138deg,#211a2f_0%,#3d2c55_62%,#5e3f7f_100%)] p-5 text-white shadow-xl md:p-7">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div className="max-w-2xl">
+            <p className="text-[11px] uppercase tracking-[0.2em] text-white/75">Base cadastral</p>
+            <h3 className="mt-2 font-headline text-2xl font-extrabold tracking-tight md:text-4xl">Cadastros Gerais</h3>
+            <p className="mt-2 text-sm text-white/85 md:text-base">
+              Cadastro e classificacao de unidades, moradores, fornecedores e servicos.
+            </p>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-3">
+            <DataSourceBadge module="cadastros" />
+            <button
+              type="button"
+              onClick={() => {
+                setShowCreateForm((current) => !current);
+                setCreateError(null);
+                setCreateSuccess(null);
+              }}
+              className="rounded-lg bg-white/15 px-5 py-3 text-xs font-bold uppercase tracking-widest text-white transition-colors hover:bg-white/20"
+            >
+              {showCreateForm ? 'Fechar' : 'Novo Cadastro'}
+            </button>
+          </div>
         </div>
-        <div className="flex items-center gap-3">
-          <DataSourceBadge module="cadastros" />
-          <button
-            type="button"
-            onClick={() => {
-              setShowCreateForm((current) => !current);
-              setCreateError(null);
-              setCreateSuccess(null);
-            }}
-            className="px-5 py-3 rounded-lg monolith-gradient text-white font-bold text-xs uppercase tracking-widest w-fit"
-          >
-            {showCreateForm ? 'Fechar' : 'Novo Cadastro'}
-          </button>
+
+        <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <article className="rounded-2xl bg-white/12 px-3 py-3">
+            <p className="text-[10px] uppercase tracking-widest text-white/75">Total</p>
+            <p className="mt-1 text-xl font-extrabold">{indicadores.total}</p>
+          </article>
+          <article className="rounded-2xl bg-white/12 px-3 py-3">
+            <p className="text-[10px] uppercase tracking-widest text-white/75">Ativos</p>
+            <p className="mt-1 text-xl font-extrabold">{indicadores.ativos}</p>
+          </article>
+          <article className="rounded-2xl bg-white/12 px-3 py-3">
+            <p className="text-[10px] uppercase tracking-widest text-white/75">Pendentes</p>
+            <p className="mt-1 text-xl font-extrabold">{indicadores.pendentes}</p>
+          </article>
+          <article className="rounded-2xl bg-white/12 px-3 py-3">
+            <p className="text-[10px] uppercase tracking-widest text-white/75">Inativos</p>
+            <p className="mt-1 text-xl font-extrabold">{indicadores.inativos}</p>
+          </article>
         </div>
       </section>
 
       {createSuccess ? (
-        <section className="rounded-xl border border-tertiary-fixed-dim/50 bg-tertiary-fixed-dim/20 px-4 py-3">
+        <section className="rounded-2xl border border-tertiary-fixed-dim/50 bg-tertiary-fixed-dim/20 px-4 py-3">
           <p className="text-sm font-semibold text-on-tertiary-fixed-variant">{createSuccess}</p>
         </section>
       ) : null}
 
+      {editingItem ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <section className="w-full max-w-lg rounded-2xl bg-surface-container-low p-6 shadow-2xl">
+            <div className="mb-4 flex items-center justify-between">
+              <h4 className="font-headline text-lg font-bold">Editar cadastro</h4>
+              <button
+                type="button"
+                onClick={() => { setEditingItem(null); setEditError(null); }}
+                className="rounded-lg bg-surface-container-highest px-3 py-1.5 text-xs font-bold"
+              >
+                Fechar
+              </button>
+            </div>
+
+            <form className="grid grid-cols-1 gap-4 md:grid-cols-2" onSubmit={handleEditSubmit}>
+              <label className="text-xs font-bold uppercase tracking-widest text-on-surface-variant">
+                Tipo
+                <select name="tipo" defaultValue={editingItem.tipo} className="mt-2 w-full rounded-lg border border-outline-variant/30 bg-surface-container-highest px-3 py-2">
+                  <option value="unidade">Unidade</option>
+                  <option value="morador">Morador</option>
+                  <option value="fornecedor">Fornecedor</option>
+                  <option value="servico">Servico</option>
+                </select>
+              </label>
+
+              <label className="text-xs font-bold uppercase tracking-widest text-on-surface-variant">
+                Status
+                <select name="status" defaultValue={editingItem.status} className="mt-2 w-full rounded-lg border border-outline-variant/30 bg-surface-container-highest px-3 py-2">
+                  <option value="active">Ativo</option>
+                  <option value="pending">Pendente</option>
+                  <option value="inactive">Inativo</option>
+                </select>
+              </label>
+
+              <label className="md:col-span-2 text-xs font-bold uppercase tracking-widest text-on-surface-variant">
+                Titulo
+                <input
+                  name="titulo"
+                  maxLength={120}
+                  defaultValue={editingItem.titulo}
+                  className="mt-2 w-full rounded-lg border border-outline-variant/30 bg-surface-container-highest px-3 py-2 outline-none focus:ring-2 focus:ring-primary-fixed"
+                />
+              </label>
+
+              <label className="md:col-span-2 text-xs font-bold uppercase tracking-widest text-on-surface-variant">
+                Descricao
+                <input
+                  name="descricao"
+                  maxLength={240}
+                  defaultValue={editingItem.descricao}
+                  className="mt-2 w-full rounded-lg border border-outline-variant/30 bg-surface-container-highest px-3 py-2 outline-none focus:ring-2 focus:ring-primary-fixed"
+                />
+              </label>
+
+              <div className="md:col-span-2 flex flex-wrap items-center gap-3">
+                <button
+                  type="submit"
+                  disabled={editing}
+                  className="rounded-lg monolith-gradient px-4 py-2 text-xs font-bold uppercase tracking-widest text-white disabled:opacity-50"
+                >
+                  {editing ? 'Salvando...' : 'Salvar alteracoes'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setEditingItem(null); setEditError(null); }}
+                  className="rounded-lg bg-surface-container-highest px-4 py-2 text-xs font-bold uppercase tracking-widest text-on-surface"
+                >
+                  Cancelar
+                </button>
+                {editError ? <span className="text-xs text-error">{editError}</span> : null}
+              </div>
+            </form>
+          </section>
+        </div>
+      ) : null}
+
       {showCreateForm ? (
-        <section className="bg-surface-container-low rounded-xl p-6">
-          <form className="grid grid-cols-1 md:grid-cols-2 gap-4" onSubmit={handleCreateSubmit}>
+        <section className="rounded-2xl border border-outline-variant/30 bg-surface-container-low p-4 md:p-6">
+          <div className="mb-4">
+            <h4 className="font-headline text-lg font-bold md:text-xl">Novo cadastro</h4>
+            <p className="mt-1 text-sm text-on-surface-variant">Preencha os dados e salve para atualizar a base cadastral.</p>
+          </div>
+
+          <form className="grid grid-cols-1 gap-4 md:grid-cols-2" onSubmit={handleCreateSubmit}>
             <label className="text-xs font-bold uppercase tracking-widest text-on-surface-variant">
               Tipo
-              <select name="tipo" className="mt-2 w-full px-3 py-2 rounded-lg bg-surface-container-highest">
+              <select name="tipo" className="mt-2 w-full rounded-lg border border-outline-variant/30 bg-surface-container-highest px-3 py-2">
                 <option value="unidade">Unidade</option>
                 <option value="morador">Morador</option>
                 <option value="fornecedor">Fornecedor</option>
@@ -200,7 +338,7 @@ export default function CadastrosGerais() {
 
             <label className="text-xs font-bold uppercase tracking-widest text-on-surface-variant">
               Status
-              <select name="status" className="mt-2 w-full px-3 py-2 rounded-lg bg-surface-container-highest">
+              <select name="status" className="mt-2 w-full rounded-lg border border-outline-variant/30 bg-surface-container-highest px-3 py-2">
                 <option value="active">Ativo</option>
                 <option value="pending">Pendente</option>
                 <option value="inactive">Inativo</option>
@@ -212,7 +350,7 @@ export default function CadastrosGerais() {
               <input
                 name="titulo"
                 maxLength={120}
-                className="mt-2 w-full px-3 py-2 rounded-lg bg-surface-container-highest outline-none focus:ring-2 focus:ring-primary-fixed"
+                className="mt-2 w-full rounded-lg border border-outline-variant/30 bg-surface-container-highest px-3 py-2 outline-none focus:ring-2 focus:ring-primary-fixed"
                 placeholder="Ex.: Unidade A-120"
               />
             </label>
@@ -222,16 +360,16 @@ export default function CadastrosGerais() {
               <input
                 name="descricao"
                 maxLength={240}
-                className="mt-2 w-full px-3 py-2 rounded-lg bg-surface-container-highest outline-none focus:ring-2 focus:ring-primary-fixed"
+                className="mt-2 w-full rounded-lg border border-outline-variant/30 bg-surface-container-highest px-3 py-2 outline-none focus:ring-2 focus:ring-primary-fixed"
                 placeholder="Ex.: Responsavel, contrato ou observacao"
               />
             </label>
 
-            <div className="md:col-span-2 flex items-center gap-3">
+            <div className="md:col-span-2 flex flex-wrap items-center gap-3">
               <button
                 type="submit"
                 disabled={creating}
-                className="px-4 py-2 rounded-lg monolith-gradient text-white text-xs font-bold uppercase tracking-widest disabled:opacity-50"
+                className="rounded-lg monolith-gradient px-4 py-2 text-xs font-bold uppercase tracking-widest text-white disabled:opacity-50"
               >
                 {creating ? 'Salvando...' : 'Salvar cadastro'}
               </button>
@@ -241,7 +379,7 @@ export default function CadastrosGerais() {
                   setShowCreateForm(false);
                   setCreateError(null);
                 }}
-                className="px-4 py-2 rounded-lg bg-surface-container-highest text-on-surface text-xs font-bold uppercase tracking-widest"
+                className="rounded-lg bg-surface-container-highest px-4 py-2 text-xs font-bold uppercase tracking-widest text-on-surface"
               >
                 Cancelar
               </button>
@@ -251,26 +389,7 @@ export default function CadastrosGerais() {
         </section>
       ) : null}
 
-      <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <article className="bg-surface-container-highest p-6 rounded-xl">
-          <p className="text-on-surface-variant text-xs uppercase tracking-widest">Total de registros</p>
-          <h4 className="text-2xl md:text-3xl font-headline font-extrabold mt-2">{indicadores.total}</h4>
-        </article>
-        <article className="bg-surface-container-highest p-6 rounded-xl">
-          <p className="text-on-surface-variant text-xs uppercase tracking-widest">Ativos</p>
-          <h4 className="text-2xl md:text-3xl font-headline font-extrabold mt-2">{indicadores.ativos}</h4>
-        </article>
-        <article className="bg-surface-container-highest p-6 rounded-xl">
-          <p className="text-on-surface-variant text-xs uppercase tracking-widest">Pendentes</p>
-          <h4 className="text-2xl md:text-3xl font-headline font-extrabold mt-2">{indicadores.pendentes}</h4>
-        </article>
-        <article className="bg-surface-container-highest p-6 rounded-xl">
-          <p className="text-on-surface-variant text-xs uppercase tracking-widest">Inativos</p>
-          <h4 className="text-2xl md:text-3xl font-headline font-extrabold mt-2">{indicadores.inativos}</h4>
-        </article>
-      </section>
-
-      <section className="bg-surface-container-low rounded-xl p-6 space-y-4">
+      <section className="rounded-2xl border border-outline-variant/30 bg-surface-container-low p-4 md:p-6">
         <div className="flex flex-wrap gap-2">
           <button
             type="button"
@@ -309,7 +428,7 @@ export default function CadastrosGerais() {
           </button>
         </div>
 
-        <div>
+        <div className="mt-4">
           <label htmlFor="busca-cadastro" className="block text-xs font-bold uppercase tracking-widest text-on-surface-variant mb-2">
             Busca rapida
           </label>
@@ -318,7 +437,7 @@ export default function CadastrosGerais() {
             value={busca}
             onChange={(event) => setBusca(event.target.value)}
             placeholder="Busque por nome, unidade, fornecedor ou servico..."
-            className="w-full px-4 py-3 bg-surface-container-highest rounded-lg outline-none focus:ring-2 focus:ring-primary-fixed"
+            className="w-full rounded-lg border border-outline-variant/30 bg-surface-container-highest px-4 py-3 outline-none focus:ring-2 focus:ring-primary-fixed"
           />
         </div>
       </section>
@@ -328,14 +447,14 @@ export default function CadastrosGerais() {
           <EmptyState message="Nenhum registro encontrado para os filtros selecionados." />
         ) : (
           filtrados.map((item) => (
-            <article key={item.id} className="bg-surface-container-low rounded-xl p-5">
+            <article key={item.id} className="rounded-2xl border border-outline-variant/30 bg-surface-container-low p-4 md:p-5">
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <p className="text-[10px] uppercase tracking-widest text-on-surface-variant">{tipoLabel[item.tipo]}</p>
                   <h4 className="font-headline text-xl font-bold mt-1">{item.titulo}</h4>
                   <p className="text-sm text-on-surface-variant mt-1">{item.descricao}</p>
                 </div>
-                <span className={`px-2 py-1 rounded text-xs font-bold ${statusClass[item.status]}`}>{statusLabel[item.status]}</span>
+                <span className={`rounded px-2 py-1 text-xs font-bold ${statusClass[item.status]}`}>{statusLabel[item.status]}</span>
               </div>
               <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
                 <div className="flex flex-wrap gap-2">
@@ -371,8 +490,17 @@ export default function CadastrosGerais() {
                   </button>
                 </div>
 
-                <div className="text-[11px] uppercase tracking-widest text-on-surface-variant">
-                  {updatingId === item.id ? 'Atualizando...' : formatUpdatedAt(item.updatedAt)}
+                <div className="flex items-center gap-3">
+                  <span className="text-[11px] uppercase tracking-widest text-on-surface-variant">
+                    {updatingId === item.id ? 'Atualizando...' : formatUpdatedAt(item.updatedAt)}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => { setEditingItem(item); setEditError(null); setCreateSuccess(null); }}
+                    className="rounded px-3 py-1 text-[10px] font-bold uppercase tracking-widest bg-surface-container-highest text-on-surface hover:opacity-80"
+                  >
+                    Editar
+                  </button>
                 </div>
               </div>
             </article>

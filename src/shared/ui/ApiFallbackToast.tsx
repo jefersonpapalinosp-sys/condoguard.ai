@@ -44,7 +44,7 @@ export function ApiFallbackToast() {
   }
 
   return (
-    <div className="fixed bottom-5 right-5 z-[100] max-w-sm rounded-xl bg-error-container text-on-error-container px-4 py-3 shadow-lg border border-error/20">
+    <div className="fixed bottom-[max(0.75rem,env(safe-area-inset-bottom))] left-3 right-3 z-[100] rounded-xl border border-error/20 bg-error-container px-4 py-3 text-on-error-container shadow-lg md:left-auto md:right-5 md:max-w-sm">
       <p className="text-xs font-bold uppercase tracking-widest">Aviso de conectividade</p>
       <p className="text-sm mt-1">{toast.text}</p>
     </div>

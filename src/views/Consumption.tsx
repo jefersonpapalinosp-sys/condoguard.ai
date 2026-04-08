@@ -7,9 +7,21 @@ import { ErrorState } from '../shared/ui/states/ErrorState';
 import { EmptyState } from '../shared/ui/states/EmptyState';
 
 const anomalyStyle: Record<'critical' | 'warning' | 'info', string> = {
-  critical: 'border-error',
-  warning: 'border-secondary',
-  info: 'border-on-primary-fixed-variant',
+  critical: 'border-error/45 bg-error-container/20',
+  warning: 'border-secondary/40 bg-secondary-container/25',
+  info: 'border-on-primary-fixed-variant/35 bg-surface-container-highest',
+};
+
+const anomalyTagClass: Record<'critical' | 'warning' | 'info', string> = {
+  critical: 'bg-error-container text-on-error-container',
+  warning: 'bg-secondary-container text-on-secondary-container',
+  info: 'bg-tertiary-fixed-dim/30 text-on-tertiary-fixed-variant',
+};
+
+const anomalyLabel: Record<'critical' | 'warning' | 'info', string> = {
+  critical: 'Critico',
+  warning: 'Aviso',
+  info: 'Informativo',
 };
 
 export default function Consumption() {
@@ -58,43 +70,52 @@ export default function Consumption() {
   }
 
   return (
-    <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-8">
-      <section>
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <h2 className="font-headline text-2xl md:text-4xl font-extrabold tracking-tight">Consumo e Telemetria</h2>
-            <p className="text-on-surface-variant mt-2">Monitoramento operacional de energia, agua e gas.</p>
+    <div className="mx-auto max-w-7xl space-y-6 p-4 md:space-y-8 md:p-8">
+      <section className="rounded-3xl bg-[linear-gradient(140deg,#072340_0%,#0f4364_58%,#186f8f_100%)] p-5 text-white shadow-xl md:p-7">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div className="max-w-2xl">
+            <p className="text-[11px] uppercase tracking-[0.2em] text-white/75">Consumo inteligente</p>
+            <h2 className="mt-2 font-headline text-2xl font-extrabold tracking-tight md:text-4xl">Consumo e Telemetria</h2>
+            <p className="mt-2 text-sm text-white/85 md:text-base">Monitoramento de energia, agua e gas com leitura de desvios para acao rapida.</p>
           </div>
           <DataSourceBadge module="consumption" />
         </div>
+
+        <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-3">
+          <article className="rounded-2xl bg-white/12 px-4 py-3">
+            <p className="text-[10px] uppercase tracking-widest text-white/75">Unidades monitoradas</p>
+            <p className="mt-1 text-2xl font-extrabold">{data.kpis.monitoredUnits}</p>
+          </article>
+          <article className="rounded-2xl bg-white/12 px-4 py-3">
+            <p className="text-[10px] uppercase tracking-widest text-white/75">Pico de carga</p>
+            <p className="mt-1 text-lg font-bold">{data.kpis.peakLoad}</p>
+          </article>
+          <article className="rounded-2xl bg-white/12 px-4 py-3">
+            <p className="text-[10px] uppercase tracking-widest text-white/75">Custo projetado</p>
+            <p className="mt-1 text-lg font-bold">{data.kpis.projectedCost}</p>
+          </article>
+        </div>
       </section>
 
-      <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-surface-container-highest p-6 rounded-xl">
-          <p className="text-xs uppercase tracking-widest text-on-surface-variant">Unidades monitoradas</p>
-          <h3 className="text-2xl md:text-3xl font-headline font-extrabold mt-2">{data.kpis.monitoredUnits}</h3>
+      <section className="rounded-2xl border border-outline-variant/30 bg-surface-container-low p-4 md:p-6">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+          <h3 className="font-headline text-xl font-extrabold md:text-2xl">Anomalias detectadas</h3>
+          <span className="rounded-full bg-surface-container-high px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-on-surface-variant">
+            {data.anomalies.length} ocorrencias
+          </span>
         </div>
-        <div className="bg-surface-container-highest p-6 rounded-xl">
-          <p className="text-xs uppercase tracking-widest text-on-surface-variant">Pico de carga</p>
-          <h3 className="text-2xl font-headline font-extrabold mt-2">{data.kpis.peakLoad}</h3>
-        </div>
-        <div className="bg-surface-container-highest p-6 rounded-xl">
-          <p className="text-xs uppercase tracking-widest text-on-surface-variant">Custo projetado</p>
-          <h3 className="text-2xl font-headline font-extrabold mt-2">{data.kpis.projectedCost}</h3>
-        </div>
-      </section>
 
-      <section className="bg-surface-container-low rounded-xl p-4 md:p-8">
-        <h3 className="font-headline text-2xl font-bold mb-6">Anomalias detectadas</h3>
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
           {data.anomalies.map((item) => (
-            <article key={item.id} className={`bg-surface-container-lowest border-l-4 ${anomalyStyle[item.severity]} p-6 rounded-lg`}>
-              <div className="flex justify-between items-center mb-3">
-                <span className="text-xs uppercase tracking-widest text-on-surface-variant">{item.severity}</span>
-                <span className="font-bold text-sm">{item.sigma}</span>
+            <article key={item.id} className={`rounded-2xl border p-4 ${anomalyStyle[item.severity]}`}>
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <span className={`rounded-full px-2 py-1 text-[10px] font-bold uppercase tracking-widest ${anomalyTagClass[item.severity]}`}>
+                  {anomalyLabel[item.severity]}
+                </span>
+                <span className="rounded-full bg-surface-container-low px-2 py-1 text-[11px] font-bold text-on-surface-variant">{item.sigma}</span>
               </div>
-              <h4 className="font-headline font-bold text-lg">{item.title}</h4>
-              <p className="text-sm text-on-surface-variant mt-2">{item.description}</p>
+              <h4 className="mt-3 font-headline text-lg font-bold">{item.title}</h4>
+              <p className="mt-2 text-sm text-on-surface-variant">{item.description}</p>
             </article>
           ))}
         </div>

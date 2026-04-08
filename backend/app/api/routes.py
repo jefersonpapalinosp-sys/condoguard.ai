@@ -24,7 +24,7 @@ from app.db.oracle_client import get_oracle_pool
 from app.observability.metrics_store import get_observability_metrics_snapshot
 from app.repositories.alerts_repo import get_alerts_data, mark_alert_as_read
 from app.repositories.auth_repo import find_account_for_login
-from app.repositories.cadastros_repo import create_cadastro, list_cadastros, update_cadastro_status
+from app.repositories.cadastros_repo import create_cadastro, list_cadastros, update_cadastro, update_cadastro_status
 from app.repositories.chat_intents_repo import get_chat_intent_catalog
 from app.repositories.chat_repo import ask_chat, get_chat_bootstrap
 from app.repositories.chat_telemetry_repo import (
@@ -33,14 +33,14 @@ from app.repositories.chat_telemetry_repo import (
     record_chat_feedback_telemetry,
     record_chat_message_telemetry,
 )
-from app.repositories.invoices_repo import get_invoices_data, mark_invoice_as_paid
-from app.repositories.management_repo import get_management_units_data
+from app.repositories.invoices_repo import create_invoice, get_invoices_data, mark_invoice_as_paid, update_invoice
+from app.repositories.management_repo import get_management_units_data, update_unit_status
 from app.repositories.dashboard_repo import get_dashboard_data
 from app.repositories.consumption_repo import get_consumption_data
 from app.repositories.contracts_repo import get_contracts_data
 from app.repositories.reports_repo import get_reports_data
 from app.repositories.settings_repo import get_settings_data
-from app.schemas.requests import CadastroCreateBody, CadastroStatusBody, ChatFeedbackBody, ChatMessageBody, LoginBody
+from app.schemas.requests import CadastroCreateBody, CadastroStatusBody, CadastroUpdateBody, ChatFeedbackBody, ChatMessageBody, InvoiceCreateBody, InvoiceUpdateBody, LoginBody, UnitStatusBody
 from app.services.chat_context_service import build_chat_context
 from app.services.observability_alerts import dispatch_observability_alerts
 from app.audit.security_audit import query_security_audit_events
@@ -231,6 +231,33 @@ async def export_invoices_csv(
     return PlainTextResponse(csv, media_type="text/csv", headers={"Content-Disposition": f'attachment; filename="invoices-export-{int(datetime.now().timestamp())}.csv"'})
 
 
+@router.post("/invoices", status_code=201)
+async def post_invoice(
+    body: InvoiceCreateBody,
+    request: Request,
+    auth: dict = Depends(require_tenant_scope),
+    _role: dict = Depends(require_roles(["admin", "sindico"])),
+):
+    created = await create_invoice(auth["condominiumId"], body.model_dump())
+    log_security_event("invoice_create", request, {"unit": body.unit})
+    return {"item": created}
+
+
+@router.patch("/invoices/{invoice_id}")
+async def patch_invoice(
+    invoice_id: str,
+    body: InvoiceUpdateBody,
+    auth: dict = Depends(require_tenant_scope),
+    _role: dict = Depends(require_roles(["admin", "sindico"])),
+):
+    if not any([body.unit, body.resident, body.reference, body.dueDate, body.amount]):
+        raise ApiRequestError(400, "INVALID_BODY", "Ao menos um campo deve ser informado para atualizacao.")
+    updated = await update_invoice(auth["condominiumId"], invoice_id, body.model_dump(exclude_none=True))
+    if not updated:
+        raise ApiRequestError(404, "NOT_FOUND", "Fatura nao encontrada.")
+    return {"item": updated}
+
+
 @router.patch("/invoices/{invoice_id}/pay")
 async def pay_invoice(invoice_id: str, request: Request, auth: dict = Depends(require_tenant_scope), _role: dict = Depends(require_roles(["admin", "sindico"]))):
     invoice_id = (invoice_id or "").strip()
@@ -303,6 +330,26 @@ async def management_units(
     }
 
 
+@router.patch("/management/units/{unit_id}/status")
+async def patch_unit_status(
+    unit_id: str,
+    body: UnitStatusBody,
+    request: Request,
+    auth: dict = Depends(require_tenant_scope),
+    _role: dict = Depends(require_roles(["admin", "sindico"])),
+):
+    unit_id = (unit_id or "").strip()
+    if not unit_id:
+        raise ApiRequestError(400, "INVALID_BODY", "Parametro unit_id e obrigatorio.", {"field": "unit_id"})
+
+    updated = await update_unit_status(auth["condominiumId"], unit_id, body.status)
+    if not updated:
+        raise ApiRequestError(404, "NOT_FOUND", "Unidade nao encontrada.")
+
+    log_security_event("unit_status_update", request, {"unitId": unit_id, "status": body.status})
+    return {"item": updated}
+
+
 @router.get("/cadastros")
 async def get_cadastros(
     auth: dict = Depends(require_tenant_scope),
@@ -341,6 +388,16 @@ async def post_cadastros(body: CadastroCreateBody, auth: dict = Depends(require_
 @router.patch("/cadastros/{cadastro_id}/status")
 async def patch_cadastro_status(cadastro_id: str, body: CadastroStatusBody, auth: dict = Depends(require_tenant_scope), _role: dict = Depends(require_roles(["admin", "sindico"]))):
     updated = await update_cadastro_status(auth["condominiumId"], cadastro_id, body.status)
+    if not updated:
+        raise ApiRequestError(404, "NOT_FOUND", "Cadastro nao encontrado.")
+    return {"item": updated}
+
+
+@router.patch("/cadastros/{cadastro_id}")
+async def patch_cadastro(cadastro_id: str, body: CadastroUpdateBody, auth: dict = Depends(require_tenant_scope), _role: dict = Depends(require_roles(["admin", "sindico"]))):
+    if not any([body.tipo, body.titulo, body.descricao, body.status]):
+        raise ApiRequestError(400, "INVALID_BODY", "Ao menos um campo deve ser informado para atualizacao.")
+    updated = await update_cadastro(auth["condominiumId"], cadastro_id, body.model_dump(exclude_none=True))
     if not updated:
         raise ApiRequestError(404, "NOT_FOUND", "Cadastro nao encontrado.")
     return {"item": updated}

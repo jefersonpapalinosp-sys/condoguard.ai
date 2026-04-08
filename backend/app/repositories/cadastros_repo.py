@@ -205,5 +205,54 @@ async def update_cadastro_status(condominium_id: int, cadastro_id: str, status: 
     return None
 
 
+async def update_cadastro(condominium_id: int, cadastro_id: str, payload: dict[str, Any]) -> dict[str, Any] | None:
+    if settings.db_dialect == "oracle":
+        try:
+            affected = await run_oracle_execute(
+                """
+                update cadastros_gerais
+                set tipo       = coalesce(:tipo, tipo),
+                    titulo     = coalesce(:titulo, titulo),
+                    descricao  = coalesce(:descricao, descricao),
+                    status     = coalesce(:status, status),
+                    updated_at = systimestamp
+                where condominio_id = :condominiumId
+                  and cadastro_id   = :cadastroId
+                """,
+                {
+                    "tipo": payload.get("tipo"),
+                    "titulo": payload.get("titulo"),
+                    "descricao": payload.get("descricao"),
+                    "status": payload.get("status"),
+                    "condominiumId": condominium_id,
+                    "cadastroId": cadastro_id,
+                },
+            )
+            if not affected:
+                return None
+            return await _get_cadastro_oracle(condominium_id, cadastro_id)
+        except Exception as exc:
+            if not settings.allow_oracle_seed_fallback:
+                raise create_oracle_unavailable_error(exc)
+            record_api_fallback_metric("cadastros", "oracle_fallback_seed")
+
+    items = _tenant_store(condominium_id)
+    for idx, item in enumerate(items):
+        if item["id"] == cadastro_id:
+            merged = {
+                **item,
+                "tipo": payload.get("tipo") or item["tipo"],
+                "titulo": payload.get("titulo") or item["titulo"],
+                "descricao": payload.get("descricao") or item["descricao"],
+                "status": payload.get("status") or item["status"],
+                "updatedAt": datetime.now(timezone.utc).isoformat(),
+            }
+            updated = _normalize(merged)
+            items[idx] = updated
+            _store[condominium_id] = items
+            return updated
+    return None
+
+
 def reset_cadastros_store() -> None:
     _store.clear()

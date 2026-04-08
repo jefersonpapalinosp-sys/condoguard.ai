@@ -31,9 +31,19 @@ const statusClass: Record<ContractStatus, string> = {
 };
 
 export function ContractRiskBadge({ risk }: { risk: ContractRisk }) {
-  return <span className={`px-2 py-1 rounded text-xs font-bold ${riskClass[risk]}`}>{riskLabel[risk]}</span>;
+  const label = riskLabel[risk];
+  return (
+    <span role="status" aria-label={`Risco ${label}`} className={`px-2 py-1 rounded text-xs font-bold ${riskClass[risk]}`}>
+      {label}
+    </span>
+  );
 }
 
 export function ContractStatusBadge({ status }: { status: ContractStatus }) {
-  return <span className={`px-2 py-1 rounded text-xs font-bold ${statusClass[status]}`}>{statusLabel[status]}</span>;
+  const label = statusLabel[status];
+  return (
+    <span role="status" aria-label={`Status ${label}`} className={`px-2 py-1 rounded text-xs font-bold ${statusClass[status]}`}>
+      {label}
+    </span>
+  );
 }

@@ -25,6 +25,13 @@ function renderChat() {
 }
 
 describe('Chat view', () => {
+  beforeEach(() => {
+    Object.defineProperty(window.HTMLElement.prototype, 'scrollIntoView', {
+      configurable: true,
+      value: vi.fn(),
+    });
+  });
+
   it('renders bootstrap and sends user message', async () => {
     const { fetchChatBootstrap, fetchChatTelemetry, postChatMessage } = await import('../../../src/services/chatService');
     vi.mocked(fetchChatBootstrap).mockResolvedValue({
@@ -42,7 +49,8 @@ describe('Chat view', () => {
     renderChat();
 
     expect(await screen.findByText('Chat copiloto')).toBeInTheDocument();
-    expect(screen.getByText('Bem-vinda!')).toBeInTheDocument();
+    expect(screen.getByText('CondoGuard Copiloto')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Resumo' })).toBeInTheDocument();
 
     const user = userEvent.setup();
     await user.type(screen.getByPlaceholderText(/Digite uma pergunta/i), 'Quais alertas?');

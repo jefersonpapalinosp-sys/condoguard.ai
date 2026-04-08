@@ -45,8 +45,8 @@ export default function Login() {
   };
 
   return (
-    <main className="min-h-[100dvh] flex bg-surface text-on-surface font-body antialiased overflow-x-hidden">
-      <section className="hidden lg:flex lg:w-7/12 relative overflow-hidden bg-primary-container min-h-[100dvh]">
+    <main className="min-h-[100dvh] overflow-x-hidden bg-surface text-on-surface font-body antialiased lg:flex">
+      <section className="relative hidden min-h-[100dvh] overflow-hidden bg-primary-container lg:flex lg:w-7/12">
         <div className="absolute inset-0 z-0">
           <img
             src="https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=2070&auto=format&fit=crop"
@@ -54,7 +54,7 @@ export default function Login() {
             className="w-full h-full object-cover opacity-60 grayscale"
           />
         </div>
-        <div className="absolute inset-0 bg-gradient-to-tr from-primary via-transparent to-primary-container opacity-90 z-10"></div>
+        <div className="absolute inset-0 bg-gradient-to-tr from-primary via-transparent to-primary-container opacity-90 z-10" />
 
         <div className="relative z-20 flex flex-col justify-between p-10 xl:p-16 h-full">
           <div>
@@ -78,20 +78,41 @@ export default function Login() {
                 Monitoramento avancado para ativos de alto valor.
               </h2>
             </div>
+
+            <div className="mt-8 grid grid-cols-1 gap-3 text-sm text-white/85">
+              <div className="rounded-2xl bg-white/10 px-4 py-3">
+                <p className="text-[11px] uppercase tracking-widest text-white/70">Tempo real</p>
+                <p className="mt-1 font-semibold">Alertas e status operacionais com atualizacao continua.</p>
+              </div>
+              <div className="rounded-2xl bg-white/10 px-4 py-3">
+                <p className="text-[11px] uppercase tracking-widest text-white/70">Governanca</p>
+                <p className="mt-1 font-semibold">Controle por perfil para moradores, sindico e administracao.</p>
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
-      <section className="w-full lg:w-5/12 bg-surface flex items-center justify-center px-4 md:px-8 lg:px-16 py-8 md:py-12 lg:py-16 relative overflow-y-auto">
-        <div className="absolute inset-0 bg-surface-container-low opacity-40 -z-10"></div>
+      <section className="relative flex w-full items-center justify-center overflow-y-auto px-4 py-6 md:px-8 md:py-10 lg:w-5/12 lg:px-12">
+        <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_18%_0%,rgba(19,27,46,0.08),transparent_35%),linear-gradient(180deg,#faf8ff_0%,#f1f4ff_100%)]" />
 
-        <div className="w-full max-w-md my-4">
-          <header className="mb-10">
-            <h2 className="text-2xl md:text-3xl font-headline font-extrabold text-on-surface tracking-tight">Acessar Plataforma</h2>
-            <p className="mt-2 text-on-surface-variant font-body">Acesso autenticado no backend com credenciais validas.</p>
+        <div className="w-full max-w-md space-y-5 rounded-3xl border border-outline-variant/30 bg-surface-container-lowest/90 p-5 shadow-xl backdrop-blur-sm md:p-7">
+          <header>
+            <div className="mb-4 flex items-center gap-3 lg:hidden">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary-container">
+                <span className="material-symbols-outlined text-sm text-white">domain</span>
+              </div>
+              <div>
+                <p className="font-headline text-base font-extrabold tracking-tight">CondoGuard.AI</p>
+                <p className="text-[10px] uppercase tracking-[0.18em] text-on-surface-variant">Building Intelligence</p>
+              </div>
+            </div>
+
+            <h2 className="text-2xl font-headline font-extrabold tracking-tight text-on-surface md:text-3xl">Acessar Plataforma</h2>
+            <p className="mt-2 font-body text-on-surface-variant">Acesso autenticado no backend com credenciais validas.</p>
           </header>
 
-          <form className="space-y-6" onSubmit={onSubmit}>
+          <form className="space-y-5" onSubmit={onSubmit}>
             <div className="space-y-2">
               <label htmlFor="email" className="block text-xs font-label font-bold text-on-surface-variant uppercase tracking-widest">
                 E-mail
@@ -132,15 +153,20 @@ export default function Login() {
               </div>
             </div>
 
+            <div className="rounded-xl border border-outline-variant/30 bg-surface-container-low px-3 py-2">
+              <p className="text-[11px] uppercase tracking-widest text-on-surface-variant">Acesso seguro</p>
+              <p className="mt-1 text-xs text-on-surface-variant">Sessao protegida por autenticacao e politicas de perfil.</p>
+            </div>
+
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-4 monolith-gradient text-white font-headline font-bold text-sm uppercase tracking-widest rounded-lg shadow-xl shadow-primary-container/10 hover:shadow-primary-container/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+              className="flex w-full items-center justify-center gap-2 rounded-lg py-4 text-sm font-headline font-bold uppercase tracking-widest text-white shadow-xl shadow-primary-container/10 transition-all active:scale-[0.98] monolith-gradient hover:shadow-primary-container/20"
             >
               {loading ? 'Entrando...' : 'Entrar'}
               <span className="material-symbols-outlined text-lg">arrow_forward</span>
             </button>
-            {error ? <p className="text-sm text-error mt-2">{error}</p> : null}
+            {error ? <p className="mt-1 text-sm text-error">{error}</p> : null}
           </form>
         </div>
       </section>

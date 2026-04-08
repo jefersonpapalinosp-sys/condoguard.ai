@@ -33,7 +33,7 @@ describe('Invoices view', () => {
     await user.click(screen.getByRole('button', { name: /Registrar pagamento/i }));
     await waitFor(() => {
       expect(markInvoiceAsPaid).toHaveBeenCalledWith('inv-1');
-      expect(screen.getByText('Quitada')).toBeInTheDocument();
+      expect(screen.getAllByText('Quitada').length).toBeGreaterThan(0);
     });
   });
 

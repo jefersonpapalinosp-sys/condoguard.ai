@@ -1,5 +1,5 @@
 import type { FormEvent } from 'react';
-import { useMemo, useState } from 'react';
+import { useId, useMemo, useState } from 'react';
 import type { ContractRisk, ContractStatus, ContractUpsertPayload } from '../types/contracts';
 
 type Props = {
@@ -11,6 +11,9 @@ type Props = {
 };
 
 type FormState = ContractUpsertPayload;
+const labelClass = 'text-[11px] font-bold uppercase tracking-widest text-on-surface-variant';
+const inputClass =
+  'mt-2 w-full rounded-xl border border-outline-variant/30 bg-surface-container-highest px-3 py-2.5 outline-none focus:ring-2 focus:ring-primary-fixed';
 
 function toInputDate(value: string | undefined) {
   if (!value) return '';
@@ -18,6 +21,7 @@ function toInputDate(value: string | undefined) {
 }
 
 export function ContractForm({ initialValue, submitting = false, submitLabel, onSubmit, onCancel }: Props) {
+  const errorId = useId();
   const [error, setError] = useState<string | null>(null);
   const [form, setForm] = useState<FormState>({
     contractNumber: initialValue?.contractNumber ?? '',
@@ -80,102 +84,113 @@ export function ContractForm({ initialValue, submitting = false, submitLabel, on
   }
 
   return (
-    <form onSubmit={handleSubmit} className="bg-surface-container-low rounded-xl p-6 space-y-4">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <label className="text-xs font-bold uppercase tracking-widest text-on-surface-variant">
+    <form
+      onSubmit={handleSubmit}
+      aria-busy={submitting}
+      aria-describedby={error ? errorId : undefined}
+      className="rounded-2xl border border-outline-variant/30 bg-surface-container-low p-4 md:p-6 space-y-5"
+    >
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+        <label className={labelClass}>
           Numero/Nome do contrato
           <input
             value={form.contractNumber}
             onChange={(event) => patch('contractNumber', event.target.value)}
-            className="mt-2 w-full px-3 py-2 rounded-lg bg-surface-container-highest outline-none focus:ring-2 focus:ring-primary-fixed"
+            className={inputClass}
             placeholder="CTR-2026-001"
           />
         </label>
 
-        <label className="text-xs font-bold uppercase tracking-widest text-on-surface-variant">
+        <label className={labelClass}>
           Nome do contrato
           <input
+            required
             value={form.name}
             onChange={(event) => patch('name', event.target.value)}
-            className="mt-2 w-full px-3 py-2 rounded-lg bg-surface-container-highest outline-none focus:ring-2 focus:ring-primary-fixed"
+            className={inputClass}
             placeholder="Portaria e controle de acesso"
           />
         </label>
 
-        <label className="text-xs font-bold uppercase tracking-widest text-on-surface-variant">
+        <label className={labelClass}>
           Fornecedor
           <input
+            required
             value={form.supplier}
             onChange={(event) => patch('supplier', event.target.value)}
-            className="mt-2 w-full px-3 py-2 rounded-lg bg-surface-container-highest outline-none focus:ring-2 focus:ring-primary-fixed"
+            className={inputClass}
             placeholder="Sentinel Security Ltda"
           />
         </label>
 
-        <label className="text-xs font-bold uppercase tracking-widest text-on-surface-variant">
+        <label className={labelClass}>
           Categoria
           <input
             value={form.category}
             onChange={(event) => patch('category', event.target.value)}
-            className="mt-2 w-full px-3 py-2 rounded-lg bg-surface-container-highest outline-none focus:ring-2 focus:ring-primary-fixed"
+            className={inputClass}
             placeholder="Seguranca"
           />
         </label>
 
-        <label className="md:col-span-2 text-xs font-bold uppercase tracking-widest text-on-surface-variant">
+        <label className={`md:col-span-2 xl:col-span-3 ${labelClass}`}>
           Descricao
           <input
             value={form.description}
             onChange={(event) => patch('description', event.target.value)}
-            className="mt-2 w-full px-3 py-2 rounded-lg bg-surface-container-highest outline-none focus:ring-2 focus:ring-primary-fixed"
+            className={inputClass}
             placeholder="Descricao resumida do escopo contratual"
           />
         </label>
 
-        <label className="text-xs font-bold uppercase tracking-widest text-on-surface-variant">
+        <label className={labelClass}>
           Tipo de servico
           <input
+            required
             value={form.serviceType}
             onChange={(event) => patch('serviceType', event.target.value)}
-            className="mt-2 w-full px-3 py-2 rounded-lg bg-surface-container-highest outline-none focus:ring-2 focus:ring-primary-fixed"
+            className={inputClass}
             placeholder="Seguranca patrimonial"
           />
         </label>
 
-        <label className="text-xs font-bold uppercase tracking-widest text-on-surface-variant">
+        <label className={labelClass}>
           Valor mensal (R$)
           <input
             type="number"
-            min={0}
+            min={0.01}
             step="0.01"
+            required
             value={form.monthlyValue}
             onChange={(event) => patch('monthlyValue', Number(event.target.value))}
-            className="mt-2 w-full px-3 py-2 rounded-lg bg-surface-container-highest outline-none focus:ring-2 focus:ring-primary-fixed"
+            className={inputClass}
           />
         </label>
 
-        <label className="text-xs font-bold uppercase tracking-widest text-on-surface-variant">
+        <label className={labelClass}>
           Data de inicio
           <input
             type="date"
+            required
             value={form.startDate}
             onChange={(event) => patch('startDate', event.target.value)}
-            className="mt-2 w-full px-3 py-2 rounded-lg bg-surface-container-highest outline-none focus:ring-2 focus:ring-primary-fixed"
+            className={inputClass}
           />
         </label>
 
-        <label className="text-xs font-bold uppercase tracking-widest text-on-surface-variant">
+        <label className={labelClass}>
           Data de termino
           <input
             type="date"
             min={minEndDate}
+            required
             value={form.endDate}
             onChange={(event) => patch('endDate', event.target.value)}
-            className="mt-2 w-full px-3 py-2 rounded-lg bg-surface-container-highest outline-none focus:ring-2 focus:ring-primary-fixed"
+            className={inputClass}
           />
         </label>
 
-        <label className="text-xs font-bold uppercase tracking-widest text-on-surface-variant">
+        <label className={labelClass}>
           Prazo (meses)
           <input
             type="number"
@@ -183,16 +198,16 @@ export function ContractForm({ initialValue, submitting = false, submitLabel, on
             max={240}
             value={form.termMonths ?? 12}
             onChange={(event) => patch('termMonths', Number(event.target.value))}
-            className="mt-2 w-full px-3 py-2 rounded-lg bg-surface-container-highest outline-none focus:ring-2 focus:ring-primary-fixed"
+            className={inputClass}
           />
         </label>
 
-        <label className="text-xs font-bold uppercase tracking-widest text-on-surface-variant">
+        <label className={labelClass}>
           Indice de reajuste
           <select
             value={form.index}
             onChange={(event) => patch('index', event.target.value as FormState['index'])}
-            className="mt-2 w-full px-3 py-2 rounded-lg bg-surface-container-highest outline-none focus:ring-2 focus:ring-primary-fixed"
+            className={inputClass}
           >
             <option value="IPCA">IPCA</option>
             <option value="IGPM">IGPM</option>
@@ -201,7 +216,7 @@ export function ContractForm({ initialValue, submitting = false, submitLabel, on
           </select>
         </label>
 
-        <label className="text-xs font-bold uppercase tracking-widest text-on-surface-variant">
+        <label className={labelClass}>
           Periodicidade do reajuste (meses)
           <input
             type="number"
@@ -209,36 +224,37 @@ export function ContractForm({ initialValue, submitting = false, submitLabel, on
             max={24}
             value={form.adjustmentFrequencyMonths}
             onChange={(event) => patch('adjustmentFrequencyMonths', Number(event.target.value))}
-            className="mt-2 w-full px-3 py-2 rounded-lg bg-surface-container-highest outline-none focus:ring-2 focus:ring-primary-fixed"
+            className={inputClass}
           />
         </label>
 
-        <label className="text-xs font-bold uppercase tracking-widest text-on-surface-variant">
+        <label className={labelClass}>
           Proximo reajuste
           <input
             type="date"
             value={form.nextAdjustmentDate || ''}
             onChange={(event) => patch('nextAdjustmentDate', event.target.value)}
-            className="mt-2 w-full px-3 py-2 rounded-lg bg-surface-container-highest outline-none focus:ring-2 focus:ring-primary-fixed"
+            className={inputClass}
           />
         </label>
 
-        <label className="text-xs font-bold uppercase tracking-widest text-on-surface-variant">
+        <label className={labelClass}>
           Responsavel interno
           <input
+            required
             value={form.internalOwner}
             onChange={(event) => patch('internalOwner', event.target.value)}
-            className="mt-2 w-full px-3 py-2 rounded-lg bg-surface-container-highest outline-none focus:ring-2 focus:ring-primary-fixed"
+            className={inputClass}
             placeholder="Nome do responsavel"
           />
         </label>
 
-        <label className="text-xs font-bold uppercase tracking-widest text-on-surface-variant">
+        <label className={labelClass}>
           Status
           <select
             value={form.status}
             onChange={(event) => patch('status', event.target.value as ContractStatus)}
-            className="mt-2 w-full px-3 py-2 rounded-lg bg-surface-container-highest outline-none focus:ring-2 focus:ring-primary-fixed"
+            className={inputClass}
           >
             <option value="active">Ativo</option>
             <option value="expiring">Vencendo</option>
@@ -249,12 +265,12 @@ export function ContractForm({ initialValue, submitting = false, submitLabel, on
           </select>
         </label>
 
-        <label className="text-xs font-bold uppercase tracking-widest text-on-surface-variant">
+        <label className={labelClass}>
           Risco
           <select
             value={form.risk}
             onChange={(event) => patch('risk', event.target.value as ContractRisk)}
-            className="mt-2 w-full px-3 py-2 rounded-lg bg-surface-container-highest outline-none focus:ring-2 focus:ring-primary-fixed"
+            className={inputClass}
           >
             <option value="low">Baixo</option>
             <option value="medium">Medio</option>
@@ -262,25 +278,29 @@ export function ContractForm({ initialValue, submitting = false, submitLabel, on
           </select>
         </label>
 
-        <label className="md:col-span-2 text-xs font-bold uppercase tracking-widest text-on-surface-variant">
+        <label className={`md:col-span-2 xl:col-span-3 ${labelClass}`}>
           Observacoes
           <textarea
             rows={4}
             value={form.notes}
             onChange={(event) => patch('notes', event.target.value)}
-            className="mt-2 w-full px-3 py-2 rounded-lg bg-surface-container-highest outline-none focus:ring-2 focus:ring-primary-fixed resize-y"
+            className="mt-2 w-full rounded-xl border border-outline-variant/30 bg-surface-container-highest px-3 py-2.5 outline-none focus:ring-2 focus:ring-primary-fixed resize-y"
             placeholder="Clausulas relevantes, pendencias e observacoes de auditoria"
           />
         </label>
       </div>
 
-      {error ? <p className="text-sm text-error">{error}</p> : null}
+      {error ? (
+        <p id={errorId} role="alert" className="text-sm text-error">
+          {error}
+        </p>
+      ) : null}
 
-      <div className="flex flex-wrap items-center gap-3">
+      <div className="flex flex-wrap items-center gap-3 border-t border-outline-variant/30 pt-4">
         <button
           type="submit"
           disabled={submitting}
-          className="px-4 py-2 rounded-lg monolith-gradient text-white text-xs font-bold uppercase tracking-widest disabled:opacity-50"
+          className="interactive-focus px-4 py-2 rounded-lg monolith-gradient text-white text-xs font-bold uppercase tracking-widest disabled:opacity-50"
         >
           {submitting ? 'Salvando...' : submitLabel}
         </button>
@@ -288,7 +308,7 @@ export function ContractForm({ initialValue, submitting = false, submitLabel, on
           <button
             type="button"
             onClick={onCancel}
-            className="px-4 py-2 rounded-lg bg-surface-container-highest text-on-surface text-xs font-bold uppercase tracking-widest"
+            className="interactive-focus px-4 py-2 rounded-lg bg-surface-container-highest text-on-surface text-xs font-bold uppercase tracking-widest"
           >
             Cancelar
           </button>

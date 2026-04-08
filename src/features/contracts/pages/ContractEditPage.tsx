@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ErrorState } from '../../../shared/ui/states/ErrorState';
-import { LoadingState } from '../../../shared/ui/states/LoadingState';
 import { ContractForm } from '../components/ContractForm';
+import { ContractsLoadingSkeleton } from '../components/ContractsLoadingSkeleton';
 import { ContractsPageShell } from '../components/ContractsPageShell';
 import { fetchContractDetail, updateContract } from '../services/contractsManagementService';
 import type { ContractDetailResponse, ContractUpsertPayload } from '../types/contracts';
@@ -55,7 +55,16 @@ export default function ContractEditPage() {
     }
   }
 
-  if (loading) return <LoadingState message="Carregando contrato para edicao..." />;
+  if (loading) {
+    return (
+      <ContractsLoadingSkeleton
+        title="Editar contrato"
+        subtitle="Carregando dados para edicao."
+        variant="form"
+        message="Carregando contrato para edicao..."
+      />
+    );
+  }
   if (error || !data) return <ErrorState message={error || 'Falha ao carregar contrato.'} />;
 
   return (

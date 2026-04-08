@@ -1,4 +1,5 @@
 import { FormEvent, useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { fetchChatBootstrap, postChatMessage, sendChatFeedback } from '../../services/chatService';
 import type { ChatMessage } from '../../services/mockApi';
 
@@ -11,7 +12,8 @@ type ChatbotWidgetProps = {
 };
 
 export function ChatbotWidget({ hidden = false }: ChatbotWidgetProps) {
-  const [expanded, setExpanded] = useState(true);
+  const navigate = useNavigate();
+  const [expanded, setExpanded] = useState(false);
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -107,7 +109,7 @@ export function ChatbotWidget({ hidden = false }: ChatbotWidgetProps) {
     return (
       <button
         onClick={() => setExpanded(true)}
-        className="fixed bottom-4 right-4 z-40 flex h-12 w-[240px] items-center justify-between rounded-full monolith-gradient px-4 text-white shadow-xl"
+        className="fixed bottom-[max(1rem,env(safe-area-inset-bottom))] right-[max(1rem,env(safe-area-inset-right))] z-40 flex h-12 w-[min(240px,calc(100vw-1rem))] items-center justify-between rounded-full monolith-gradient px-4 text-white shadow-xl"
         aria-label="Abrir chat"
       >
         <div className="flex items-center gap-3">
@@ -125,7 +127,7 @@ export function ChatbotWidget({ hidden = false }: ChatbotWidgetProps) {
   }
 
   return (
-    <section className="fixed bottom-4 right-4 z-40 w-[calc(100vw-1rem)] max-w-[360px] overflow-hidden rounded-3xl border border-outline-variant/40 bg-surface shadow-2xl">
+    <section className="fixed bottom-[max(1rem,env(safe-area-inset-bottom))] right-[max(1rem,env(safe-area-inset-right))] z-40 w-[min(390px,calc(100vw-1rem))] overflow-hidden rounded-3xl border border-outline-variant/40 bg-surface shadow-2xl">
       <header className="flex items-center justify-between monolith-gradient px-3 py-3 text-on-primary">
         <div className="flex min-w-0 items-center gap-2">
           <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-surface text-on-surface">
@@ -149,23 +151,19 @@ export function ChatbotWidget({ hidden = false }: ChatbotWidgetProps) {
             <span className="material-symbols-outlined text-[17px]">expand_more</span>
           </button>
           <button
-            aria-label="Expandir"
+            aria-label="Abrir tela de chat"
             className="rounded-full p-1 hover:bg-white/15"
-            onClick={() => setExpanded(false)}
+            onClick={() => {
+              setExpanded(false);
+              navigate('/chat');
+            }}
           >
             <span className="material-symbols-outlined text-[17px]">open_in_full</span>
-          </button>
-          <button
-            aria-label="Fechar"
-            className="rounded-full p-1 hover:bg-white/15"
-            onClick={() => setExpanded(false)}
-          >
-            <span className="material-symbols-outlined text-[17px]">close</span>
           </button>
         </div>
       </header>
 
-      <div className="h-[330px] overflow-y-auto bg-surface-container-low px-3 py-3">
+      <div className="h-[min(56vh,430px)] overflow-y-auto bg-surface-container-low px-3 py-3">
         {loading ? <p className="text-xs text-on-surface-variant">Inicializando assistente...</p> : null}
         {error ? <p className="text-xs text-red-600">{error}</p> : null}
 

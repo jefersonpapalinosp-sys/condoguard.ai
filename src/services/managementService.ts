@@ -73,6 +73,21 @@ function buildQuery(params: ManagementListQuery = {}) {
   return suffix ? `?${suffix}` : '';
 }
 
+export async function updateUnitStatus(unitId: string, status: UnitStatus): Promise<ManagementUnitItem> {
+  try {
+    const response = await requestJson<{ item: ManagementUnitItem }>(
+      `/api/management/units/${encodeURIComponent(unitId)}/status`,
+      { method: 'PATCH', body: JSON.stringify({ status }) },
+    );
+    setModuleDataSource(MODULE_NAME, 'api');
+    return response.item;
+  } catch {
+    setModuleDataSource(MODULE_NAME, 'unknown');
+    notifyApiFallback({ module: 'Gestao', message: 'Falha ao atualizar status da unidade' });
+    throw new Error('Falha ao atualizar status.');
+  }
+}
+
 export async function fetchManagementData(params: ManagementListQuery = {}): Promise<ManagementApiResponse> {
   try {
     const response = await requestJson<ManagementApiResponse>(`/api/management/units${buildQuery(params)}`);
