@@ -14,18 +14,18 @@ type NavItem = {
 
 const navItems: NavItem[] = [
   { id: 'dashboard', label: 'Dashboard', icon: 'dashboard' },
-  { id: 'cadastros-gerais', label: 'Cadastros Gerais', icon: 'inventory_2' },
   { id: 'alerts', label: 'Alertas', icon: 'warning' },
+  { id: 'cadastros-gerais', label: 'Cadastros Gerais', icon: 'inventory_2' },
+  { id: 'chat', label: 'Chat', icon: 'forum' },
+  { id: 'settings', label: 'Configuracoes', icon: 'settings' },
   { id: 'consumption', label: 'Consumo', icon: 'energy_savings_leaf' },
   { id: 'contracts', label: 'Contratos', icon: 'description' },
   { id: 'invoices', label: 'Faturas', icon: 'receipt_long', allowedRoles: ['admin', 'sindico'] },
+  { id: 'management', label: 'Gestao', icon: 'domain', allowedRoles: ['admin', 'sindico'] },
   { id: 'integrations/enel', label: 'Importacao Enel', icon: 'bolt', allowedRoles: ['admin', 'sindico'] },
   { id: 'integrations/sabesp', label: 'Importacao Sabesp', icon: 'water_drop', allowedRoles: ['admin', 'sindico'] },
-  { id: 'chat', label: 'Chat', icon: 'forum' },
-  { id: 'management', label: 'Gestao', icon: 'domain', allowedRoles: ['admin', 'sindico'] },
   { id: 'observability', label: 'Observabilidade', icon: 'monitoring', allowedRoles: ['admin'] },
   { id: 'reports', label: 'Relatorios', icon: 'assessment' },
-  { id: 'settings', label: 'Configuracoes', icon: 'settings' },
 ];
 
 function toTitle(pathname: string) {
