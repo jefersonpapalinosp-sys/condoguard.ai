@@ -5,6 +5,8 @@ export type LoginResponse = {
   role: 'admin' | 'sindico' | 'morador';
   expiresAt: number;
   condominiumId?: number | null;
+  userName?: string | null;
+  name?: string | null;
 };
 
 export async function loginWithPassword(email: string, password: string) {

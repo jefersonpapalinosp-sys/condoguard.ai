@@ -150,6 +150,72 @@ describe('invoicesService.markInvoiceAsPaid', () => {
   });
 });
 
+describe('invoicesService.createInvoiceData', () => {
+  it('creates invoice and returns created item', async () => {
+    const { requestJson } = await import('../../../src/services/http');
+    const { createInvoiceData } = await import('../../../src/services/invoicesService');
+    const createdItem = {
+      id: 'inv-10',
+      unit: 'A-10',
+      resident: 'Maria Teste',
+      reference: 'Mai/2026',
+      dueDate: '2026-05-10',
+      amount: 312.55,
+      status: 'pending' as const,
+    };
+
+    vi.mocked(requestJson).mockResolvedValue({ item: createdItem });
+
+    const payload = {
+      unit: 'A-10',
+      resident: 'Maria Teste',
+      reference: 'Mai/2026',
+      dueDate: '2026-05-10',
+      amount: 312.55,
+      status: 'pending' as const,
+    };
+
+    const result = await createInvoiceData(payload);
+
+    expect(result).toEqual(createdItem);
+    expect(requestJson).toHaveBeenCalledWith('/api/invoices', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  });
+});
+
+describe('invoicesService.updateInvoiceData', () => {
+  it('updates invoice by id and returns updated item', async () => {
+    const { requestJson } = await import('../../../src/services/http');
+    const { updateInvoiceData } = await import('../../../src/services/invoicesService');
+    const updatedItem = {
+      id: 'inv-20',
+      unit: 'B-20',
+      resident: 'Joao Atualizado',
+      reference: 'Jun/2026',
+      dueDate: '2026-06-20',
+      amount: 499.9,
+      status: 'paid' as const,
+    };
+
+    vi.mocked(requestJson).mockResolvedValue({ item: updatedItem });
+
+    const payload = {
+      amount: 499.9,
+      resident: 'Joao Atualizado',
+    };
+
+    const result = await updateInvoiceData('inv/20', payload);
+
+    expect(result).toEqual(updatedItem);
+    expect(requestJson).toHaveBeenCalledWith('/api/invoices/inv%2F20', {
+      method: 'PATCH',
+      body: JSON.stringify(payload),
+    });
+  });
+});
+
 describe('invoicesService.fetchInvoicesData', () => {
   beforeEach(() => {
     vi.unstubAllEnvs();

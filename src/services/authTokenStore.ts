@@ -2,6 +2,13 @@ const SESSION_KEY = 'cg_session';
 
 let accessToken: string | null = null;
 
+export type StoredSession = {
+  token: string;
+  expiresAt: number;
+  role: string;
+  userName?: string;
+};
+
 export function getAccessToken() {
   return accessToken;
 }
@@ -19,20 +26,20 @@ export function clearAccessToken() {
   }
 }
 
-export function persistSession(token: string, expiresAt: number, role: string) {
+export function persistSession(token: string, expiresAt: number, role: string, userName?: string) {
   setAccessToken(token);
   try {
-    sessionStorage.setItem(SESSION_KEY, JSON.stringify({ token, expiresAt, role }));
+    sessionStorage.setItem(SESSION_KEY, JSON.stringify({ token, expiresAt, role, userName }));
   } catch {
     // sessionStorage not available
   }
 }
 
-export function restoreSession(): { token: string; expiresAt: number; role: string } | null {
+export function restoreSession(): StoredSession | null {
   try {
     const raw = sessionStorage.getItem(SESSION_KEY);
     if (!raw) return null;
-    const data = JSON.parse(raw) as { token: string; expiresAt: number; role: string };
+    const data = JSON.parse(raw) as StoredSession;
     if (!data.token || !data.expiresAt || data.expiresAt <= Date.now()) {
       sessionStorage.removeItem(SESSION_KEY);
       return null;

@@ -50,7 +50,7 @@ function toTitle(pathname: string) {
 
 export function AppLayout() {
   const location = useLocation();
-  const { logout, role } = useAuth();
+  const { logout, role, userName } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const mobileMenuId = useId();
   const visibleNavItems = navItems.filter((item) => !item.allowedRoles || (role && item.allowedRoles.includes(role)));
@@ -184,11 +184,11 @@ export function AppLayout() {
               <div className="flex items-center gap-2 sm:gap-3">
                 <img
                   src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"
-                  alt="Usuario"
+                  alt={`Avatar de ${userName}`}
                   className="h-8 w-8 rounded-full border border-outline-variant/60 object-cover"
                 />
-                <div className="hidden sm:block">
-                  <p className="text-sm font-semibold text-on-surface">Ricardo Silva</p>
+                <div className="min-w-0 text-right">
+                  <p className="truncate text-xs font-semibold text-on-surface sm:text-sm">{userName}</p>
                   <p className="text-[10px] uppercase tracking-[0.15em] text-on-surface-variant">{roleLabel}</p>
                 </div>
               </div>

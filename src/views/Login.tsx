@@ -6,6 +6,20 @@ import { ApiError } from '../services/http';
 
 const IS_DEV = import.meta.env.VITE_APP_ENV === 'dev' || import.meta.env.DEV;
 
+function deriveNameFromEmail(email: string) {
+  const localPart = String(email ?? '')
+    .split('@')[0]
+    ?.replace(/[._-]+/g, ' ')
+    .replace(/\d+/g, ' ')
+    .trim();
+  if (!localPart) return 'Usuario logado';
+  return localPart
+    .split(' ')
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
+    .join(' ');
+}
+
 export default function Login() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -24,7 +38,10 @@ export default function Login() {
 
     try {
       const session = await loginWithPassword(email, password);
-      login(session);
+      login({
+        ...session,
+        userName: session.userName ?? session.name ?? deriveNameFromEmail(email),
+      });
       const nextPath = (location.state as { from?: string } | null)?.from ?? '/dashboard';
       navigate(nextPath, { replace: true });
     } catch (rawError) {
