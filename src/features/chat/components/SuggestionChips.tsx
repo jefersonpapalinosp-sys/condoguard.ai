@@ -31,7 +31,9 @@ export function SuggestionChips({ suggestions, onSelect }: Props) {
           onClick={() => onSelect(item.prompt)}
           className="inline-flex items-center gap-1.5 rounded-full border border-outline-variant/30 bg-surface-container-highest px-3 py-1.5 text-xs font-semibold text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface hover:border-primary/30 active:scale-95 transition-all"
         >
-          <span className="material-symbols-outlined text-[13px] text-primary/70">{getIcon(item.label)}</span>
+          <span aria-hidden="true" className="material-symbols-outlined text-[13px] text-primary/70">
+            {getIcon(item.label)}
+          </span>
           {item.label}
         </button>
       ))}

@@ -20,7 +20,7 @@ export function WelcomeScreen({ userName, onSelectSample }: Props) {
       {/* Hero */}
       <div className="flex flex-col items-center gap-3">
         <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 ring-1 ring-primary/20">
-          <span className="material-symbols-outlined text-[28px] text-primary">smart_toy</span>
+          <span aria-hidden="true" className="material-symbols-outlined text-[28px] text-primary">smart_toy</span>
         </div>
         <div>
           {firstName && (
@@ -57,7 +57,7 @@ export function WelcomeScreen({ userName, onSelectSample }: Props) {
                 <span
                   className={`flex h-7 w-7 items-center justify-center rounded-lg text-[15px] ${style?.badge ?? 'bg-surface-container-high text-on-surface-variant'}`}
                 >
-                  <span className="material-symbols-outlined text-[15px]">{icon}</span>
+                  <span aria-hidden="true" className="material-symbols-outlined text-[15px]">{icon}</span>
                 </span>
                 <span className="text-xs font-bold text-on-surface">{tile.name}</span>
               </div>
