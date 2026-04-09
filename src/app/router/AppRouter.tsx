@@ -23,6 +23,7 @@ import CadastrosGeraisPage from '../../features/cadastros/pages/CadastrosGeraisP
 import ObservabilityPage from '../../features/observability/pages/ObservabilityPage';
 import EnelIntegrationPage from '../../features/integrations/pages/EnelIntegrationPage';
 import SabespIntegrationPage from '../../features/integrations/pages/SabespIntegrationPage';
+import ComunicadosPage from '../../features/comunicados/pages/ComunicadosPage';
 
 export function AppRouter() {
   return (
@@ -68,6 +69,7 @@ export function AppRouter() {
         />
         <Route path="cadastros-gerais" element={<CadastrosGeraisPage />} />
         <Route path="reports" element={<ReportsPage />} />
+        <Route path="comunicados" element={<ComunicadosPage />} />
         <Route
           path="observability"
           element={(

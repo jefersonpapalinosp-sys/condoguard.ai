@@ -62,8 +62,10 @@ def rule_based_response(intent_id: str, context: dict, question: str = "") -> st
             intent_id = "maintenance_overview"
         elif any(kw in q for kw in ["consumo", "energia", "agua", "telemetria"]):
             intent_id = "consumption_overview"
-        elif any(kw in q for kw in ["ola", "oi", "bom dia", "boa tarde", "teste", "tudo bem"]):
+        elif any(kw in q for kw in ["ola", "oi", "bom dia", "boa tarde", "boa noite", "teste", "tudo bem", "tudo bom", "como vai"]):
             intent_id = "greeting"
+        elif any(kw in q for kw in ["contrato", "fornecedor", "reajuste", "prestador"]):
+            intent_id = "contracts_overview"
         elif any(kw in q for kw in ["resumo", "geral", "visao", "situacao", "como esta"]):
             intent_id = "action_plan"
 
@@ -112,6 +114,12 @@ def rule_based_response(intent_id: str, context: dict, question: str = "") -> st
             lines.append("\nNenhum alerta aberto. Operacao estavel.")
         return "\n".join(lines)
 
+    # ── Contracts ────────────────────────────────────────────────────────────
+    if intent_id == "contracts_overview":
+        lines = ["Gestao de contratos disponivel no modulo Contratos."]
+        lines.append("Acesse a aba Contratos para ver fornecedores, reajustes proximos e contratos de alto risco.")
+        return "\n".join(lines)
+
     # ── Maintenance / Management ─────────────────────────────────────────────
     if intent_id in ("maintenance_overview", "cadastros_overview"):
         lines = [
@@ -126,12 +134,17 @@ def rule_based_response(intent_id: str, context: dict, question: str = "") -> st
         return "\n".join(lines)
 
     # ── Consumption ──────────────────────────────────────────────────────────
-    if intent_id == "consumption_overview":
+    if intent_id in ("consumption_overview", "consumption_anomalies"):
         lines = ["Dados de consumo e telemetria disponiveis no modulo Consumo."]
         if critical:
             lines.append(
                 f"{critical} alertas criticos podem impactar leituras de consumo. "
                 "Verifique anomalias nas unidades afetadas."
+            )
+        if not critical:
+            lines.append(
+                "Acesse o modulo Consumo para ver graficos de energia, agua e gas "
+                "com comparativo de metas por unidade."
             )
         return "\n".join(lines)
 

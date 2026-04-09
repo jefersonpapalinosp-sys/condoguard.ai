@@ -26,6 +26,7 @@ const navItems: NavItem[] = [
   { id: 'integrations/enel', label: 'Importacao Enel', icon: 'bolt', allowedRoles: ['admin', 'sindico'] },
   { id: 'integrations/sabesp', label: 'Importacao Sabesp', icon: 'water_drop', allowedRoles: ['admin', 'sindico'] },
   { id: 'observability', label: 'Observabilidade', icon: 'monitoring', allowedRoles: ['admin'] },
+  { id: 'comunicados', label: 'Comunicados', icon: 'campaign' },
   { id: 'reports', label: 'Relatorios', icon: 'assessment' },
 ];
 

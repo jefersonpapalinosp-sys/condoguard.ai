@@ -128,6 +128,60 @@ export async function updateInvoiceData(invoiceId: string, payload: InvoiceUpdat
   return response.item;
 }
 
+export type InvoiceAnalyticsKpis = {
+  total: number;
+  paid: number;
+  pending: number;
+  overdue: number;
+  totalAmount: number;
+  paidAmount: number;
+  pendingAmount: number;
+  overdueAmount: number;
+  delinquencyRate: number;
+};
+
+export type InvoiceStatusDistribution = {
+  status: 'paid' | 'pending' | 'overdue';
+  label: string;
+  count: number;
+  amount: number;
+};
+
+export type InvoiceMonthlyTrend = {
+  month: string;
+  total: number;
+  paid: number;
+  pending: number;
+  overdue: number;
+  count: number;
+};
+
+export type InvoiceAgingBucket = {
+  range: string;
+  count: number;
+  amount: number;
+};
+
+export type InvoiceDelinquentUnit = {
+  unit: string;
+  resident: string;
+  count: number;
+  amount: number;
+};
+
+export type InvoiceAnalyticsResponse = {
+  kpis: InvoiceAnalyticsKpis;
+  statusDistribution: InvoiceStatusDistribution[];
+  monthlyTrend: InvoiceMonthlyTrend[];
+  aging: InvoiceAgingBucket[];
+  topDelinquent: InvoiceDelinquentUnit[];
+  generatedAt: string;
+};
+
+export async function fetchInvoicesAnalytics(): Promise<InvoiceAnalyticsResponse> {
+  return requestJson<InvoiceAnalyticsResponse>('/api/invoices/analytics');
+}
+
 export async function markInvoiceAsPaid(invoiceId: string) {
   const safeId = encodeURIComponent(invoiceId);
   return requestJson<{ item: InvoicesData['items'][number] }>(`/api/invoices/${safeId}/pay`, {

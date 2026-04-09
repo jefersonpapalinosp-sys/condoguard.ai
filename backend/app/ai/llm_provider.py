@@ -50,8 +50,21 @@ def get_embeddings():
     return _embeddings
 
 
+def _parse_retry_delay(err_str: str, default: float = 10.0, max_wait: float = 60.0) -> float:
+    """Extract retry delay hint from a 429 error message (e.g. 'retry_delay { seconds: 37 }')."""
+    import re
+    match = re.search(r"seconds[:\s]+(\d+)", err_str)
+    if match:
+        return min(float(match.group(1)) + 2, max_wait)
+    return default
+
+
 async def invoke_chain_with_retry(chain, kwargs: dict, max_retries: int = 1) -> str:
-    """Invoke an LCEL chain, retrying once on quota exhaustion (429)."""
+    """Invoke an LCEL chain, retrying once on quota exhaustion (429).
+
+    Respects the retry-delay hint embedded in the API error when available,
+    capped at 60 s to avoid blocking the event loop indefinitely.
+    """
     for attempt in range(max_retries + 1):
         try:
             return await chain.ainvoke(kwargs)
@@ -65,8 +78,12 @@ async def invoke_chain_with_retry(chain, kwargs: dict, max_retries: int = 1) -> 
                 or "rate_limit" in err_str
             )
             if is_quota and attempt < max_retries:
-                _log.warning("Quota 429 — aguardando 5s antes de retry %d/%d", attempt + 1, max_retries)
-                await asyncio.sleep(5)
+                delay = _parse_retry_delay(err_str)
+                _log.warning(
+                    "Quota 429 — aguardando %.0fs antes de retry %d/%d",
+                    delay, attempt + 1, max_retries,
+                )
+                await asyncio.sleep(delay)
                 continue
             raise
 

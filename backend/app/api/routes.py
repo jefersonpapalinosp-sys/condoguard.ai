@@ -33,13 +33,19 @@ from app.repositories.chat_telemetry_repo import (
     record_chat_feedback_telemetry,
     record_chat_message_telemetry,
 )
-from app.repositories.invoices_repo import create_invoice, get_invoices_data, mark_invoice_as_paid, update_invoice
+from app.repositories.invoices_repo import create_invoice, get_invoices_analytics, get_invoices_data, mark_invoice_as_paid, update_invoice
 from app.repositories.management_repo import get_management_units_data, update_unit_status
 from app.repositories.dashboard_repo import get_dashboard_data
 from app.repositories.consumption_repo import get_consumption_data
 from app.repositories.contracts_repo import get_contracts_data
 from app.repositories.reports_repo import get_reports_data, reports_to_csv
 from app.repositories.settings_repo import get_settings_data, update_thresholds
+from app.repositories.comunicados_repo import (
+    list_comunicados,
+    create_comunicado,
+    update_comunicado,
+    delete_comunicado,
+)
 from app.schemas.requests import CadastroCreateBody, CadastroStatusBody, CadastroUpdateBody, ChatFeedbackBody, ChatMessageBody, InvoiceCreateBody, InvoiceUpdateBody, LoginBody, ThresholdUpdateBody, UnitStatusBody
 from app.services.chat_context_service import build_chat_context
 from app.services.observability_alerts import dispatch_observability_alerts
@@ -233,6 +239,14 @@ async def login(body: LoginBody, request: Request) -> dict[str, Any]:
     token, expires_at = create_access_token({"sub": account["email"], "role": account["role"], "condominium_id": account["condominiumId"]})
     log_security_event("auth_login_success", request, {"email": account["email"], "role": account["role"]})
     return {"token": token, "role": account["role"], "condominiumId": account["condominiumId"], "expiresAt": expires_at}
+
+
+@router.get("/invoices/analytics")
+async def invoices_analytics(
+    auth: dict = Depends(require_tenant_scope),
+    _role: dict = Depends(require_roles(["admin", "sindico"])),
+):
+    return await get_invoices_analytics(auth["condominiumId"])
 
 
 @router.get("/invoices")
@@ -593,6 +607,55 @@ async def chat_message(body: ChatMessageBody, auth: dict = Depends(require_tenan
 async def chat_feedback(body: ChatFeedbackBody, request: Request, auth: dict = Depends(require_tenant_scope), _role: dict = Depends(require_roles(AUTH_ROLES))):
     record_chat_feedback_telemetry(auth["condominiumId"], {"messageId": body.messageId, "rating": body.rating, "comment": body.comment})
     log_security_event("chat_feedback_submitted", request, {"messageId": body.messageId, "rating": body.rating})
+    return {"ok": True}
+
+
+@router.get("/comunicados")
+async def comunicados_list(
+    auth: dict = Depends(require_tenant_scope),
+    _role: dict = Depends(require_roles(AUTH_ROLES)),
+    category: str | None = Query(default=None),
+    status: str | None = Query(default=None),
+    targetRole: str | None = Query(default=None),
+) -> Any:
+    return await list_comunicados(auth["condominiumId"], category, status, targetRole)
+
+
+@router.post("/comunicados", status_code=201)
+async def comunicado_create(
+    body: dict,
+    auth: dict = Depends(require_tenant_scope),
+    _role: dict = Depends(require_roles(["admin", "sindico"])),
+) -> Any:
+    try:
+        item = await create_comunicado(auth["condominiumId"], body, author_name=auth.get("sub", "Sindico"))
+        return {"item": item}
+    except ValueError as exc:
+        raise ApiRequestError(400, "VALIDATION_ERROR", str(exc), {}) from exc
+
+
+@router.patch("/comunicados/{comunicado_id}")
+async def comunicado_update(
+    comunicado_id: str,
+    body: dict,
+    auth: dict = Depends(require_tenant_scope),
+    _role: dict = Depends(require_roles(["admin", "sindico"])),
+) -> Any:
+    item = await update_comunicado(auth["condominiumId"], comunicado_id, body)
+    if not item:
+        raise ApiRequestError(404, "NOT_FOUND", "Comunicado nao encontrado.", {})
+    return {"item": item}
+
+
+@router.delete("/comunicados/{comunicado_id}")
+async def comunicado_delete(
+    comunicado_id: str,
+    auth: dict = Depends(require_tenant_scope),
+    _role: dict = Depends(require_roles(["admin", "sindico"])),
+) -> Any:
+    found = await delete_comunicado(auth["condominiumId"], comunicado_id)
+    if not found:
+        raise ApiRequestError(404, "NOT_FOUND", "Comunicado nao encontrado.", {})
     return {"ok": True}
 
 

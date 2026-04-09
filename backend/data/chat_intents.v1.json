@@ -1,40 +1,61 @@
 {
-  "version": "2026-04-05.v1",
+  "version": "2026-04-09.v2",
   "intents": [
+    {
+      "id": "greeting",
+      "label": "Saudação",
+      "description": "Saudações, apresentações e mensagens de teste.",
+      "promptTemplate": "Ola! Como posso ajudar você hoje?",
+      "keywords": ["ola", "oi", "bom dia", "boa tarde", "boa noite", "tudo bem", "tudo bom", "teste", "ola copiloto", "como vai"]
+    },
     {
       "id": "financial_priorities",
       "label": "Resumo financeiro",
-      "description": "Prioriza inadimplencia, faturas vencidas e fluxo de cobranca.",
+      "description": "Prioriza inadimplência, faturas vencidas e fluxo de cobrança.",
       "promptTemplate": "Quais as principais prioridades financeiras do condominio hoje?",
-      "keywords": ["financeiro", "fatura", "inadimplencia", "cobranca", "vencida", "pagamento"]
+      "keywords": ["financeiro", "fatura", "inadimplencia", "cobranca", "vencida", "pagamento", "pago", "pagar", "inadimplente", "receita", "divida"]
     },
     {
       "id": "critical_alerts",
       "label": "Alertas criticos",
       "description": "Lista eventos de risco alto e direciona resposta operacional.",
       "promptTemplate": "Liste os alertas criticos e recomendacoes imediatas.",
-      "keywords": ["alerta", "critico", "risco", "incidente", "urgente", "operacional"]
+      "keywords": ["alerta", "critico", "risco", "incidente", "urgente", "operacional", "emergencia", "aviso", "advertencia"]
     },
     {
-      "id": "action_plan",
-      "label": "Plano de acao",
-      "description": "Consolida financeiro e operacao em plano tatico curto.",
-      "promptTemplate": "Monte um plano de acao para as proximas 24 horas.",
-      "keywords": ["plano", "acao", "prioridade", "resolver", "executar", "proxima"]
+      "id": "maintenance_overview",
+      "label": "Gestão de unidades",
+      "description": "Status de unidades, manutenção preventiva e corretiva.",
+      "promptTemplate": "Quais unidades estão em manutenção e qual é o status atual?",
+      "keywords": ["manutencao", "unidade", "gestao", "ocupacao", "bloco", "ocupada", "vaga", "reforma", "reparo", "andar", "apartamento", "sala"]
     },
     {
       "id": "consumption_anomalies",
       "label": "Consumo fora da meta",
       "description": "Resume anomalias de consumo e impactos operacionais.",
       "promptTemplate": "Existe algum bloco com consumo fora da meta?",
-      "keywords": ["consumo", "energia", "agua", "meta", "anomalia", "telemetria"]
+      "keywords": ["consumo", "energia", "agua", "meta", "anomalia", "telemetria", "kwh", "gas", "medidor", "leitura", "eletrica"]
+    },
+    {
+      "id": "contracts_overview",
+      "label": "Contratos de serviço",
+      "description": "Contratos de fornecedores, reajustes e vencimentos.",
+      "promptTemplate": "Mostre os contratos com maior risco ou próximos do vencimento.",
+      "keywords": ["contrato", "contratos", "fornecedor", "fornecedores", "reajuste", "vencimento contrato", "terceirizado", "prestador", "servico contratado", "indice contratual"]
+    },
+    {
+      "id": "action_plan",
+      "label": "Plano de acao",
+      "description": "Consolida financeiro e operação em plano tático curto.",
+      "promptTemplate": "Monte um plano de acao para as proximas 24 horas.",
+      "keywords": ["plano", "acao", "prioridade", "resolver", "executar", "proxima", "pendencias", "pendente", "tarefas"]
     },
     {
       "id": "general_overview",
       "label": "Resumo do condominio",
-      "description": "Visao executiva de financeiro, alertas e pendencias.",
+      "description": "Visão executiva de financeiro, alertas e pendências.",
       "promptTemplate": "Gerar um resumo rapido dos eventos operacionais de hoje.",
-      "keywords": ["resumo", "visao", "geral", "condominio", "status", "painel"]
+      "keywords": ["resumo", "visao", "geral", "condominio", "status", "painel", "situacao", "como esta", "diagnostico", "panorama"]
     }
   ]
 }

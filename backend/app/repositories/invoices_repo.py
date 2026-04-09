@@ -133,6 +133,122 @@ async def get_invoices_data(condominium_id: int) -> dict[str, Any]:
     return {"items": _apply_status_state(merged, condominium_id, status_state)}
 
 
+def _brl(value: float) -> str:
+    return f"R$ {value:_.2f}".replace("_", ".").replace(".", ",", 1)
+
+
+async def get_invoices_analytics(condominium_id: int) -> dict[str, Any]:
+    condominium_id = ensure_condominium_id(condominium_id)
+    payload = await get_invoices_data(condominium_id)
+    items = payload["items"]
+    today_str = datetime.now(timezone.utc).date().isoformat()
+
+    # --- KPIs ---
+    total = len(items)
+    paid = [i for i in items if i.get("status") == "paid"]
+    pending = [i for i in items if i.get("status") == "pending"]
+    overdue = [i for i in items if i.get("status") == "overdue"]
+
+    total_amount = sum(float(i.get("amount") or 0) for i in items)
+    paid_amount = sum(float(i.get("amount") or 0) for i in paid)
+    pending_amount = sum(float(i.get("amount") or 0) for i in pending)
+    overdue_amount = sum(float(i.get("amount") or 0) for i in overdue)
+    delinquency_rate = round((len(overdue) / total) * 100, 1) if total else 0.0
+
+    kpis = {
+        "total": total,
+        "paid": len(paid),
+        "pending": len(pending),
+        "overdue": len(overdue),
+        "totalAmount": round(total_amount, 2),
+        "paidAmount": round(paid_amount, 2),
+        "pendingAmount": round(pending_amount, 2),
+        "overdueAmount": round(overdue_amount, 2),
+        "delinquencyRate": delinquency_rate,
+    }
+
+    # --- Status distribution (for donut/pie) ---
+    status_distribution = [
+        {"status": "paid", "label": "Pagas", "count": len(paid), "amount": round(paid_amount, 2)},
+        {"status": "pending", "label": "Pendentes", "count": len(pending), "amount": round(pending_amount, 2)},
+        {"status": "overdue", "label": "Vencidas", "count": len(overdue), "amount": round(overdue_amount, 2)},
+    ]
+
+    # --- Monthly trend (last 6 months by dueDate) ---
+    from collections import defaultdict
+    month_buckets: dict[str, dict[str, Any]] = defaultdict(lambda: {"month": "", "total": 0.0, "paid": 0.0, "pending": 0.0, "overdue": 0.0, "count": 0})
+    for item in items:
+        due = str(item.get("dueDate") or "")
+        if len(due) < 7:
+            continue
+        month_key = due[:7]  # "YYYY-MM"
+        bucket = month_buckets[month_key]
+        bucket["month"] = month_key
+        bucket["count"] += 1
+        amount = float(item.get("amount") or 0)
+        bucket["total"] = round(bucket["total"] + amount, 2)
+        st = str(item.get("status") or "")
+        if st in ("paid", "pending", "overdue"):
+            bucket[st] = round(bucket[st] + amount, 2)
+
+    # Sort and keep last 6 months relative to today
+    all_months = sorted(month_buckets.keys())
+    today_month = today_str[:7]
+    relevant = [m for m in all_months if m <= today_month][-6:]
+    monthly_trend = [month_buckets[m] for m in relevant]
+
+    # --- Aging buckets (overdue invoices by days overdue) ---
+    aging_buckets = {"0-30": 0, "31-60": 0, "61-90": 0, "90+": 0}
+    aging_amounts = {"0-30": 0.0, "31-60": 0.0, "61-90": 0.0, "90+": 0.0}
+    for item in overdue:
+        due = str(item.get("dueDate") or "")
+        if len(due) < 10:
+            continue
+        try:
+            from datetime import date
+            days = (date.fromisoformat(today_str) - date.fromisoformat(due)).days
+        except ValueError:
+            continue
+        amt = float(item.get("amount") or 0)
+        if days <= 30:
+            bucket_key = "0-30"
+        elif days <= 60:
+            bucket_key = "31-60"
+        elif days <= 90:
+            bucket_key = "61-90"
+        else:
+            bucket_key = "90+"
+        aging_buckets[bucket_key] += 1
+        aging_amounts[bucket_key] = round(aging_amounts[bucket_key] + amt, 2)
+
+    aging = [
+        {"range": k, "count": aging_buckets[k], "amount": aging_amounts[k]}
+        for k in ("0-30", "31-60", "61-90", "90+")
+    ]
+
+    # --- Top delinquent units ---
+    unit_overdue: dict[str, dict[str, Any]] = {}
+    for item in overdue:
+        unit = str(item.get("unit") or "")
+        if not unit:
+            continue
+        if unit not in unit_overdue:
+            unit_overdue[unit] = {"unit": unit, "resident": str(item.get("resident") or ""), "count": 0, "amount": 0.0}
+        unit_overdue[unit]["count"] += 1
+        unit_overdue[unit]["amount"] = round(unit_overdue[unit]["amount"] + float(item.get("amount") or 0), 2)
+
+    top_delinquent = sorted(unit_overdue.values(), key=lambda x: x["amount"], reverse=True)[:10]
+
+    return {
+        "kpis": kpis,
+        "statusDistribution": status_distribution,
+        "monthlyTrend": monthly_trend,
+        "aging": aging,
+        "topDelinquent": top_delinquent,
+        "generatedAt": datetime.now(timezone.utc).isoformat(),
+    }
+
+
 async def create_invoice(condominium_id: int, payload: dict[str, Any]) -> dict[str, Any]:
     condominium_id = ensure_condominium_id(condominium_id)
     invoice_id = f"inv-manual-{int(datetime.now(timezone.utc).timestamp() * 1000)}-{randint(0, 9999):04d}"

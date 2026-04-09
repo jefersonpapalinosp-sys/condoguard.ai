@@ -33,12 +33,12 @@ class TestGuardrails:
         assert result["blocked"] is True
         assert result["reason"] == "OUT_OF_SCOPE"
 
-    def test_low_confidence_no_key_blocked(self):
+    def test_low_confidence_no_key_allowed(self):
+        """Low-confidence messages are no longer blocked — the rule-based fallback handles them gracefully."""
         with patch("app.ai.guardrails.settings") as s:
             s.gemini_api_key = ""
             result = check_guardrails("xyzabc qualquer coisa", "low")
-        assert result["blocked"] is True
-        assert result["reason"] == "LOW_CONFIDENCE"
+        assert result["blocked"] is False
 
     def test_low_confidence_with_key_allowed(self):
         with patch("app.ai.guardrails.settings") as s:
