@@ -48,7 +48,7 @@ describe('Chat view', () => {
 
     renderChat();
 
-    expect(await screen.findByText('Chat copiloto')).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: /Chat copiloto/i })).toBeInTheDocument();
     expect(screen.getByText('CondoGuard Copiloto')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Resumo' })).toBeInTheDocument();
 

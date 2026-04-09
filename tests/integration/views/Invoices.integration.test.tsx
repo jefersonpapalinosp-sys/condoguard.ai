@@ -26,7 +26,7 @@ describe('Invoices view', () => {
     setModuleDataSource('invoices', 'api');
 
     render(<Invoices />);
-    expect(await screen.findByText('Faturas')).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Faturas' })).toBeInTheDocument();
     expect(screen.getByText('Fonte: API real')).toBeInTheDocument();
 
     const user = userEvent.setup();
