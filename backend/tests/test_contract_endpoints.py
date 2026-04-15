@@ -8,7 +8,7 @@ from app.main import app
 
 def _login_headers() -> dict[str, str]:
     client = TestClient(app)
-    res = client.post('/api/auth/login', json={'email': 'admin@condoguard.ai', 'password': 'password123'})
+    res = client.post('/api/auth/login', json={'email': 'admin@atlasgrid.ai', 'password': 'password123'})
     assert res.status_code == 200
     token = res.json()['token']
     return {'Authorization': f'Bearer {token}'}

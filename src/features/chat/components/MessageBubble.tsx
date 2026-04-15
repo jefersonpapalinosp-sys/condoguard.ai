@@ -14,7 +14,7 @@ const AGENT_ICONS: Record<string, string> = {
   'Agente de Alertas': 'warning',
   'Agente de Consumo': 'bolt',
   'Agente de Gestao': 'domain',
-  'CondoGuard Copiloto': 'smart_toy',
+  'Atlas Assist': 'smart_toy',
 };
 
 // Simple markdown renderer: **bold**, bullet lists, numbered lists
@@ -144,7 +144,7 @@ export function MessageBubble({ message, feedbackGiven, onFeedback, canViewDetai
           <span className="material-symbols-outlined text-[14px]">{agentIcon}</span>
         </div>
         <span className={`text-[11px] font-bold ${agentStyle?.badge ? '' : 'text-on-surface-variant'}`}>
-          {message.agentName ?? 'CondoGuard Copiloto'}
+          {message.agentName ?? 'Atlas Assist'}
         </span>
 
         <div className="ml-auto flex items-center gap-2">

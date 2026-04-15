@@ -2,6 +2,8 @@ import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { fetchChatBootstrap, postChatMessage, sendChatFeedback } from '../../services/chatService';
 import type { ChatMessage } from '../../services/mockApi';
+import { BRAND } from '../branding/brand';
+import { BrandMark } from './BrandMark';
 
 function nowTime() {
   return new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
@@ -109,14 +111,12 @@ export function ChatbotWidget({ hidden = false }: ChatbotWidgetProps) {
     return (
       <button
         onClick={() => setExpanded(true)}
-        className="fixed bottom-[max(1rem,env(safe-area-inset-bottom))] right-[max(1rem,env(safe-area-inset-right))] z-40 flex h-12 w-[min(240px,calc(100vw-1rem))] items-center justify-between rounded-full monolith-gradient px-4 text-white shadow-xl"
+        className="atlas-gradient fixed bottom-[max(1rem,env(safe-area-inset-bottom))] right-[max(1rem,env(safe-area-inset-right))] z-40 flex h-12 w-[min(250px,calc(100vw-1rem))] items-center justify-between rounded-full px-4 text-white shadow-[0_18px_40px_rgba(15,34,39,0.22)]"
         aria-label="Abrir chat"
       >
         <div className="flex items-center gap-3">
-          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-surface text-on-surface">
-            <span className="material-symbols-outlined text-[16px]">smart_toy</span>
-          </div>
-          <span className="text-sm font-semibold">CondoGuard.ia</span>
+          <BrandMark size="sm" className="h-8 w-8 rounded-full" />
+          <span className="text-sm font-semibold">{BRAND.assistantName}</span>
         </div>
         <div className="flex items-center gap-1 text-on-primary/90">
           <span className="material-symbols-outlined text-[18px]">expand_less</span>
@@ -128,14 +128,12 @@ export function ChatbotWidget({ hidden = false }: ChatbotWidgetProps) {
 
   return (
     <section className="fixed bottom-[max(1rem,env(safe-area-inset-bottom))] right-[max(1rem,env(safe-area-inset-right))] z-40 w-[min(390px,calc(100vw-1rem))] overflow-hidden rounded-3xl border border-outline-variant/40 bg-surface shadow-2xl">
-      <header className="flex items-center justify-between monolith-gradient px-3 py-3 text-on-primary">
+      <header className="atlas-gradient flex items-center justify-between px-3 py-3 text-on-primary">
         <div className="flex min-w-0 items-center gap-2">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-surface text-on-surface">
-            <span className="material-symbols-outlined text-[18px]">smart_toy</span>
-          </div>
+          <BrandMark size="sm" className="h-9 w-9 shrink-0 rounded-full" />
           <div className="min-w-0">
-            <p className="truncate text-sm font-semibold">CondoGuard.ia</p>
-            <p className="text-[11px] text-on-primary/80">Online - CondoGuard</p>
+            <p className="truncate text-sm font-semibold">{BRAND.assistantName}</p>
+            <p className="text-[11px] text-on-primary/80">{BRAND.assistantTagline}</p>
           </div>
           <span className="ml-1 shrink-0 rounded-full bg-white/20 px-2 py-0.5 text-[10px] font-semibold text-on-primary/90">
             {totalMessages} mensagens

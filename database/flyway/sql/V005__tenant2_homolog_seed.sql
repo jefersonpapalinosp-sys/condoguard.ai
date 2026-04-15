@@ -17,12 +17,12 @@ from dual
 where not exists (select 1 from app.unidades u where u.unidade_id = 2002);
 
 insert into app.moradores (morador_id, condominio_id, unidade_id, nome, tipo_morador, data_inicio_residencia, telefone, email)
-select 2001, 2, 2001, 'Marina Costa', 'proprietario', date '2021-03-01', '11988887777', 'marina.costa@condoguard.ai'
+select 2001, 2, 2001, 'Marina Costa', 'proprietario', date '2021-03-01', '11988887777', 'marina.costa@plataforma.dev'
 from dual
 where not exists (select 1 from app.moradores m where m.morador_id = 2001);
 
 insert into app.moradores (morador_id, condominio_id, unidade_id, nome, tipo_morador, data_inicio_residencia, telefone, email)
-select 2002, 2, 2002, 'Bruno Melo', 'inquilino', date '2022-06-10', '11999996666', 'bruno.melo@condoguard.ai'
+select 2002, 2, 2002, 'Bruno Melo', 'inquilino', date '2022-06-10', '11999996666', 'bruno.melo@plataforma.dev'
 from dual
 where not exists (select 1 from app.moradores m where m.morador_id = 2002);
 
@@ -57,16 +57,16 @@ where not exists (
 );
 
 insert into app.usuarios (condominium_id, email, password_hash, role, active)
-select 2, 'admin.cond2@condoguard.ai', standard_hash('password123', 'SHA256'), 'admin', 1
+select 2, 'admin.cond2@plataforma.dev', standard_hash('password123', 'SHA256'), 'admin', 1
 from dual
-where not exists (select 1 from app.usuarios u where lower(u.email) = 'admin.cond2@condoguard.ai');
+where not exists (select 1 from app.usuarios u where lower(u.email) = 'admin.cond2@plataforma.dev');
 
 insert into app.usuarios (condominium_id, email, password_hash, role, active)
-select 2, 'sindico.cond2@condoguard.ai', standard_hash('password123', 'SHA256'), 'sindico', 1
+select 2, 'sindico.cond2@plataforma.dev', standard_hash('password123', 'SHA256'), 'sindico', 1
 from dual
-where not exists (select 1 from app.usuarios u where lower(u.email) = 'sindico.cond2@condoguard.ai');
+where not exists (select 1 from app.usuarios u where lower(u.email) = 'sindico.cond2@plataforma.dev');
 
 insert into app.usuarios (condominium_id, email, password_hash, role, active)
-select 2, 'morador.cond2@condoguard.ai', standard_hash('password123', 'SHA256'), 'morador', 1
+select 2, 'morador.cond2@plataforma.dev', standard_hash('password123', 'SHA256'), 'morador', 1
 from dual
-where not exists (select 1 from app.usuarios u where lower(u.email) = 'morador.cond2@condoguard.ai');
+where not exists (select 1 from app.usuarios u where lower(u.email) = 'morador.cond2@plataforma.dev');

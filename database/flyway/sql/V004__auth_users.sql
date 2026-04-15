@@ -18,11 +18,11 @@ create table app.usuarios (
 create index app.idx_usuarios_email on app.usuarios(email);
 
 insert into app.usuarios (condominium_id, email, password_hash, role, active)
-values (1, 'admin@condoguard.ai', standard_hash('password123', 'SHA256'), 'admin', 1);
+values (1, 'admin@plataforma.dev', standard_hash('password123', 'SHA256'), 'admin', 1);
 
 insert into app.usuarios (condominium_id, email, password_hash, role, active)
-values (1, 'sindico@condoguard.ai', standard_hash('password123', 'SHA256'), 'sindico', 1);
+values (1, 'sindico@plataforma.dev', standard_hash('password123', 'SHA256'), 'sindico', 1);
 
 insert into app.usuarios (condominium_id, email, password_hash, role, active)
-values (1, 'morador@condoguard.ai', standard_hash('password123', 'SHA256'), 'morador', 1);
+values (1, 'morador@plataforma.dev', standard_hash('password123', 'SHA256'), 'morador', 1);
 

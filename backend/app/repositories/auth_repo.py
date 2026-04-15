@@ -39,9 +39,9 @@ except ImportError:
         return _hash_password(password) == str(password_hash or "").lower()
 
 DEMO_USERS = {
-    "admin@condoguard.ai": {"password": "password123", "role": "admin", "condominiumId": 1},
-    "sindico@condoguard.ai": {"password": "password123", "role": "sindico", "condominiumId": 1},
-    "morador@condoguard.ai": {"password": "password123", "role": "morador", "condominiumId": 1},
+    "admin@atlasgrid.ai": {"password": "password123", "role": "admin", "condominiumId": 1},
+    "sindico@atlasgrid.ai": {"password": "password123", "role": "sindico", "condominiumId": 1},
+    "morador@atlasgrid.ai": {"password": "password123", "role": "morador", "condominiumId": 1},
 }
 
 _AUTH_QUERY_BY_SCHEMA = """

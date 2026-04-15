@@ -2,7 +2,7 @@
 
 ## Fundamentos do Monitoramento
 
-O sistema CondoGuard monitora consumo por bloco/unidade e compara com a **linha de base histórica** (média dos últimos 6 meses com sazonalidade). Anomalias são identificadas por análise estatística de desvio padrão (sigma).
+O sistema AtlasGrid monitora consumo por bloco/unidade e compara com a **linha de base histórica** (média dos últimos 6 meses com sazonalidade). Anomalias são identificadas por análise estatística de desvio padrão (sigma).
 
 ---
 
@@ -84,7 +84,7 @@ O sistema CondoGuard monitora consumo por bloco/unidade e compara com a **linha 
 ## Plano de Ação para Anomalias Críticas
 
 ### Energia — Protocolo 24h
-1. **H+0:** Registrar alerta no sistema CondoGuard com descrição e localização.
+1. **H+0:** Registrar alerta no sistema AtlasGrid com descrição e localização.
 2. **H+2:** Acionar eletricista de plantão para inspeção visual.
 3. **H+6:** Emitir relatório preliminar de causa provável.
 4. **H+24:** Solução implementada ou plano de ação aprovado pelo síndico.

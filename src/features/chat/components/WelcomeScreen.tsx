@@ -1,4 +1,5 @@
 import { AGENT_STYLES, AGENT_TILES } from '../types/chat';
+import { BRAND } from '../../../shared/branding/brand';
 
 const TILE_ICONS: Record<string, string> = {
   'Agente Financeiro': 'receipt_long',
@@ -28,9 +29,9 @@ export function WelcomeScreen({ userName, onSelectSample }: Props) {
               Bem-vindo, <span className="font-semibold text-on-surface">{firstName}</span>
             </p>
           )}
-          <h3 className="font-headline text-xl font-bold text-on-surface">CondoGuard Copiloto</h3>
+          <h3 className="font-headline text-xl font-bold text-on-surface">{BRAND.assistantName}</h3>
           <p className="text-sm text-on-surface-variant mt-1.5 max-w-xs leading-relaxed">
-            Assistente com IA especializada para acelerar a gestão do seu condomínio.
+            {BRAND.chatDescription}
           </p>
         </div>
         <div className="flex items-center gap-1.5 rounded-full bg-tertiary-fixed-dim/20 px-3 py-1">

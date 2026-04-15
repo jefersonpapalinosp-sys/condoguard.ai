@@ -52,7 +52,7 @@ async def get_chat_bootstrap(condominium_id: int) -> dict:
             overdue_count = int((overdue_rows or [{}])[0].get("TOTAL") or 0)
             critical_count = int((alerts_rows or [{}])[0].get("TOTAL") or 0)
             welcome = (
-                f"Ola! Sou o **CondoGuard Copiloto** ({ai_badge}). "
+                f"Ola! Sou o **Atlas Assist** ({ai_badge}). "
                 f"Situacao atual: **{overdue_count} faturas vencidas** e **{critical_count} alertas criticos**. "
                 "Pergunte sobre faturas, alertas, consumo, contratos ou gestao de unidades."
             )
@@ -68,7 +68,7 @@ async def get_chat_bootstrap(condominium_id: int) -> dict:
 
     seed = read_seed_json("chat_bootstrap.json")
     welcome = (
-        f"Ola! Sou o **CondoGuard Copiloto** ({ai_badge}). "
+        f"Ola! Sou o **Atlas Assist** ({ai_badge}). "
         "Posso ajudar com faturas, alertas operacionais, consumo de recursos e gestao de unidades. "
         "Como posso ajudar hoje?"
     )

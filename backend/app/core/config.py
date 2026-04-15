@@ -84,13 +84,34 @@ class Settings(BaseSettings):
     oidc_tenant_claim: str = Field(default="condominium_id", alias="OIDC_TENANT_CLAIM")
     oidc_allowed_algs: str = Field(default="RS256", alias="OIDC_ALLOWED_ALGS")
 
+    # Legacy Google / LangChain / Chroma settings still referenced by the current RAG stack.
     gemini_api_key: str = Field(default="", alias="GEMINI_API_KEY")
     gemini_model: str = Field(default="gemini-2.0-flash-lite", alias="GEMINI_MODEL")
-
     langchain_tracing_v2: bool = Field(default=False, alias="LANGCHAIN_TRACING_V2")
     langchain_api_key: str = Field(default="", alias="LANGCHAIN_API_KEY")
     embedding_provider: Literal["google", "local"] = Field(default="local", alias="EMBEDDING_PROVIDER")
-    chroma_persist_dir: str = Field(default="./data/chroma_db", alias="CHROMA_PERSIST_DIR")
+    chroma_persist_dir: str = Field(default="backend/data/chroma_db", alias="CHROMA_PERSIST_DIR")
+
+    # Azure OpenAI
+    azure_openai_endpoint: str = Field(default="", alias="AZURE_OPENAI_ENDPOINT")
+    azure_openai_api_key: str = Field(default="", alias="AZURE_OPENAI_API_KEY")
+    azure_openai_deployment: str = Field(default="gpt-4o", alias="AZURE_OPENAI_DEPLOYMENT")
+    azure_openai_embedding_deployment: str = Field(default="text-embedding-3-large", alias="AZURE_OPENAI_EMBEDDING_DEPLOYMENT")
+
+    # Azure AI Search
+    azure_ai_search_endpoint: str = Field(default="", alias="AZURE_AI_SEARCH_ENDPOINT")
+    azure_ai_search_key: str = Field(default="", alias="AZURE_AI_SEARCH_KEY")
+    azure_ai_search_index: str = Field(default="documentos-plataforma", alias="AZURE_AI_SEARCH_INDEX")
+
+    # Azure Blob Storage
+    azure_blob_connection_string: str = Field(default="", alias="AZURE_BLOB_CONNECTION_STRING")
+    azure_blob_container_docs: str = Field(default="documentos", alias="AZURE_BLOB_CONTAINER_DOCS")
+
+    # Azure Document Intelligence
+    azure_doc_intelligence_endpoint: str = Field(default="", alias="AZURE_DOC_INTELLIGENCE_ENDPOINT")
+    azure_doc_intelligence_key: str = Field(default="", alias="AZURE_DOC_INTELLIGENCE_KEY")
+
+    # RAG / knowledge base (legado — mantido para compatibilidade)
     rag_top_k: int = Field(default=3, alias="RAG_TOP_K")
     rag_enabled: bool = Field(default=True, alias="RAG_ENABLED")
     knowledge_base_dir: str = Field(default="backend/data/knowledge_base", alias="KNOWLEDGE_BASE_DIR")

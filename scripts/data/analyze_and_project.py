@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Analisa a planilha CondoGuard, aplica saneamentos basicos e gera:
+Analisa a planilha AtlasGrid, aplica saneamentos basicos e gera:
 - database/reports/data_quality_report.json
 - backend/data/*.json (invoices, management_units, chat_bootstrap, alerts)
 """
@@ -232,7 +232,7 @@ def main() -> None:
         )
 
     chat_bootstrap = {
-        "welcomeMessage": "Sou o copiloto CondoGuard. Posso ajudar com alertas, consumo e operacao diaria.",
+        "welcomeMessage": "Sou o Atlas Assist. Posso ajudar com alertas, consumo e operacao diaria.",
         "suggestions": [
             {"id": "s1", "label": "Resumo do dia", "prompt": "Gerar um resumo rapido dos eventos operacionais de hoje."},
             {"id": "s2", "label": "Alertas criticos", "prompt": "Quais alertas criticos exigem acao imediata?"},

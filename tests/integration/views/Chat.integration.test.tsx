@@ -48,8 +48,8 @@ describe('Chat view', () => {
 
     renderChat();
 
-    expect(await screen.findByRole('heading', { name: /Chat copiloto/i })).toBeInTheDocument();
-    expect(screen.getByText('CondoGuard Copiloto')).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: /Atlas Assist/i })).toBeInTheDocument();
+    expect(screen.getAllByText('Atlas Assist').length).toBeGreaterThan(0);
     expect(screen.getByRole('button', { name: 'Resumo' })).toBeInTheDocument();
 
     const user = userEvent.setup();

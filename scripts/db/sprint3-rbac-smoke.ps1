@@ -1,10 +1,10 @@
 param(
   [string]$ApiBaseUrl = "http://localhost:4000",
-  [string]$AdminEmail = "admin@condoguard.ai",
+  [string]$AdminEmail = "admin@atlasgrid.ai",
   [string]$AdminPassword = "password123",
-  [string]$SindicoEmail = "sindico@condoguard.ai",
+  [string]$SindicoEmail = "sindico@atlasgrid.ai",
   [string]$SindicoPassword = "password123",
-  [string]$MoradorEmail = "morador@condoguard.ai",
+  [string]$MoradorEmail = "morador@atlasgrid.ai",
   [string]$MoradorPassword = "password123",
   [string]$OutputPath = "docs/sprint3_rbac_smoke_report.md"
 )

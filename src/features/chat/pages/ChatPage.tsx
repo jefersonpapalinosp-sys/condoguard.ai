@@ -18,6 +18,7 @@ import { SuggestionChips } from '../components/SuggestionChips';
 import { ChatInput } from '../components/ChatInput';
 import { TelemetryPanel } from '../components/TelemetryPanel';
 import { WelcomeScreen } from '../components/WelcomeScreen';
+import { BRAND } from '../../../shared/branding/brand';
 
 function nowTime() {
   return new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
@@ -69,7 +70,7 @@ export default function ChatPage() {
             role: 'assistant',
             text: welcomeText,
             time: nowTime(),
-            agentName: 'CondoGuard Copiloto',
+            agentName: 'Atlas Assist',
             aiPowered: response.welcomeMessage.toLowerCase().includes('gemini') || response.welcomeMessage.toLowerCase().includes('ai'),
           };
           setMessages([welcomeMsg]);
@@ -143,7 +144,7 @@ export default function ChatPage() {
     }
   }
 
-  if (loading) return <LoadingState message="Iniciando Copiloto..." />;
+  if (loading) return <LoadingState message={`Iniciando ${BRAND.assistantName}...`} />;
   if (error) return <ErrorState message={error} />;
 
   const hasMessages = messages.length > 0;
@@ -158,7 +159,7 @@ export default function ChatPage() {
           </div>
           <div>
             <div className="flex items-center gap-2 flex-wrap">
-              <h2 className="font-headline text-2xl md:text-3xl font-extrabold tracking-tight">Chat Copiloto</h2>
+              <h2 className="font-headline text-2xl md:text-3xl font-extrabold tracking-tight">{BRAND.chatTitle}</h2>
               {aiActive && (
                 <span className="inline-flex items-center gap-1 rounded-full bg-tertiary-fixed-dim/20 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-on-tertiary-fixed-variant">
                   <span className="h-1.5 w-1.5 rounded-full bg-green-400 animate-pulse" />
@@ -167,7 +168,7 @@ export default function ChatPage() {
               )}
             </div>
             <p className="text-sm text-on-surface-variant mt-0.5">
-              Assistente inteligente para gestão do seu condomínio.
+              {BRAND.chatDescription}
             </p>
           </div>
         </div>

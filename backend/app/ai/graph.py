@@ -1,5 +1,5 @@
 """
-LangGraph StateGraph — multi-agent orchestration for CondoGuard chat.
+LangGraph StateGraph — multi-agent orchestration for AtlasGrid chat.
 
 Graph flow:
   context_loader

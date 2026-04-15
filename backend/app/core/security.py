@@ -3,18 +3,36 @@ from __future__ import annotations
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
-import httpx
 from fastapi import Depends, Request
 from jose import JWTError, jwt
 
 from app.core.config import settings
 from app.core.errors import ApiRequestError
-from app.core.tenancy import ensure_condominium_id
 from app.utils.logging import log_security_event
 
-AUTH_ROLES = ["admin", "sindico", "morador"]
-_jwks_cache: dict[str, Any] = {}
+AUTH_ROLES = [
+    "admin",
+    "sindico",
+    "morador",
+    "gestor",
+    "coordenador",
+    "engenheiro",
+    "mestre_obras",
+    "cliente_final",
+    "prestador",
+    "financeiro",
+    "prestador_mkt",
+]
 
+FINANCIAL_ROLES = {"admin", "sindico", "gestor", "financeiro"}
+
+# Hierarquia de níveis de documento
+DOC_LEVEL_HIERARCHY = {
+    "publico": 0,
+    "interno": 1,
+    "confidencial": 2,
+    "restrito": 3,
+}
 
 def _decode_bearer(auth_header: str | None) -> str | None:
     raw = str(auth_header or "")
@@ -24,68 +42,68 @@ def _decode_bearer(auth_header: str | None) -> str | None:
     return token or None
 
 
-def create_access_token(payload: dict[str, Any]) -> tuple[str, int]:
+def _coerce_optional_int(value: Any) -> int | None:
+    if value in (None, "", 0, "0"):
+        return None
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def create_access_token(user: dict[str, Any]) -> tuple[str, int]:
+    """Cria JWT aceitando tanto o payload legado quanto o novo formato de usuario."""
     expires_at = datetime.now(timezone.utc) + timedelta(seconds=settings.jwt_expiration_seconds)
-    to_encode = dict(payload)
-    to_encode.update({"exp": int(expires_at.timestamp())})
-    token = jwt.encode(to_encode, settings.jwt_secret, algorithm="HS256")
+    sub = str(user.get("sub") or user.get("email") or user.get("id") or user.get("usuario_id") or "")
+    email = str(user.get("email") or (sub if "@" in sub else ""))
+    role = str(user.get("role") or "").lower()
+    condominium_id = _coerce_optional_int(
+        user.get("condominium_id")
+        or user.get("condominiumId")
+        or user.get("tenant_id")
+        or user.get("tenantId")
+    )
+    tenant_id = str(user.get("tenant_id") or user.get("tenantId") or condominium_id or "")
+    payload = {
+        "sub": sub,
+        "email": email,
+        "role": role,
+        "tenant_id": tenant_id,
+        "condominium_id": condominium_id,
+        "condominiumId": condominium_id,
+        "scope": str(user.get("scope") or user.get("escopo_dados") or "project"),
+        "project_ids": user.get("project_ids") or [],
+        "doc_level": str(user.get("doc_level") or "interno"),
+        "nome": str(user.get("nome") or ""),
+        "exp": int(expires_at.timestamp()),
+    }
+    token = jwt.encode(payload, settings.jwt_secret, algorithm="HS256")
     return token, int(expires_at.timestamp() * 1000)
 
 
-async def _get_jwks(url: str) -> dict[str, Any]:
-    cached = _jwks_cache.get(url)
-    now_ts = datetime.now(timezone.utc).timestamp()
-    if cached and now_ts - cached["ts"] < 300:
-        return cached["payload"]
-
-    async with httpx.AsyncClient(timeout=5.0) as client:
-        response = await client.get(url)
-        response.raise_for_status()
-        payload = response.json()
-        _jwks_cache[url] = {"ts": now_ts, "payload": payload}
-        return payload
-
-
 async def verify_access_token(token: str) -> dict[str, Any]:
-    if settings.auth_provider == "oidc_jwks":
-        if not settings.oidc_configured:
-            raise ApiRequestError(401, "INVALID_TOKEN", "Token invalido.")
-        try:
-            header = jwt.get_unverified_header(token)
-            kid = header.get("kid")
-            alg = header.get("alg", "RS256")
-            if not kid or alg not in set(settings.oidc_allowed_algorithms):
-                raise ApiRequestError(401, "INVALID_TOKEN", "Token invalido.")
-
-            jwks = await _get_jwks(settings.oidc_jwks_url)
-            keys = jwks.get("keys", [])
-            jwk = next((k for k in keys if k.get("kid") == kid), None)
-            if not jwk:
-                raise ApiRequestError(401, "INVALID_TOKEN", "Token invalido.")
-
-            payload = jwt.decode(
-                token,
-                jwk,
-                algorithms=settings.oidc_allowed_algorithms,
-                audience=settings.oidc_audience,
-                issuer=settings.oidc_issuer,
-            )
-        except ApiRequestError:
-            raise
-        except Exception as exc:  # pragma: no cover
-            raise ApiRequestError(401, "INVALID_TOKEN", "Token invalido.", {"reason": str(exc)})
-
-        role = str(payload.get("role") or payload.get(settings.oidc_role_claim) or "").lower()
-        if isinstance(payload.get(settings.oidc_role_claim), list):
-            role = str(payload[settings.oidc_role_claim][0] if payload[settings.oidc_role_claim] else "").lower()
-        condominium_id = int(payload.get(settings.oidc_tenant_claim) or payload.get("condominium_id") or 0) or None
-        return {"sub": str(payload.get("sub") or ""), "role": role, "condominiumId": condominium_id}
-
     try:
         payload = jwt.decode(token, settings.jwt_secret, algorithms=["HS256"])
-        role = str(payload.get("role") or "").lower()
-        condominium_id = int(payload.get("condominium_id") or payload.get("condominiumId") or 0) or None
-        return {"sub": str(payload.get("sub") or ""), "role": role, "condominiumId": condominium_id}
+        condominium_id = _coerce_optional_int(
+            payload.get("condominium_id")
+            or payload.get("condominiumId")
+            or payload.get("tenant_id")
+            or payload.get("tenantId")
+        )
+        sub = str(payload.get("sub") or "")
+        email = str(payload.get("email") or (sub if "@" in sub else ""))
+        return {
+            "sub": sub,
+            "email": email,
+            "role": str(payload.get("role") or "").lower(),
+            "tenant_id": str(payload.get("tenant_id") or payload.get("tenantId") or condominium_id or ""),
+            "condominiumId": condominium_id,
+            "condominium_id": condominium_id,
+            "scope": str(payload.get("scope") or "project"),
+            "project_ids": payload.get("project_ids") or [],
+            "doc_level": str(payload.get("doc_level") or "interno"),
+            "nome": str(payload.get("nome") or ""),
+        }
     except JWTError:
         raise ApiRequestError(401, "INVALID_TOKEN", "Token invalido.")
 
@@ -97,7 +115,7 @@ async def require_auth(request: Request) -> dict[str, Any]:
         raise ApiRequestError(401, "AUTH_REQUIRED", "Token de autenticacao ausente.")
 
     payload = await verify_access_token(token)
-    role = str(payload.get("role") or "").lower()
+    role = payload.get("role", "")
     if role not in AUTH_ROLES:
         log_security_event("auth_invalid_token_role", request, {"role": role})
         raise ApiRequestError(401, "INVALID_TOKEN_ROLE", "Role de token invalida.")
@@ -107,21 +125,69 @@ async def require_auth(request: Request) -> dict[str, Any]:
 
 
 def require_roles(allowed_roles: list[str]):
+    """Exige que o usuário tenha um dos roles listados."""
     async def dependency(request: Request, auth: dict[str, Any] = Depends(require_auth)) -> dict[str, Any]:
         role = auth.get("role")
         if role not in allowed_roles:
             log_security_event("auth_forbidden_role", request, {"role": role, "allowedRoles": allowed_roles})
             raise ApiRequestError(403, "FORBIDDEN", "Sem permissao para este recurso.", {"allowedRoles": allowed_roles})
         return auth
-
     return dependency
 
 
+def require_financial_access():
+    """Bloqueia acesso a dados financeiros para roles sem permissão."""
+    async def dependency(request: Request, auth: dict[str, Any] = Depends(require_auth)) -> dict[str, Any]:
+        if auth.get("role") not in FINANCIAL_ROLES:
+            log_security_event("auth_forbidden_financial", request, {"role": auth.get("role")})
+            raise ApiRequestError(403, "FORBIDDEN_FINANCIAL", "Acesso a dados financeiros nao permitido.")
+        return auth
+    return dependency
+
+
+def require_doc_level(minimum_level: str):
+    """Exige que o doc_level do usuário seja >= nível mínimo."""
+    min_rank = DOC_LEVEL_HIERARCHY.get(minimum_level, 0)
+
+    async def dependency(request: Request, auth: dict[str, Any] = Depends(require_auth)) -> dict[str, Any]:
+        user_rank = DOC_LEVEL_HIERARCHY.get(auth.get("doc_level", "publico"), 0)
+        if user_rank < min_rank:
+            log_security_event("auth_forbidden_doc_level", request, {
+                "userLevel": auth.get("doc_level"),
+                "requiredLevel": minimum_level,
+            })
+            raise ApiRequestError(403, "FORBIDDEN_DOC_LEVEL", "Nivel de acesso ao documento insuficiente.")
+        return auth
+    return dependency
+
+
+def require_data_scope(request: Request, auth: dict[str, Any] = Depends(require_auth)) -> dict[str, Any]:
+    """
+    Injeta filtros de escopo no request.state para uso nos repositórios:
+      - global:  sem filtro
+      - tenant:  request.state.filter_tenant_id
+      - project: request.state.filter_project_ids
+      - own:     request.state.filter_user_id
+    """
+    scope = auth.get("scope", "project")
+    if scope == "own":
+        request.state.filter_user_id = auth.get("sub")
+    elif scope == "project":
+        request.state.filter_project_ids = auth.get("project_ids", [])
+    elif scope == "tenant":
+        request.state.filter_tenant_id = auth.get("tenant_id") or auth.get("condominiumId")
+    # "global" não aplica filtro
+    return auth
+
+
 async def require_tenant_scope(request: Request, auth: dict[str, Any] = Depends(require_auth)) -> dict[str, Any]:
-    try:
-        auth["condominiumId"] = ensure_condominium_id(auth.get("condominiumId"))
-    except ApiRequestError:
-        condominium_id = auth.get("condominiumId")
-        log_security_event("auth_invalid_tenant_scope", request, {"condominiumId": condominium_id})
-        raise
+    """Compatibilidade entre o contrato legado (`condominiumId`) e o novo (`tenant_id`)."""
+    condominium_id = _coerce_optional_int(auth.get("condominiumId") or auth.get("tenant_id"))
+    if not condominium_id:
+        log_security_event("auth_invalid_tenant_scope", request, {"tenant_id": auth.get("tenant_id")})
+        raise ApiRequestError(403, "MISSING_TENANT", "tenant_id ausente no token.")
+    auth["condominiumId"] = condominium_id
+    auth["condominium_id"] = condominium_id
+    auth["tenant_id"] = str(auth.get("tenant_id") or condominium_id)
+    request.state.filter_tenant_id = condominium_id
     return auth

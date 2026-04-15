@@ -1,4 +1,4 @@
-const UNAUTHORIZED_EVENT = 'condoguard:auth-unauthorized';
+const UNAUTHORIZED_EVENT = 'atlasgrid:auth-unauthorized';
 
 export type UnauthorizedReason = 'expired' | 'missing' | 'invalid' | 'unauthorized';
 

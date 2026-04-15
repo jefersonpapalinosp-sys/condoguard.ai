@@ -28,7 +28,7 @@ function renderLayout(initialSession: AuthSession) {
 describe('AppLayout role-based navigation', () => {
   it('hides invoices and management for morador', async () => {
     renderLayout({
-      token: 'valid-token-condoguard',
+      token: 'valid-token-atlasgrid',
       role: 'morador',
       expiresAt: Date.now() + 60_000,
     });
@@ -42,7 +42,7 @@ describe('AppLayout role-based navigation', () => {
 
   it('shows invoices and management for admin', async () => {
     renderLayout({
-      token: 'valid-token-condoguard',
+      token: 'valid-token-atlasgrid',
       role: 'admin',
       expiresAt: Date.now() + 60_000,
     });

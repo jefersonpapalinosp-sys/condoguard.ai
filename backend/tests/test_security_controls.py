@@ -6,7 +6,7 @@ from app.core.config import settings
 from app.main import app
 
 
-def _login_headers(email: str = "admin@condoguard.ai", password: str = "password123") -> dict[str, str]:
+def _login_headers(email: str = "admin@atlasgrid.ai", password: str = "password123") -> dict[str, str]:
     client = TestClient(app)
     res = client.post("/api/auth/login", json={"email": email, "password": password})
     assert res.status_code == 200
@@ -62,7 +62,7 @@ def test_auth_login_disabled_by_external_provider_flag():
     previous = settings.auth_password_login_enabled
     settings.auth_password_login_enabled = False
     try:
-        response = client.post("/api/auth/login", json={"email": "admin@condoguard.ai", "password": "password123"})
+        response = client.post("/api/auth/login", json={"email": "admin@atlasgrid.ai", "password": "password123"})
         assert response.status_code == 501
         assert response.json()["error"]["code"] == "AUTH_EXTERNAL_PROVIDER_REQUIRED"
     finally:
@@ -71,8 +71,8 @@ def test_auth_login_disabled_by_external_provider_flag():
 
 def test_audit_endpoint_is_admin_only():
     client = TestClient(app)
-    admin_headers = _login_headers("admin@condoguard.ai")
-    resident_headers = _login_headers("morador@condoguard.ai")
+    admin_headers = _login_headers("admin@atlasgrid.ai")
+    resident_headers = _login_headers("morador@atlasgrid.ai")
 
     forbidden = client.get("/api/security/audit", headers=resident_headers)
     assert forbidden.status_code == 403

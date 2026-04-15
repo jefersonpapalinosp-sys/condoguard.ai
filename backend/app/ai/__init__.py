@@ -1,1 +1,1 @@
-# CondoGuard AI — LangChain/LangGraph multi-agent layer
+# AtlasGrid AI — LangChain/LangGraph multi-agent layer

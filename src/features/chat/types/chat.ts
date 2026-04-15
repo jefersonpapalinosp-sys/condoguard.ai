@@ -10,7 +10,7 @@ export type AgentName =
   | 'Agente de Alertas'
   | 'Agente de Consumo'
   | 'Agente de Gestao'
-  | 'CondoGuard Copiloto';
+  | 'Atlas Assist';
 
 export type ActionResult = {
   type: string;
@@ -51,10 +51,10 @@ export const AGENT_STYLES: Record<string, { badge: string; dot: string; label: s
     dot: 'bg-yellow-500',
     label: 'Gestao',
   },
-  'CondoGuard Copiloto': {
+  'Atlas Assist': {
     badge: 'bg-gray-100 text-gray-700',
     dot: 'bg-gray-400',
-    label: 'Copiloto',
+    label: 'Assist',
   },
 };
 

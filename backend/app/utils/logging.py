@@ -10,7 +10,7 @@ from app.audit.security_audit import persist_security_event
 from app.core.config import settings
 
 
-logger = logging.getLogger("condoguard.api")
+logger = logging.getLogger("atlasgrid.api")
 
 
 def configure_logging() -> None:

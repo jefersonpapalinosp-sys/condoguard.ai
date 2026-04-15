@@ -72,7 +72,7 @@ def rule_based_response(intent_id: str, context: dict, question: str = "") -> st
     # ── Greeting / test message ──────────────────────────────────────────────
     if intent_id == "greeting":
         lines = [
-            "Ola! Sou o CondoGuard Copiloto, seu assistente de gestao condominial.",
+            "Ola! Sou o Atlas Assist, seu assistente de gestao condominial.",
             f"Situacao atual: {overdue} faturas vencidas, {critical} alertas criticos, "
             f"{maintenance} unidades em manutencao.",
             "\nPosso ajudar com faturas, alertas, consumo, contratos e gestao de unidades. "

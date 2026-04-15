@@ -14,14 +14,14 @@ def _login(email: str) -> tuple[TestClient, dict[str, str]]:
 
 
 def test_role_forbidden_on_observability_for_sindico():
-    client, headers = _login('sindico@condoguard.ai')
+    client, headers = _login('sindico@atlasgrid.ai')
     res = client.get('/api/observability/metrics', headers=headers)
     assert res.status_code == 403
     assert res.json()['error']['code'] == 'FORBIDDEN'
 
 
 def test_chat_feedback_and_telemetry():
-    client, headers = _login('admin@condoguard.ai')
+    client, headers = _login('admin@atlasgrid.ai')
     msg = client.post('/api/chat/message', json={'message': 'Resumo financeiro'}, headers=headers)
     assert msg.status_code == 200
     message_id = msg.json()['id']

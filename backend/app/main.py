@@ -174,7 +174,7 @@ reset_contracts_management_state()
 reset_enel_integration_state()
 reset_sabesp_integration_state()
 
-app = FastAPI(title="CondoGuard API (FastAPI)", version="1.0.0")
+app = FastAPI(title="AtlasGrid API (FastAPI)", version="1.0.0")
 _STARTUP_BACKGROUND_JOBS: set[asyncio.Future[Any]] = set()
 
 

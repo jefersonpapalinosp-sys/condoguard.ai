@@ -158,7 +158,7 @@ export function AuthProvider({
       login: (options) => {
         setSessionEndedReason(null);
         setSession(() => {
-          const token = options?.token ?? `dev-session-${Date.now()}-condoguard`;
+          const token = options?.token ?? `dev-session-${Date.now()}-atlasgrid`;
           const expiresAt = options?.expiresAt ?? Date.now() + 3600_000;
           const role: AuthRole = options?.role ?? 'morador';
           const userName = resolveUserName(token, options?.userName);
@@ -183,7 +183,7 @@ export function AuthProvider({
     if (msUntilWarn <= 0) return;
     const timer = setTimeout(() => {
       // Dispatch a custom event that UI components can listen to for showing a toast
-      window.dispatchEvent(new CustomEvent('cg:session-expiring-soon'));
+      window.dispatchEvent(new CustomEvent('atlasgrid:session-expiring-soon'));
     }, msUntilWarn);
     return () => clearTimeout(timer);
   }, [session, isAuthenticated]);

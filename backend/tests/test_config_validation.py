@@ -54,7 +54,7 @@ def test_settings_reject_password_login_with_oidc_in_hml(monkeypatch: pytest.Mon
             AUTH_PROVIDER="oidc_jwks",
             AUTH_PASSWORD_LOGIN_ENABLED="true",
             OIDC_ISSUER="https://issuer.example",
-            OIDC_AUDIENCE="condoguard-api",
+            OIDC_AUDIENCE="atlasgrid-api",
             OIDC_JWKS_URL="https://issuer.example/.well-known/jwks.json",
         )
 
@@ -65,7 +65,7 @@ def test_settings_parse_oidc_allowed_algorithms(monkeypatch: pytest.MonkeyPatch)
         AUTH_PROVIDER="oidc_jwks",
         AUTH_PASSWORD_LOGIN_ENABLED="false",
         OIDC_ISSUER="https://issuer.example",
-        OIDC_AUDIENCE="condoguard-api",
+        OIDC_AUDIENCE="atlasgrid-api",
         OIDC_JWKS_URL="https://issuer.example/.well-known/jwks.json",
         OIDC_ALLOWED_ALGS="RS256, RS512, RS256",
     )
@@ -81,7 +81,7 @@ def test_settings_reject_invalid_oidc_algorithm_list(monkeypatch: pytest.MonkeyP
             AUTH_PROVIDER="oidc_jwks",
             AUTH_PASSWORD_LOGIN_ENABLED="false",
             OIDC_ISSUER="https://issuer.example",
-            OIDC_AUDIENCE="condoguard-api",
+            OIDC_AUDIENCE="atlasgrid-api",
             OIDC_JWKS_URL="https://issuer.example/.well-known/jwks.json",
             OIDC_ALLOWED_ALGS="HS256",
         )

@@ -3,7 +3,7 @@ param(
   [string]$ExpectedEnv = "hml",
   [switch]$RequireOidc,
   [string]$AccessToken = "",
-  [string]$AdminEmail = "admin@condoguard.ai",
+  [string]$AdminEmail = "admin@atlasgrid.ai",
   [string]$AdminPassword = "password123",
   [string]$OutputPath = "docs/sprint7_hml_smoke_report.md"
 )

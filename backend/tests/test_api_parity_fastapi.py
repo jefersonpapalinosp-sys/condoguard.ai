@@ -28,7 +28,7 @@ def reset_runtime_state():
     yield
 
 
-def _login_headers(email: str = "admin@condoguard.ai", password: str = "password123") -> dict[str, str]:
+def _login_headers(email: str = "admin@atlasgrid.ai", password: str = "password123") -> dict[str, str]:
     client = TestClient(app)
     res = client.post("/api/auth/login", json={"email": email, "password": password})
     assert res.status_code == 200
@@ -70,9 +70,9 @@ def test_alerts_mark_as_read_flow():
 
 def test_chat_telemetry_rbac_matrix():
     client = TestClient(app)
-    admin = _login_headers("admin@condoguard.ai")
-    sindico = _login_headers("sindico@condoguard.ai")
-    morador = _login_headers("morador@condoguard.ai")
+    admin = _login_headers("admin@atlasgrid.ai")
+    sindico = _login_headers("sindico@atlasgrid.ai")
+    morador = _login_headers("morador@atlasgrid.ai")
 
     assert client.get("/api/chat/telemetry", headers=admin).status_code == 200
     assert client.get("/api/chat/telemetry", headers=sindico).status_code == 200
@@ -84,8 +84,8 @@ def test_chat_telemetry_rbac_matrix():
 
 def test_observability_metrics_admin_only():
     client = TestClient(app)
-    admin = _login_headers("admin@condoguard.ai")
-    morador = _login_headers("morador@condoguard.ai")
+    admin = _login_headers("admin@atlasgrid.ai")
+    morador = _login_headers("morador@atlasgrid.ai")
 
     assert client.get("/api/health").status_code == 200
     assert client.get("/api/invoices", headers=admin).status_code == 200
@@ -104,8 +104,8 @@ def test_observability_metrics_admin_only():
 
 def test_observability_alerts_admin_only():
     client = TestClient(app)
-    admin = _login_headers("admin@condoguard.ai")
-    sindico = _login_headers("sindico@condoguard.ai")
+    admin = _login_headers("admin@atlasgrid.ai")
+    sindico = _login_headers("sindico@atlasgrid.ai")
 
     alerts = client.get("/api/observability/alerts", headers=admin)
     assert alerts.status_code == 200
@@ -132,12 +132,12 @@ def test_invalid_filters_return_standardized_400():
 def test_tenant_scope_protection_and_isolation():
     client = TestClient(app)
 
-    no_scope_token, _ = create_access_token({"sub": "admin@condoguard.ai", "role": "admin"})
+    no_scope_token, _ = create_access_token({"sub": "admin@atlasgrid.ai", "role": "admin"})
     no_scope = client.get("/api/invoices", headers={"Authorization": f"Bearer {no_scope_token}"})
     assert no_scope.status_code == 401
     assert no_scope.json()["error"]["code"] == "INVALID_TENANT_SCOPE"
 
-    tenant2_token, _ = create_access_token({"sub": "admin@condoguard.ai", "role": "admin", "condominium_id": 2})
+    tenant2_token, _ = create_access_token({"sub": "admin@atlasgrid.ai", "role": "admin", "condominium_id": 2})
     tenant2_headers = {"Authorization": f"Bearer {tenant2_token}"}
     invoices = client.get("/api/invoices", headers=tenant2_headers)
     management = client.get("/api/management/units", headers=tenant2_headers)
@@ -158,8 +158,8 @@ def test_tenant_scope_protection_and_isolation():
 
 def test_security_audit_role_and_invalid_range():
     client = TestClient(app)
-    admin = _login_headers("admin@condoguard.ai")
-    morador = _login_headers("morador@condoguard.ai")
+    admin = _login_headers("admin@atlasgrid.ai")
+    morador = _login_headers("morador@atlasgrid.ai")
 
     forbidden = client.get("/api/security/audit", headers=morador)
     assert forbidden.status_code == 403

@@ -46,7 +46,7 @@ describe('ProtectedRoute negative scenarios', () => {
   it('redirects to login when session is expired', async () => {
     renderProtected({
       initialSession: {
-        token: 'valid-token-condoguard',
+        token: 'valid-token-atlasgrid',
         role: 'admin',
         expiresAt: Date.now() - 1_000,
       },
@@ -58,7 +58,7 @@ describe('ProtectedRoute negative scenarios', () => {
   it('redirects to dashboard when user has no permission', async () => {
     renderProtected({
       initialSession: {
-        token: 'valid-token-condoguard',
+        token: 'valid-token-atlasgrid',
         role: 'morador',
         expiresAt: Date.now() + 60_000,
       },

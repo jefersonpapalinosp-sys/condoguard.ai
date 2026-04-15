@@ -1,7 +1,9 @@
+import { BRAND } from '../../../shared/branding/brand';
+
 type Props = { agentName?: string | null };
 
 export function TypingIndicator({ agentName }: Props) {
-  const label = agentName ?? 'Copiloto';
+  const label = agentName ?? BRAND.assistantName;
 
   return (
     <div className="flex items-center gap-2 px-1">

@@ -11,7 +11,7 @@ def test_health():
     assert resp.status_code == 200
     body = resp.json()
     assert body['ok'] is True
-    assert body['service'] == 'condoguard-api'
+    assert body['service'] == 'atlasgrid-api'
     assert 'oidcReadiness' in body
     assert 'ready' in body['oidcReadiness']
     assert 'missingConfig' in body['oidcReadiness']

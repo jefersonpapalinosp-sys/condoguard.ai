@@ -1,4 +1,4 @@
-# CondoGuard.AI
+# AtlasGrid
 
 Plataforma de inteligencia predial em React + Vite.
 
@@ -27,9 +27,9 @@ No PowerShell com politica restrita, use `npm.cmd` em vez de `npm`.
 
 Credenciais locais de desenvolvimento (P0 auth):
 
-- `admin@condoguard.ai` / `password123`
-- `sindico@condoguard.ai` / `password123`
-- `morador@condoguard.ai` / `password123`
+- `admin@atlasgrid.ai` / `password123`
+- `sindico@atlasgrid.ai` / `password123`
+- `morador@atlasgrid.ai` / `password123`
 
 ## Scripts
 
@@ -68,7 +68,7 @@ Credenciais locais de desenvolvimento (P0 auth):
 - `/consumption`: consumo e utilidades.
 - `/contracts`: contratos e vigencias.
 - `/invoices`: financeiro e faturas.
-- `/chat`: assistente CondoGuard.
+- `/chat`: assistente AtlasGrid.
 - `/management`: gestao de unidades.
 - `/cadastros-gerais`: centro de cadastros de unidades, moradores, fornecedores e servicos.
 - `/reports`: relatorios operacionais.
@@ -88,7 +88,7 @@ Arquivos implementados:
 Executar analise com a planilha:
 
 ```powershell
-py -3 scripts/data/analyze_and_project.py --xlsx "c:\Users\Camila\Downloads\CondoGuardAI - Base de Dados.xlsx"
+py -3 scripts/data/analyze_and_project.py --xlsx "c:\Users\Camila\Downloads\AtlasGrid - Base de Dados.xlsx"
 ```
 
 Saidas:
@@ -179,8 +179,8 @@ Endpoints principais:
 Validacao manual (Windows PowerShell):
 
 ```powershell
-cd C:\Users\Camila\Desktop\Senac\workspace\CondoGuard.AI\condoguard.ai
-$login = Invoke-RestMethod -Method Post -Uri "http://localhost:4000/api/auth/login" -ContentType "application/json" -Body '{"email":"admin@condoguard.ai","password":"password123"}'
+cd C:\Users\Camila\Desktop\Senac\workspace\AtlasGrid\atlasgrid.ai
+$login = Invoke-RestMethod -Method Post -Uri "http://localhost:4000/api/auth/login" -ContentType "application/json" -Body '{"email":"admin@atlasgrid.ai","password":"password123"}'
 $headers = @{ Authorization = "Bearer $($login.token)" }
 $msg = Invoke-RestMethod -Method Post -Uri "http://localhost:4000/api/chat/message" -Headers $headers -ContentType "application/json" -Body '{"message":"Resumo financeiro do condominio"}'
 Invoke-RestMethod -Method Post -Uri "http://localhost:4000/api/chat/feedback" -Headers $headers -ContentType "application/json" -Body (@{ messageId = $msg.id; rating = "up" } | ConvertTo-Json)

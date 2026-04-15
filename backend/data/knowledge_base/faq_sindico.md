@@ -85,7 +85,7 @@ São motivos de justa causa (CLT art. 482): improbidade, incontinência de condu
 
 ## Tecnologia e Sistemas
 
-### Como usar o CondoGuard para gestão de alertas?
+### Como usar o AtlasGrid para gestão de alertas?
 O sistema classifica alertas por severidade (informativo, atenção, crítico). Alertas críticos exigem ação imediata — acesse o painel de alertas, clique no alerta e siga o plano de ação sugerido. Registre a resolução com notas e evidências.
 
 ### Como verificar o status de faturas no sistema?

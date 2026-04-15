@@ -24,7 +24,7 @@ const alertsFixture = {
       status: 'read' as const,
       read: true,
       readAt: '2026-04-07T15:00:00Z',
-      readBy: 'admin@condoguard.ai',
+      readBy: 'admin@atlasgrid.ai',
     },
   ],
   meta: {

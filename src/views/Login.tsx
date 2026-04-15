@@ -3,6 +3,8 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../features/auth/context/AuthContext';
 import { loginWithPassword } from '../services/authService';
 import { ApiError } from '../services/http';
+import { BRAND } from '../shared/branding/brand';
+import { BrandMark } from '../shared/ui/BrandMark';
 
 const IS_DEV = import.meta.env.VITE_APP_ENV === 'dev' || import.meta.env.DEV;
 
@@ -76,131 +78,149 @@ export default function Login() {
   };
 
   return (
-    <main className="min-h-[100dvh] overflow-x-hidden bg-surface text-on-surface font-body antialiased lg:flex">
-      <section className="relative hidden min-h-[100dvh] overflow-hidden bg-primary-container lg:flex lg:w-7/12">
-        <div className="absolute inset-0 z-0">
-          <img
-            src="https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=2070&auto=format&fit=crop"
-            alt="Detalhe arquitetonico de um predio"
-            className="w-full h-full object-cover opacity-60 grayscale"
-          />
+    <main className="min-h-[100dvh] overflow-x-hidden bg-surface text-on-surface font-body antialiased lg:grid lg:grid-cols-[1.2fr_minmax(24rem,32rem)]">
+      <section className="relative hidden min-h-[100dvh] overflow-hidden bg-primary-container lg:flex">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_20%,rgba(194,233,227,0.26),transparent_0%,transparent_32%),radial-gradient(circle_at_78%_18%,rgba(201,141,72,0.34),transparent_0%,transparent_24%),linear-gradient(150deg,#08161a_0%,#10343a_48%,#0f262b_100%)]" />
+        <div className="absolute inset-y-0 right-0 w-px bg-white/12" />
+        <div className="absolute inset-x-[10%] top-[14%] h-[17rem] rounded-[3rem] border border-white/10 bg-white/6 rotate-[-7deg]" />
+        <div className="absolute inset-x-[26%] top-[36%] h-[14rem] rounded-[3rem] border border-white/8 bg-white/5 rotate-[8deg]" />
+        <div className="absolute right-[12%] top-[14%] grid gap-3">
+          <div className="rounded-2xl border border-white/12 bg-white/8 px-4 py-3 text-white/82 backdrop-blur-sm">
+            <p className="text-[11px] uppercase tracking-[0.22em] text-white/48">Pulso operacional</p>
+            <p className="mt-2 text-2xl font-headline font-bold text-white">24 eventos</p>
+            <p className="mt-1 text-sm">Incidentes, contratos e tarefas em atualizacao continua.</p>
+          </div>
+          <div className="rounded-2xl border border-white/10 bg-black/18 px-4 py-3 text-white/82 backdrop-blur-sm">
+            <p className="text-[11px] uppercase tracking-[0.22em] text-white/48">Base visual</p>
+            <p className="mt-2 text-sm leading-6">Layout inicial para substituir a marca antiga por uma shell mais institucional e modular.</p>
+          </div>
         </div>
-        <div className="absolute inset-0 bg-gradient-to-tr from-primary via-transparent to-primary-container opacity-90 z-10" />
 
-        <div className="relative z-20 flex flex-col justify-between p-10 xl:p-16 h-full">
-          <div>
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-primary-fixed flex items-center justify-center rounded-lg">
-                <span className="material-symbols-outlined text-on-primary-fixed">domain</span>
-              </div>
-              <h1 className="font-headline text-2xl md:text-3xl font-extrabold tracking-tight text-white">CondoGuard.AI</h1>
+        <div className="relative z-10 flex h-full w-full flex-col justify-between px-12 py-12 xl:px-16 xl:py-16">
+          <div className="flex items-center gap-4">
+            <BrandMark size="lg" />
+            <div>
+              <p className="font-headline text-3xl font-bold tracking-tight text-white">{BRAND.name}</p>
+              <p className="text-[11px] uppercase tracking-[0.28em] text-white/58">{BRAND.tagline}</p>
             </div>
-            <p className="mt-4 text-on-primary-container font-headline text-lg max-w-sm">
-              Inteligencia predial para operacoes modernas.
+          </div>
+
+          <div className="max-w-2xl">
+            <span className="inline-flex items-center gap-2 rounded-full border border-white/14 bg-white/10 px-4 py-2 text-[11px] font-bold uppercase tracking-[0.22em] text-white/78">
+              <span className="h-2 w-2 rounded-full bg-[#a8f2cb]" />
+              {BRAND.loginBadge}
+            </span>
+            <h1 className="mt-6 max-w-xl font-headline text-5xl font-bold leading-[1.04] tracking-[-0.03em] text-white">
+              {BRAND.loginHeadline}
+            </h1>
+            <p className="mt-5 max-w-lg text-base leading-7 text-white/74">
+              {BRAND.loginDescription}
             </p>
           </div>
 
-          <div className="space-y-6">
-            <div className="max-w-md">
-              <span className="inline-block px-3 py-1 mb-4 text-xs font-bold tracking-widest uppercase bg-tertiary-fixed text-on-tertiary-fixed rounded-full">
-                ESTATE INTELLIGENCE
-              </span>
-              <h2 className="text-3xl md:text-4xl font-headline font-bold text-white leading-tight">
-                Monitoramento avancado para ativos de alto valor.
-              </h2>
-            </div>
-
-            <div className="mt-8 grid grid-cols-1 gap-3 text-sm text-white/85">
-              <div className="rounded-2xl bg-white/10 px-4 py-3">
-                <p className="text-[11px] uppercase tracking-widest text-white/70">Tempo real</p>
-                <p className="mt-1 font-semibold">Alertas e status operacionais com atualizacao continua.</p>
-              </div>
-              <div className="rounded-2xl bg-white/10 px-4 py-3">
-                <p className="text-[11px] uppercase tracking-widest text-white/70">Governanca</p>
-                <p className="mt-1 font-semibold">Controle por perfil para moradores, sindico e administracao.</p>
-              </div>
-            </div>
+          <div className="grid max-w-3xl grid-cols-3 gap-3">
+            {BRAND.loginHighlights.map((item) => (
+              <article key={item.label} className="rounded-[1.7rem] border border-white/12 bg-white/9 px-4 py-4 text-white/86 backdrop-blur-sm">
+                <p className="text-[11px] uppercase tracking-[0.22em] text-white/46">{item.label}</p>
+                <p className="mt-3 text-sm leading-6">{item.text}</p>
+              </article>
+            ))}
           </div>
         </div>
       </section>
 
-      <section className="relative flex w-full items-center justify-center overflow-y-auto px-4 py-6 md:px-8 md:py-10 lg:w-5/12 lg:px-12">
-        <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_18%_0%,rgba(19,27,46,0.08),transparent_35%),linear-gradient(180deg,#faf8ff_0%,#f1f4ff_100%)]" />
+      <section className="relative flex min-h-[100dvh] items-center justify-center overflow-y-auto px-4 py-8 sm:px-6 lg:px-10">
+        <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_18%_0%,rgba(17,96,102,0.10),transparent_36%),radial-gradient(circle_at_84%_10%,rgba(201,141,72,0.12),transparent_28%),linear-gradient(180deg,#f8f5ef_0%,#f3efe6_100%)]" />
 
-        <div className="w-full max-w-md space-y-5 rounded-3xl border border-outline-variant/30 bg-surface-container-lowest/90 p-5 shadow-xl backdrop-blur-sm md:p-7">
-          <header>
-            <div className="mb-4 flex items-center gap-3 lg:hidden">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary-container">
-                <span className="material-symbols-outlined text-sm text-white">domain</span>
-              </div>
+        <div className="atlas-panel w-full max-w-xl rounded-[2rem] border border-white/60 p-5 shadow-[0_28px_70px_rgba(15,34,39,0.14)] md:p-8">
+          <header className="mb-6 flex flex-col gap-5">
+            <div className="flex items-center gap-4">
+              <BrandMark />
               <div>
-                <p className="font-headline text-base font-extrabold tracking-tight">CondoGuard.AI</p>
-                <p className="text-[10px] uppercase tracking-[0.18em] text-on-surface-variant">Building Intelligence</p>
+                <p className="font-headline text-xl font-bold tracking-tight text-on-surface">{BRAND.name}</p>
+                <p className="text-[11px] uppercase tracking-[0.22em] text-on-surface-variant">{BRAND.tagline}</p>
               </div>
             </div>
 
-            <h2 className="text-2xl font-headline font-extrabold tracking-tight text-on-surface md:text-3xl">Acessar Plataforma</h2>
-            <p className="mt-2 font-body text-on-surface-variant">Acesso autenticado no backend com credenciais validas.</p>
+            <div className="rounded-[1.6rem] border border-outline-variant/45 bg-surface-container-lowest/75 px-4 py-4">
+              <p className="text-[11px] uppercase tracking-[0.22em] text-on-surface-variant">Esboco inicial</p>
+              <h2 className="mt-2 font-headline text-3xl font-bold tracking-tight text-on-surface">Acessar nucleo operacional</h2>
+              <p className="mt-2 max-w-md text-sm leading-6 text-on-surface-variant">
+                Login reescrito para a nova identidade visual, com base pronta para shell, chatbot e modulos do projeto.
+              </p>
+            </div>
           </header>
 
           <form className="space-y-5" onSubmit={onSubmit}>
-            <div className="space-y-2">
-              <label htmlFor="email" className="block text-xs font-label font-bold text-on-surface-variant uppercase tracking-widest">
-                E-mail
-              </label>
-              <div className="relative">
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-on-primary-container text-lg">
-                  alternate_email
-                </span>
-                <input
-                  type="email"
-                  id="email"
-                  name="email"
-                  placeholder="nome@organizacao.ai"
-                  required
-                  defaultValue={IS_DEV ? 'admin@condoguard.ai' : ''}
-                  className="w-full pl-12 pr-4 py-4 bg-surface-container border-0 focus:ring-2 focus:ring-primary-fixed rounded-lg transition-all text-on-surface"
-                />
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2 sm:col-span-2">
+                <label htmlFor="email" className="block text-[11px] font-label font-bold uppercase tracking-[0.22em] text-on-surface-variant">
+                  E-mail
+                </label>
+                <div className="relative">
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-on-primary-container text-lg">
+                    alternate_email
+                  </span>
+                  <input
+                    type="email"
+                    id="email"
+                    name="email"
+                    placeholder={BRAND.demoAdminEmail}
+                    required
+                    defaultValue={IS_DEV ? BRAND.demoAdminEmail : ''}
+                    className="interactive-focus h-14 w-full rounded-[1.25rem] border border-outline-variant/45 bg-surface-container-lowest/85 pl-12 pr-4 text-sm text-on-surface outline-none transition-all"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2 sm:col-span-2">
+                <label htmlFor="password" className="block text-[11px] font-label font-bold uppercase tracking-[0.22em] text-on-surface-variant">
+                  Senha
+                </label>
+                <div className="relative">
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-on-primary-container text-lg">
+                    lock
+                  </span>
+                  <input
+                    type="password"
+                    id="password"
+                    name="password"
+                    placeholder="************"
+                    required
+                    defaultValue={IS_DEV ? 'password123' : ''}
+                    className="interactive-focus h-14 w-full rounded-[1.25rem] border border-outline-variant/45 bg-surface-container-lowest/85 pl-12 pr-4 text-sm text-on-surface outline-none transition-all"
+                  />
+                </div>
               </div>
             </div>
 
-            <div className="space-y-2">
-              <label htmlFor="password" className="block text-xs font-label font-bold text-on-surface-variant uppercase tracking-widest">
-                Senha
-              </label>
-              <div className="relative">
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-on-primary-container text-lg">
-                  lock
-                </span>
-                <input
-                  type="password"
-                  id="password"
-                  name="password"
-                  placeholder="************"
-                  required
-                  defaultValue={IS_DEV ? 'password123' : ''}
-                  className="w-full pl-12 pr-4 py-4 bg-surface-container border-0 focus:ring-2 focus:ring-primary-fixed rounded-lg transition-all text-on-surface"
-                />
+            <div className="grid gap-3 sm:grid-cols-[1.4fr_1fr]">
+              <div className="rounded-[1.4rem] border border-outline-variant/45 bg-surface-container-low px-4 py-3">
+                <p className="text-[11px] uppercase tracking-[0.22em] text-on-surface-variant">Acesso seguro</p>
+                <p className="mt-2 text-sm leading-6 text-on-surface-variant">
+                  Sessao protegida, rastreavel e preparada para evoluir com identidade visual unificada.
+                </p>
               </div>
-            </div>
-
-            <div className="rounded-xl border border-outline-variant/30 bg-surface-container-low px-3 py-2">
-              <p className="text-[11px] uppercase tracking-widest text-on-surface-variant">Acesso seguro</p>
-              <p className="mt-1 text-xs text-on-surface-variant">Sessao protegida por autenticacao e politicas de perfil.</p>
+              <div className="rounded-[1.4rem] border border-outline-variant/45 bg-surface-container-low px-4 py-3">
+                <p className="text-[11px] uppercase tracking-[0.22em] text-on-surface-variant">Status</p>
+                <p className="mt-2 text-sm font-semibold text-on-surface">Preview pronta</p>
+                <p className="mt-1 text-xs text-on-surface-variant">Login, shell e assistente ja reescritos.</p>
+              </div>
             </div>
 
             <button
               type="submit"
               disabled={loading}
-              className="flex w-full items-center justify-center gap-2 rounded-lg py-4 text-sm font-headline font-bold uppercase tracking-widest text-white shadow-xl shadow-primary-container/10 transition-all active:scale-[0.98] monolith-gradient hover:shadow-primary-container/20"
+              className="atlas-gradient flex h-14 w-full items-center justify-center gap-2 rounded-[1.25rem] px-4 text-sm font-headline font-bold uppercase tracking-[0.22em] text-white shadow-[0_18px_40px_rgba(15,34,39,0.16)] transition-transform active:scale-[0.99] disabled:opacity-60"
             >
               {loading ? 'Entrando...' : 'Entrar'}
-              <span className="material-symbols-outlined text-lg">arrow_forward</span>
+              <span className="material-symbols-outlined text-lg">north_east</span>
             </button>
+
             {error ? (
-              <div className="mt-1 space-y-1">
-                <p className="text-sm text-error">{error}</p>
-                {traceId ? <p className="text-[11px] uppercase tracking-[0.16em] text-on-surface-variant">Trace ID: {traceId}</p> : null}
+              <div className="rounded-[1.2rem] border border-error/20 bg-error-container/85 px-4 py-3">
+                <p className="text-sm text-on-error-container">{error}</p>
+                {traceId ? <p className="mt-1 text-[11px] uppercase tracking-[0.16em] text-on-error-container/80">Trace ID: {traceId}</p> : null}
               </div>
             ) : null}
           </form>

@@ -99,7 +99,7 @@ export default function Dashboard() {
   const quickActions = [
     { to: '/alerts', label: 'Ver alertas', icon: 'warning' },
     { to: '/consumption', label: 'Acompanhar consumo', icon: 'query_stats' },
-    { to: '/chat', label: 'Abrir copiloto', icon: 'forum' },
+    { to: '/chat', label: 'Abrir assistente', icon: 'forum' },
   ];
 
   const metricCards: Array<{
@@ -154,10 +154,10 @@ export default function Dashboard() {
       <section className="rounded-3xl bg-[linear-gradient(132deg,#131b2e_0%,#1d2d4e_58%,#344d7f_100%)] p-5 text-white shadow-xl md:p-8">
         <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
           <div className="max-w-2xl">
-            <p className="text-[11px] uppercase tracking-[0.2em] text-white/75">Painel do morador</p>
+            <p className="text-[11px] uppercase tracking-[0.2em] text-white/75">Novo layout operacional</p>
             <h3 className="mt-2 font-headline text-2xl font-extrabold tracking-tight md:text-4xl">Dashboard</h3>
             <p className="mt-3 text-sm text-white/85 md:text-base">
-              Visao consolidada do condominio para decidir rapido: alertas, consumo e indicadores de economia.
+              Visao consolidada da operacao para decidir rapido: alertas, consumo e indicadores de desempenho.
             </p>
           </div>
           <div className="flex items-center gap-2 self-start rounded-full bg-white/10 px-3 py-1.5">

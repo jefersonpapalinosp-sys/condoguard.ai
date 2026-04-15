@@ -5,8 +5,8 @@ export type ApiFallbackDetail = {
 
 export type DataSourceType = 'api' | 'mock' | 'unknown';
 
-const FALLBACK_EVENT = 'condoguard:api-fallback';
-const SOURCE_EVENT = 'condoguard:data-source';
+const FALLBACK_EVENT = 'atlasgrid:api-fallback';
+const SOURCE_EVENT = 'atlasgrid:data-source';
 
 const sourceByModule = new Map<string, DataSourceType>();
 

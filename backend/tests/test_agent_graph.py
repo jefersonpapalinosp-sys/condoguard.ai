@@ -207,7 +207,7 @@ class TestChatEndpoint:
         from app.main import app
 
         client = TestClient(app)
-        res = client.post("/api/auth/login", json={"email": "admin@condoguard.ai", "password": "password123"})
+        res = client.post("/api/auth/login", json={"email": "admin@atlasgrid.ai", "password": "password123"})
         token = res.json()["token"]
         headers = {"Authorization": f"Bearer {token}"}
 

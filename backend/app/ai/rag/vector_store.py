@@ -51,7 +51,7 @@ def get_vector_store(persist_dir: str | None = None, embeddings=None):
         _persist = persist_dir or settings.chroma_persist_dir
         _emb = embeddings or _get_embeddings()
         _VECTOR_STORE = Chroma(
-            collection_name="condoguard_kb",
+            collection_name="atlasgrid_kb",
             embedding_function=_emb,
             persist_directory=_persist,
         )

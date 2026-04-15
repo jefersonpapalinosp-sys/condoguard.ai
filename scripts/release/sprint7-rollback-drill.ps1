@@ -2,7 +2,7 @@ param(
   [string]$PrimaryApiBaseUrl = "http://localhost:4000",
   [string]$RollbackApiBaseUrl = "http://localhost:4000",
   [string]$AccessToken = "",
-  [string]$AdminEmail = "admin@condoguard.ai",
+  [string]$AdminEmail = "admin@atlasgrid.ai",
   [string]$AdminPassword = "password123",
   [string]$OutputPath = "docs/sprint7_rollback_drill_report.md",
   [int]$RecoveryTimeoutSec = 300,

@@ -89,7 +89,7 @@ for (const service of services) {
 process.stdout.write('Subindo frontend e API local...\n');
 process.stdout.write('Frontend: http://localhost:3000\n');
 process.stdout.write('API: http://localhost:4000\n');
-process.stdout.write('Login local: admin@condoguard.ai / password123\n\n');
+process.stdout.write('Login local: admin@atlasgrid.ai / password123\n\n');
 
 process.on('SIGINT', () => stopAll('Encerrando stack local...', 0));
 process.on('SIGTERM', () => stopAll('Encerrando stack local...', 0));

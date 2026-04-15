@@ -113,7 +113,7 @@ $headersInvalid = @{ Authorization = "Bearer $invalidToken" }
 $alertsValid = Invoke-Api -Method "GET" -Url "$ApiBaseUrl/api/alerts" -Headers $headersValid
 $chatValid = Invoke-Api -Method "GET" -Url "$ApiBaseUrl/api/chat/bootstrap" -Headers $headersValid
 $alertsInvalid = Invoke-Api -Method "GET" -Url "$ApiBaseUrl/api/alerts" -Headers $headersInvalid
-$loginPwd = Invoke-Api -Method "POST" -Url "$ApiBaseUrl/api/auth/login" -Body '{"email":"admin@condoguard.ai","password":"password123"}'
+$loginPwd = Invoke-Api -Method "POST" -Url "$ApiBaseUrl/api/auth/login" -Body '{"email":"admin@atlasgrid.ai","password":"password123"}'
 
 $checks += New-CheckResult -Name "OIDC token valido acessa /api/alerts" -ExpectedStatus 200 -ActualStatus $alertsValid.Status
 $checks += New-CheckResult -Name "OIDC token valido acessa /api/chat/bootstrap" -ExpectedStatus 200 -ActualStatus $chatValid.Status

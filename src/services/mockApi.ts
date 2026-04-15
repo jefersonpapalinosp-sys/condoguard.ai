@@ -381,7 +381,7 @@ export async function getInvoicesData(): Promise<InvoicesData> {
 
 export async function getChatData(): Promise<ChatData> {
   return simulateNetwork({
-    welcomeMessage: 'Sou o copiloto CondoGuard. Posso ajudar com alertas, consumo e operacao diaria.',
+    welcomeMessage: 'Sou o Atlas Assist. Posso ajudar com alertas, consumo e operacao diaria.',
     suggestions: [
       {
         id: 's1',

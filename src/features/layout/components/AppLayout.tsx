@@ -5,6 +5,8 @@ import { fetchAlertsSummary, type AlertsSummary } from '../../../services/alerts
 import type { AuthRole } from '../../auth/context/AuthContext';
 import { ApiFallbackToast } from '../../../shared/ui/ApiFallbackToast';
 import { ChatbotWidget } from '../../../shared/ui/ChatbotWidget';
+import { BRAND } from '../../../shared/branding/brand';
+import { BrandMark } from '../../../shared/ui/BrandMark';
 
 type NavItem = {
   id: string;
@@ -68,7 +70,7 @@ function toTitle(pathname: string) {
   const segments = pathname.split('/').filter(Boolean);
   const current = segments.at(-1) ?? 'dashboard';
   if (current === 'dashboard') {
-    return 'Condominio Mirante do Parque';
+    return BRAND.workspaceName;
   }
 
   const direct = navItems.find((item) => item.id === current)?.label;
@@ -82,7 +84,7 @@ function toTitle(pathname: string) {
 
   // Match multi-segment nav ids like "integrations/enel"
   const fullPath = segments.join('/');
-  return navItems.find((item) => item.id === fullPath)?.label ?? 'CondoGuard.AI';
+  return navItems.find((item) => item.id === fullPath)?.label ?? BRAND.name;
 }
 
 const ALERT_POLL_MS = 30_000;
@@ -185,7 +187,7 @@ export function AppLayout() {
   return (
     <>
       <div className="relative flex min-h-[100dvh] overflow-hidden bg-surface text-on-surface font-body">
-        <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_top_left,rgba(19,27,46,0.10),transparent_45%),radial-gradient(circle_at_85%_0%,rgba(74,225,118,0.10),transparent_40%),linear-gradient(180deg,#faf8ff_0%,#f3f6ff_100%)]" />
+        <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_top_left,rgba(17,96,102,0.10),transparent_42%),radial-gradient(circle_at_84%_0%,rgba(201,141,72,0.14),transparent_34%),linear-gradient(180deg,#f8f5ef_0%,#f3efe6_100%)]" />
 
         {mobileMenuOpen ? (
           <button
@@ -197,18 +199,24 @@ export function AppLayout() {
 
         <aside
           id={mobileMenuId}
-          className={`fixed inset-y-0 left-0 z-50 flex h-[100dvh] w-[18rem] max-w-[88vw] flex-col border-r border-outline-variant/30 bg-surface-container-lowest/95 py-4 font-headline text-sm font-medium shadow-2xl backdrop-blur-lg transition-transform duration-300 ease-out md:static md:h-auto md:w-[17rem] md:max-w-none md:translate-x-0 md:shadow-none ${
+          className={`fixed inset-y-0 left-0 z-50 flex h-[100dvh] w-[18rem] max-w-[88vw] flex-col border-r border-outline-variant/30 bg-surface-container-lowest/92 py-4 font-headline text-sm font-medium shadow-2xl backdrop-blur-xl transition-transform duration-300 ease-out md:static md:h-auto md:w-[17rem] md:max-w-none md:translate-x-0 md:shadow-none ${
             mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
           }`}
         >
           <div className="mb-6 px-5">
-            <div className="flex items-center gap-3 rounded-2xl bg-surface-container px-3 py-3">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary-container">
-                <span className="material-symbols-outlined text-sm text-white">domain</span>
+            <div className="atlas-gradient overflow-hidden rounded-[1.75rem] px-4 py-4 text-white shadow-[0_18px_40px_rgba(15,34,39,0.16)]">
+              <div className="flex items-center gap-3">
+                <BrandMark size="sm" />
+                <div>
+                  <h1 className="text-base font-extrabold tracking-tight">{BRAND.name}</h1>
+                  <p className="text-[10px] uppercase tracking-[0.18em] text-white/62">{BRAND.tagline}</p>
+                </div>
               </div>
-              <div>
-                <h1 className="text-base font-extrabold tracking-tight text-on-surface">CondoGuard.AI</h1>
-                <p className="text-[10px] uppercase tracking-[0.18em] text-on-surface-variant">Building Intelligence</p>
+              <div className="mt-4 rounded-[1.2rem] border border-white/12 bg-white/10 px-3 py-3">
+                <p className="text-[10px] uppercase tracking-[0.18em] text-white/58">{BRAND.shellLabel}</p>
+                <p className="mt-2 text-xs leading-5 text-white/82">
+                  Esboco inicial do novo shell com navegacao, identidade e ritmo visual reescritos.
+                </p>
               </div>
             </div>
           </div>
@@ -227,7 +235,7 @@ export function AppLayout() {
                   className={({ isActive }) =>
                     `group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 transition-colors ${
                       isActive
-                        ? 'bg-primary-container text-white shadow-sm'
+                        ? 'bg-primary text-white shadow-[0_10px_22px_rgba(18,62,70,0.18)]'
                         : 'text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface'
                     }`
                   }
@@ -260,7 +268,7 @@ export function AppLayout() {
         </aside>
 
         <main className="flex min-w-0 flex-1 flex-col">
-          <header className="sticky top-0 z-30 flex h-16 w-full shrink-0 items-center justify-between border-b border-outline-variant/30 bg-surface-container-lowest/85 px-3 font-headline text-sm font-semibold shadow-[0_2px_12px_rgba(19,27,46,0.05)] backdrop-blur md:px-6">
+          <header className="sticky top-0 z-30 flex h-16 w-full shrink-0 items-center justify-between border-b border-outline-variant/30 bg-surface-container-lowest/82 px-3 font-headline text-sm font-semibold shadow-[0_2px_12px_rgba(19,27,46,0.05)] backdrop-blur-xl md:px-6">
             <div className="flex min-w-0 items-center gap-2 md:gap-5">
               <button
                 aria-label="Abrir menu"
@@ -271,12 +279,19 @@ export function AppLayout() {
               >
                 <span className="material-symbols-outlined">menu</span>
               </button>
-              <h2 className="truncate text-on-surface font-extrabold text-base tracking-tight capitalize md:text-lg">
-                {toTitle(location.pathname)}
-              </h2>
+              <div className="min-w-0">
+                <p className="truncate text-[10px] uppercase tracking-[0.22em] text-on-surface-variant">{BRAND.shellLabel}</p>
+                <h2 className="truncate text-on-surface font-extrabold text-base tracking-tight capitalize md:text-lg">
+                  {toTitle(location.pathname)}
+                </h2>
+              </div>
             </div>
 
             <div className="flex items-center gap-1.5 sm:gap-2.5">
+              <div className="hidden items-center gap-2 rounded-full border border-outline-variant/35 bg-surface-container px-3 py-1 md:flex">
+                <span className="h-2 w-2 rounded-full bg-tertiary-fixed-dim" />
+                <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-on-surface-variant">Nova identidade</span>
+              </div>
               <div className="relative" ref={notifRef}>
                 <button
                   aria-label="Notificacoes"

@@ -146,7 +146,7 @@ async def health() -> dict[str, Any]:
 
     return {
         "ok": True,
-        "service": "condoguard-api",
+        "service": "atlasgrid-api",
         "env": settings.effective_env,
         "dialect": settings.db_dialect,
         "authProvider": settings.auth_provider,

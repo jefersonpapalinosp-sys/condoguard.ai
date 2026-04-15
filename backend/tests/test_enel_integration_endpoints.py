@@ -21,7 +21,7 @@ def setup_enel_integration_state(monkeypatch: pytest.MonkeyPatch, tmp_path: Path
     reset_enel_integration_state()
 
 
-def _login_headers(email: str = "admin@condoguard.ai", password: str = "password123") -> dict[str, str]:
+def _login_headers(email: str = "admin@atlasgrid.ai", password: str = "password123") -> dict[str, str]:
     client = TestClient(app)
     res = client.post("/api/auth/login", json={"email": email, "password": password})
     assert res.status_code == 200
@@ -96,7 +96,7 @@ def test_enel_runs_create_list_detail_and_invoice_snapshot():
 
 def test_enel_runs_rbac_forbidden_for_morador():
     client = TestClient(app)
-    morador_headers = _login_headers("morador@condoguard.ai")
+    morador_headers = _login_headers("morador@atlasgrid.ai")
 
     forbidden_list = client.get("/api/integrations/enel/runs", headers=morador_headers)
     assert forbidden_list.status_code == 403
@@ -114,7 +114,7 @@ def test_enel_runs_rbac_forbidden_for_morador():
 def test_enel_runs_are_isolated_by_tenant_scope():
     client = TestClient(app)
     tenant1_headers = _login_headers()
-    tenant2_token, _ = create_access_token({"sub": "admin-tenant2@condoguard.ai", "role": "admin", "condominium_id": 2})
+    tenant2_token, _ = create_access_token({"sub": "admin-tenant2@atlasgrid.ai", "role": "admin", "condominium_id": 2})
     tenant2_headers = {"Authorization": f"Bearer {tenant2_token}"}
 
     tenant1_create = client.post(

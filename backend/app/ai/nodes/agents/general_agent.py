@@ -10,7 +10,7 @@ from app.ai.llm_provider import invoke_chain_with_retry
 from app.observability.metrics_store import record_api_fallback_metric
 
 _log = logging.getLogger(__name__)
-AGENT_NAME = "CondoGuard Copiloto"
+AGENT_NAME = "Atlas Assist"
 DOMAIN = "general"
 
 
